@@ -6,7 +6,7 @@
 <title>Our Little Date</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f6ede0;
@@ -35,9 +35,9 @@
     -webkit-tap-highlight-color: transparent;
   }
   button, .polaroid, .court { cursor: var(--paw), pointer; }
-  main { max-width: 720px; margin: 0 auto; padding: 56px 16px 90px; position: relative; z-index: 1; }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 16px 160px; position: relative; z-index: 1; }
   h1, h2 { font-weight: 600; margin: 0 0 8px; line-height: 1.2; }
-  h1 { font-size: clamp(28px, 7vw, 40px); }
+  h1 { font: 400 clamp(26px, 8vw, 40px)/1.3 "Press Start 2P", monospace; margin: 6px 0 12px; }
   h2 { font-size: clamp(24px, 6vw, 32px); }
   p { line-height: 1.5; }
   [hidden] { display: none !important; }
@@ -79,7 +79,7 @@
   .pxbtn:hover { background: #f8c6d3; }
   .pxbtn:active { transform: translateY(3px); }
   .pxbtn.big { font-size: 22px; padding: 14px 28px; }
-  .pxbtn:focus-visible, .toy:focus-visible, .linkbtn:focus-visible, .back:focus-visible, .court:focus-visible {
+  .pxbtn:focus-visible, .toy:focus-visible, .linkbtn:focus-visible, .back:focus-visible, .court:focus-visible, .jamiel:focus-visible {
     outline: 3px dashed var(--pink-d); outline-offset: 8px;
   }
 
@@ -88,7 +88,7 @@
   .toolbar .pxbtn[aria-pressed="false"] { background: var(--card); color: var(--muted); text-decoration: line-through; box-shadow: 0 0 0 3px var(--ink); }
 
   .kicker { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
-  .story { font-family: "Gaegu", cursive; font-size: 22px; margin: 6px auto 4px; max-width: 32ch; }
+  .story { font-family: "Gaegu", cursive; font-size: 23px; margin: 6px auto 4px; max-width: 32ch; }
   .hint { color: var(--muted); font-size: 15px; margin: 4px 0 0; }
   .hint .count { color: var(--pink-d); }
   .back {
@@ -97,14 +97,26 @@
   }
   .back:hover { color: var(--ink); }
 
+  /* the cats: cliz, rhey and jamiel, each with a name tag */
+  .pet { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+  .pet svg { display: block; transform-origin: 50% 100%; }
+  .pet.go svg { animation: bounce .4s ease-out; }
+  .tag {
+    font: 400 10px "Press Start 2P", monospace; color: var(--ink); background: var(--card);
+    padding: 4px 7px 3px; box-shadow: 0 0 0 2px var(--ink); white-space: nowrap; line-height: 1;
+  }
+  .tag.her { background: var(--pink-l); }
+
   /* start screen */
-  .cats { display: flex; justify-content: center; align-items: flex-end; gap: 6px; margin-bottom: 14px; }
-  .cats svg:nth-child(2) { animation: hop 1.6s steps(2) infinite; }
+  .cats { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 18px; }
+  .cats .float-heart { align-self: center; animation: hop 1.6s steps(2) infinite; }
+  .cats .pet svg { animation: hop 2.4s steps(2) infinite; }
+  .cats .pet + .float-heart + .pet svg { animation-delay: -1.2s; }
   .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
   .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
 
   /* paw-print trail */
-  .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 34px; }
+  .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 40px; }
   .trail { list-style: none; display: flex; justify-content: space-between; margin: 0; padding: 0; position: relative; }
   .trail::before {
     content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 4px; transform: translateY(-50%);
@@ -116,26 +128,25 @@
   .trail li svg { display: block; }
   .trail-label { text-align: center; color: var(--muted); font-size: 14px; margin: 6px 0 0; }
   .walker {
-    position: absolute; top: 0; width: 28px;
-    left: calc(var(--p, 0) * (100% - 28px));
+    position: absolute; top: 0; width: 68px; display: flex; gap: 4px; align-items: flex-end;
+    left: calc(14px + var(--p, 0) * (100% - 28px) - 34px);
     transition: left .9s steps(9);
   }
   .walker svg { display: block; animation: hop .5s steps(2) infinite; }
+  .walker svg + svg { animation-delay: -.25s; }
 
   /* scene */
   .scene { text-align: center; }
-  .stage { display: flex; justify-content: center; align-items: flex-end; margin-top: 12px; }
+  .stage { display: flex; justify-content: center; align-items: flex-end; gap: 4px; margin-top: 14px; }
   .toy {
-    background: none; border: 0; padding: 10px; display: block;
+    background: none; border: 0; padding: 6px; display: block; flex-shrink: 1; min-width: 0;
     filter: drop-shadow(4px 6px 0 rgba(91, 70, 54, .15));
   }
-  .toy svg, .buddy svg { display: block; transform-origin: 50% 100%; }
+  .toy svg { display: block; max-width: 100%; height: auto; transform-origin: 50% 100%; }
   .toy.idle svg { animation: idle 2.4s ease-in-out infinite; }
   .toy.go.bounce svg { animation: bounce .35s ease-out; }
   .toy.go.squish svg { animation: squish .45s ease-out; }
   .toy.go.wiggle svg { animation: wiggle .4s ease-out; }
-  .buddy { margin: 0 0 10px -8px; }
-  .buddy.go svg { animation: bounce .4s ease-out; }
 
   /* basketball minigame */
   .court {
@@ -149,10 +160,14 @@
   .hoop { position: absolute; top: 14px; left: 0; z-index: 2; }
   .ball { position: absolute; top: 0; left: 0; z-index: 1; }
   .hoop svg, .ball svg { display: block; }
-  .score {
-    position: absolute; right: 10px; bottom: 10px; z-index: 3; font: 600 18px "Pixelify Sans", monospace;
+  .score, .misses {
+    position: absolute; bottom: 10px; z-index: 3; font: 600 16px "Pixelify Sans", monospace;
     background: var(--card); padding: 2px 10px; box-shadow: 0 0 0 3px var(--ink);
   }
+  .score { right: 10px; }
+  .misses { left: 10px; color: var(--muted); }
+  .skip-box { margin-top: 14px; }
+  .skip-msg { font-family: "Gaegu", cursive; font-size: 22px; color: var(--pink-d); margin: 0; }
 
   .photos {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -179,7 +194,25 @@
   .letter { text-align: left; padding: 26px 24px; margin-top: 26px; animation: drop .6s ease-out both;
     background: var(--card) repeating-linear-gradient(transparent 0 31px, var(--pink-l) 31px 33px); }
   .letter p { font-family: "Gaegu", cursive; font-size: 22px; margin: 0 0 14px; line-height: 33px; }
-  .letter .sign { text-align: right; }
+  .letter .sign { text-align: right; margin-bottom: 0; }
+  .sign-luffy { display: flex; justify-content: flex-end; margin-top: 4px; }
+  .sign-luffy svg { display: block; animation: hop 1s steps(2) infinite; }
+
+  /* the whole date, in one swipeable strip */
+  .recap { margin-top: 34px; animation: drop .6s ease-out both; }
+  .recap h3 { font-size: 22px; font-weight: 600; margin: 0 0 2px; }
+  .recap .hint { margin: 0; }
+  .recap-strip {
+    display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 26px 12px 22px; margin: 0 -14px; -webkit-overflow-scrolling: touch;
+    scrollbar-color: var(--pink-d) transparent;
+  }
+  .recap-strip .polaroid { flex: 0 0 210px; scroll-snap-align: center; animation: none; }
+  .recap-strip .stop-tag {
+    position: absolute; top: 16px; left: 16px; z-index: 2; font: 600 12px "Pixelify Sans", monospace;
+    background: var(--pink); padding: 1px 6px; box-shadow: 0 0 0 2px var(--ink);
+  }
+
   .again { margin-top: 30px; }
   .again p { font-size: 20px; }
   .final { font-family: "Gaegu", cursive; font-size: 30px; font-weight: 700; color: var(--pink-d); }
@@ -189,11 +222,11 @@
   .floaters, .rain { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .floaters span { position: absolute; bottom: -40px; opacity: .45; animation: floatUp linear infinite; }
   .rain i { position: absolute; top: -20px; width: 4px; height: 14px; background: #a9c4d6; opacity: .8; animation: fall linear infinite; }
-  .peek {
-    position: fixed; left: 12px; bottom: 0; z-index: 15; background: none; border: 0; padding: 0;
-    transform: translateY(68%); animation: peek 10s ease-in-out infinite;
+  .jamiel {
+    position: fixed; left: 10px; bottom: 8px; z-index: 15; background: none; border: 0; padding: 0;
+    filter: drop-shadow(3px 4px 0 rgba(91, 70, 54, .2));
   }
-  .peek svg { display: block; }
+  .jamiel svg { animation: grumble 3s steps(2) infinite; }
   .pop {
     position: fixed; z-index: 30; pointer-events: none; font: 600 22px "Pixelify Sans", monospace; color: var(--pink-d);
     text-shadow: 2px 2px 0 var(--card); transform: translate(-50%, -50%); animation: pop 0.9s ease-out forwards; white-space: nowrap;
@@ -206,6 +239,7 @@
 
   @keyframes hop { 50% { transform: translateY(-4px); } }
   @keyframes idle { 50% { transform: translateY(-6px); } }
+  @keyframes grumble { 50% { transform: scale(1.03, .97); } }
   @keyframes bounce { 40% { transform: translateY(-18px) scale(1.05); } 70% { transform: translateY(0) scale(1.08, .92); } }
   @keyframes squish { 30% { transform: scale(1.35, .62); } 60% { transform: scale(.88, 1.15); } 80% { transform: scale(1.06, .95); } }
   @keyframes wiggle { 25% { transform: rotate(-10deg); } 50% { transform: rotate(9deg); } 75% { transform: rotate(-5deg); } }
@@ -213,7 +247,6 @@
   @keyframes pop { to { opacity: 0; transform: translate(-50%, -150%) scale(1.3); } }
   @keyframes floatUp { to { transform: translateY(-115vh) rotate(20deg); } }
   @keyframes fall { to { transform: translate(-30px, 110vh); } }
-  @keyframes peek { 0%, 55%, 100% { transform: translateY(68%); } 62%, 88% { transform: translateY(6%); } }
   @keyframes burst { 0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1); opacity: 0; } }
 
   @media (prefers-reduced-motion: reduce) {
@@ -229,14 +262,14 @@
   <button class="pxbtn" id="musicBtn" aria-pressed="true">♪ music</button>
   <button class="pxbtn" id="sfxBtn" aria-pressed="true">sfx</button>
 </div>
-<button class="peek" id="peek" aria-label="a cat says hi"></button>
+<button class="jamiel" id="jamiel" aria-label="jamiel the grumpy cat"></button>
 
 <main>
   <section id="start" class="screen">
     <div class="px card hero" data-ears>
       <div class="cats" id="heroCats"></div>
       <p class="kicker" id="dateLabel"></p>
-      <h1>hi, <span class="her"></span> ♡</h1>
+      <h1 id="greeting"></h1>
       <p id="intro"></p>
       <button class="pxbtn big" id="startBtn">start our date</button>
       <div class="kaomoji">ฅ^•ﻌ•^ฅ</div>
@@ -258,12 +291,14 @@
       <p class="kicker">last stop</p>
       <h2>goodnight, <span class="her"></span></h2>
       <p class="story">before you go... i left something for you</p>
-      <div class="stage">
-        <button class="toy idle" id="envelope" aria-label="open the letter"></button>
-        <div class="buddy" id="endBuddy"></div>
-      </div>
+      <div class="stage" id="endStage"></div>
       <p class="hint" id="envHint">tap to open</p>
       <article class="px letter" id="letter" hidden></article>
+      <div class="recap" id="recap" hidden>
+        <h3>our whole date ♡</h3>
+        <p class="hint">swipe through everything →</p>
+        <div class="recap-strip" id="recapStrip"></div>
+      </div>
       <div class="again" id="again" hidden>
         <p>will you go on another date with me?</p>
         <button class="pxbtn" data-yes>yes</button>
@@ -282,26 +317,27 @@
    EDIT THIS PART ♡
    ========================================================= */
 const CONFIG = {
-  herName: "my love",
-  yourName: "your favorite person",
+  herName: "cliz",
+  yourName: "rhey",
+  greeting: "HI CLIZ!",
   dateLabel: "our anniversary date ♡",
   intro: "i know we're miles apart, so today i took you along with me. tap through and come on our little date.",
   letter: [
-    "hi baby,",
-    "happy anniversary. i wish you were really here with me today. at every stop i kept thinking about what you'd pick, what you'd say, and how hard you'd laugh at me in that straw hat.",
-    "the distance is hard, but you're with me everywhere i go. one day we'll do all of this together for real, and i'll hold the umbrella.",
-    "i love you so much.",
+    "hi cliz,",
+    "happy anniversary. 3 FREAKING YEARS and wala ko napulan hahhaha UNTA IKAW PUD. bisan wala ka karon ma feel gihapon nako imong presence every kay I carry a piece of you everyday with me and that is enough for me right now until magkita ta usab.",
+    "I miss you more everyday and I hope magkita ta very soon. i love you cliz so much unta nalingaw ka sa atong mini date sa mga familiar places na atong gina adtuan sad ahhahhaahhaha. happy anniversary love you!!",
   ],
+  signature: ["love, rhey", "king of pirates (new personality)"],
 };
 
 // Each stop of the date, in order.
-// sprite: which pixel drawing to tap   anim: bounce | squish | wiggle
-// taps: taps needed before photos appear   buddy: the little cat beside it
+// sprite: which pixel drawing to tap   size: how big it is   anim: bounce | squish | wiggle
+// taps: taps needed before photos appear   hat: rhey wears the straw hat   jamiel: jamiel joins
 const SCENES = [
   {
     stop: "squishies", title: "first stop: squishy heaven",
-    text: "the tiniest shop, packed wall to wall with squishies. and look, a banana one!",
-    sprite: "banana", anim: "squish", action: "squish the banana", taps: 3,
+    text: "sari sari store x squishy store, what the hell combination. sa sulok2 pajud. bahalag saging basta lambing",
+    sprite: "banana", size: 210, anim: "squish", action: "squish the banana", taps: 3,
     pops: ["squish!", "squish!!", "SQUISH ♡"],
     photos: [
       { src: "photos/01-squishy-1.jpg", caption: "me vs. the squishy wall" },
@@ -310,7 +346,7 @@ const SCENES = [
   },
   {
     stop: "bags & makeup", title: "window shopping",
-    text: "we looked at bags and makeup. i kept picturing which ones you'd pick.",
+    text: "lingi lang kadali pero wa na ni kagat kay halang man",
     sprite: "lipstick", anim: "wiggle", action: "try the lipstick", taps: 2,
     pops: ["mwah!", "so pretty ♡"],
     photos: [
@@ -320,7 +356,7 @@ const SCENES = [
   },
   {
     stop: "crochet", title: "a little crochet friend",
-    text: "i found a crochet octopus kit. maybe we can make it together someday.",
+    text: "diba gipalitan tikag whale sauna, gipalitan tika usab pero karon ikaw na himo hahhahahah",
     sprite: "octopus", anim: "squish", action: "boop the octopus", taps: 3,
     pops: ["boop", "boop!", "it likes you ♡"],
     photos: [
@@ -330,7 +366,7 @@ const SCENES = [
   },
   {
     stop: "rain", title: "then it started pouring",
-    text: "we got stuck in the rain. i wish we could hide under one umbrella together.",
+    text: "na basa ko",
     sprite: "umbrella", anim: "bounce", action: "share my umbrella", taps: 1, effect: "rain",
     pops: ["come here ☂"],
     photos: [
@@ -340,8 +376,8 @@ const SCENES = [
   },
   {
     stop: "toy store", title: "the anime toy store",
-    text: "i put on luffy's straw hat and became the pirate king for a minute.",
-    sprite: "luffy", anim: "bounce", action: "say hi to luffy", taps: 3, buddy: "catHat",
+    text: "KING OF THE PIRATES!!",
+    sprite: "luffy", anim: "bounce", action: "say hi to luffy", taps: 3, hat: true,
     pops: ["shishishi!", "gomu gomu no...", "MEAT!!"],
     photos: [
       { src: "photos/05-toystore-1.jpg", caption: "so many figures" },
@@ -351,8 +387,9 @@ const SCENES = [
   },
   {
     stop: "arcade", title: "arcade time!",
-    text: "all the neon lights made me miss you more. play a round with me?",
-    game: "basketball", goal: 3,
+    text: "sige daw i try daw nig daog 1000 percent diffuculty",
+    game: "basketball", goal: 3, skipAfter: 3,
+    skipText: "kabalo ko di ka maka human so skip nlng",
     photos: [
       { src: "photos/06-arcade-1.jpg", caption: "the arcade" },
       { src: "photos/06-arcade-2.jpg", caption: "neon me" },
@@ -360,7 +397,7 @@ const SCENES = [
   },
   {
     stop: "the bag", title: "a little bag",
-    text: "this cute brown bag came home with me. the pizza charm got me.",
+    text: "okay lang",
     sprite: "bag", anim: "wiggle", action: "open the bag", taps: 2,
     pops: ["zip!", "cute right?"],
     photos: [
@@ -369,8 +406,8 @@ const SCENES = [
   },
   {
     stop: "wings", title: "dinner: chicken wings",
-    text: "we ended the day with wings, rice and fries. i saved you a seat.",
-    sprite: "wing", anim: "wiggle", action: "take a bite", taps: 3,
+    text: "unli wings, rice and fries",
+    sprite: "wing", anim: "wiggle", action: "take a bite", taps: 3, jamiel: true,
     pops: ["nom", "nom nom", "only bones left"],
     photos: [
       { src: "photos/08-wings-1.jpg", caption: "dinner time!" },
@@ -381,45 +418,67 @@ const SCENES = [
 
 /* ======================= pixel art ======================= */
 const PALETTE = {
-  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", c: "#f3c6cf", l: "#a9c4d6",
+  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", l: "#a9c4d6",
   o: "#f2b46b", O: "#c9773c", y: "#f6d26b", Y: "#e0ae3c", N: "#9b7350", n: "#c9a274",
   v: "#c7a2e6", R: "#e05a5a", B: "#7b9be0", s: "#f7d2ad", h: "#3a2e2a", q: "#ef8e4f",
+  F: "#c99a6e", d: "#9a6b45",               // cliz: brown cat
+  z: "#211b1c", K: "#433a3c", e: "#f3d36a",   // rhey: black cat with white
+  G: "#b3aca8", g: "#8c8480",               // jamiel: grumpy grey cat
 };
 const SPRITES = {
-  cat: [
+  catBrown: [
     "..k.........k...",
-    ".kwk.......kwk..",
-    ".kpwk.....kwpk..",
-    ".kwwwkkkkkwwwk..",
+    ".kFk.......kFk..",
+    ".kpFk.....kFpk..",
+    ".kFFFkkkkkFFFk..",
+    ".kFFdFFdFFdFFk..",
+    "kFFFFFFFFFFFFFk.",
+    "kFFkkFFFFFkkFFk.",
+    "kFFkkFFFFFkkFFk.",
+    "kFrwwwwkwwwwrFk.",
+    "kFwwwwkwkwwwwFk.",
     ".kwwwwwwwwwwwk..",
-    "kwwwwwwwwwwwwwk.",
-    "kwwkkwwwwwkkwwk.",
-    "kwwkkwwwwwkkwwk.",
-    "kwrwwwwkwwwwrwk.",
-    "kwwwwwkwkwwwwwk.",
-    ".kwwwwwwwwwwwk..",
-    "..kkwwwwwwwkk...",
-    "...kwwwwwwwk.kk.",
-    "...kwwwwwwwkkwk.",
-    "...kwkwwwkwkkk..",
+    "..kkFFFFFFFkk...",
+    "...kFFdFdFFk.kk.",
+    "...kFwwwwwFkkFk.",
+    "...kFkFFFkFkkk..",
     "...kkk.k.kkk....",
   ],
-  catOrange: [
+  catBlack: [
+    "..z.........z...",
+    ".zKz.......zKz..",
+    ".zpKz.....zKpz..",
+    ".zKKKzzzzzKKKz..",
+    ".zKKKKKKKKKKKz..",
+    "zKKKKKKKKKKKKKz.",
+    "zKKeeKKKKKeeKKz.",
+    "zKKezKKKKKezKKz.",
+    "zKrKKwwzwwKKrKz.",
+    "zKKKwwzwzwwKKKz.",
+    ".zKKKwwwwwKKKz..",
+    "..zzKwwwwwKzz...",
+    "...zKwwwwwKz.zz.",
+    "...zKwwwwwKzzKz.",
+    "...zwzKKKzwzzz..",
+    "...zzz.z.zzz....",
+  ],
+  jamiel: [
     "..k.........k...",
-    ".kok.......kok..",
-    ".kpok.....kopk..",
-    ".koookkkkkoook..",
-    ".koowwooowwook..",
-    "kooooooooooooook",
-    "kookkoooookkook.",
-    "kookkoooookkook.",
-    "korwwwwkwwwwrok.",
-    "kowwwwkwkwwwwok.",
-    ".kwwwwwwwwwwwk..",
-    "..kkooooooookk..",
-    "...kooooooook...",
-    "...kwwoooowwk...",
-    "...kwkwwwkwk....",
+    ".kGk.......kGk..",
+    ".kpGk.....kGpk..",
+    ".kGGGkkkkkGGGk..",
+    ".kGGgGGgGGgGGk..",
+    "kGGGGGGGGGGGGGk.",
+    "kGkkGGGGGGGkkGk.",
+    "kGGGkkGGGkkGGGk.",
+    "kGGkkkGGGkkkGGk.",
+    "kGwGGGGkGGGGwGk.",
+    "kGwGGGkkkGGGwGk.",
+    ".kGGGkGGGkGGGk..",
+    "..kkGGGGGGGkk...",
+    "...kGGgGgGGk.kk.",
+    "...kGwwwwwGkkGk.",
+    "...kGkGGGkGkkk..",
     "...kkk.k.kkk....",
   ],
   ear: [
@@ -585,16 +644,15 @@ const SPRITES = {
     "kkkkkkkkkkkk",
   ],
 };
-// cat wearing luffy's straw hat, and a cat head for peeking
-SPRITES.catHat = [
+// rhey wearing luffy's straw hat
+SPRITES.catBlackHat = [
   "....kkkkkkk.....",
   "...kyyyyyyyk....",
   "...kRRRRRRRk....",
   ".kkyyyyyyyyykk..",
   ".kkkkkkkkkkkkk..",
-  ...SPRITES.cat.slice(4),
+  ...SPRITES.catBlack.slice(4),
 ];
-SPRITES.catPeek = SPRITES.cat.slice(0, 12);
 
 function sprite(name, size) {
   const rows = SPRITES[name];
@@ -606,6 +664,12 @@ function sprite(name, size) {
   return `<svg viewBox="0 0 ${w} ${h}" width="${size}" height="${Math.round(size * h / w)}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
 const EARS = `<div class="ears">${sprite("ear", 40)}${sprite("ear", 40)}</div>`;
+// a cat with its name tag underneath
+function pet(spriteName, name, size, cls = "") {
+  return `<figure class="pet">${sprite(spriteName, size)}<figcaption class="tag ${cls}">${esc(name)}</figcaption></figure>`;
+}
+const cliz = size => pet("catBrown", CONFIG.herName, size, "her");
+const rhey = (size, hat) => pet(hat ? "catBlackHat" : "catBlack", CONFIG.yourName, size);
 
 /* ======================= sound & music ======================= */
 let actx, sfxOn = true, musicOn = true, musicTimer = null, musicStep = 0, musicNext = 0, started = false;
@@ -681,7 +745,7 @@ const done = new Set();
 function popText(text, x, y) {
   const el = document.createElement("span");
   el.className = "pop"; el.textContent = text;
-  el.style.left = x + "px"; el.style.top = y + "px";
+  el.style.left = Math.max(70, Math.min(innerWidth - 70, x)) + "px"; el.style.top = y + "px";
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 950);
 }
@@ -691,6 +755,7 @@ function eventPoint(e, el) {
   return [r.left + r.width / 2, r.top];
 }
 function replay(el) { el.classList.remove("go"); void el.offsetWidth; el.classList.add("go"); }
+function hopPets(root) { root.querySelectorAll(".pet").forEach(replay); }
 function heartBurst() {
   for (let i = 0; i < 26; i++) {
     const h = document.createElement("span"); h.className = "burst";
@@ -720,6 +785,20 @@ function show(id) {
   if (id !== "journey") setRain(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+function polaroid(p, i, extra = "") {
+  return `<figure class="polaroid" role="button" tabindex="0" style="--r:${(i % 2 ? 1 : -1) * (1.5 + (i % 3))}deg"
+      data-src="${esc(p.src)}" data-cap="${esc(p.caption || "")}">${extra}
+      <img src="${esc(p.src)}" alt="${esc(p.caption || "a photo from our date")}" loading="lazy">
+      <figcaption>${esc(p.caption || "")}</figcaption>
+    </figure>`;
+}
+function wireLightbox(root) {
+  root.querySelectorAll(".polaroid").forEach(f => {
+    const open = () => openLightbox(f.dataset.src, f.dataset.cap);
+    f.onclick = open;
+    f.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+  });
+}
 
 /* ======================= the date ======================= */
 function renderTrail() {
@@ -728,7 +807,8 @@ function renderTrail() {
     `<li class="${i === current ? "here" : ""}">${i < current ? sprite("paw", 18) : '<span class="dot"></span>'}</li>`
   ).join("");
   $("#trailLabel").textContent = stops[current];
-  $("#walker").innerHTML = sprite((SCENES[current] || {}).buddy || "cat", 28);
+  const hat = (SCENES[current] || {}).hat;
+  $("#walker").innerHTML = sprite("catBrown", 32) + sprite(hat ? "catBlackHat" : "catBlack", 32);
   $("#walker").style.setProperty("--p", current / (stops.length - 1));
 }
 
@@ -740,12 +820,20 @@ function renderScene() {
     ? `<div class="court" id="court" tabindex="0" role="button" aria-label="shoot the ball">
          <div class="hoop" id="hoop">${sprite("hoop", 96)}</div>
          <div class="ball" id="ball">${sprite("ball", 36)}</div>
+         <div class="misses" id="misses">miss: 0</div>
          <div class="score" id="score">0 / ${s.goal}</div>
        </div>
-       <button class="pxbtn" id="shoot">shoot!</button>`
+       <button class="pxbtn" id="shoot">shoot!</button>
+       <div class="skip-box" id="skipBox" hidden>
+         <p class="skip-msg">${esc(s.skipText)}</p>
+         <button class="pxbtn" id="skip">skip</button>
+       </div>
+       <div class="stage">${cliz(64)}${rhey(64)}</div>`
     : `<div class="stage">
-         <button class="toy idle ${s.anim || "bounce"}" id="toy" aria-label="${esc(s.action)}">${sprite(s.sprite, 128)}</button>
-         <div class="buddy" id="buddy">${sprite(s.buddy || "cat", 52)}</div>
+         ${cliz(64)}
+         <button class="toy idle ${s.anim || "bounce"}" id="toy" aria-label="${esc(s.action)}">${sprite(s.sprite, s.size || 150)}</button>
+         ${rhey(64, s.hat)}
+         ${s.jamiel ? pet("jamiel", "jamiel", 64) : ""}
        </div>`;
   $("#scene").innerHTML = `${EARS}
     <button class="back" id="back">← back</button>
@@ -764,11 +852,11 @@ function renderScene() {
 
 function setupToy(s) {
   let taps = 0;
-  const toy = $("#toy"), buddy = $("#buddy");
+  const toy = $("#toy");
   toy.onclick = e => {
     taps++;
     toy.classList.remove("idle");
-    replay(toy); replay(buddy);
+    replay(toy); hopPets($("#scene"));
     blip(500 + Math.min(taps, 6) * 110);
     const [x, y] = eventPoint(e, toy);
     popText(s.pops[Math.min(taps, s.pops.length) - 1], x, y);
@@ -780,15 +868,16 @@ function setupToy(s) {
 
 function setupGame(s) {
   const court = $("#court"), hoop = $("#hoop"), ball = $("#ball");
-  let score = 0, flying = false, hoopX = 0;
+  let score = 0, misses = 0, flying = false, hoopX = 0;
   const t0 = performance.now();
   const W = () => court.clientWidth, H = () => court.clientHeight;
   const restY = () => H() - 52;
 
+  // "1000 percent difficulty": the hoop speeds up and wobbles
   (function loop(now) {
     if (!document.body.contains(court)) return;
-    const amp = (W() - 96) / 2 - 4;
-    hoopX = (W() - 96) / 2 + amp * Math.sin((now - t0) / 600);
+    const amp = (W() - 96) / 2 - 4, t = (now - t0) / 1000;
+    hoopX = (W() - 96) / 2 + amp * Math.sin(t * 2.6 + Math.sin(t * 1.3) * 0.8);
     hoop.style.transform = `translateX(${hoopX}px)`;
     requestAnimationFrame(loop);
   })(t0);
@@ -817,7 +906,7 @@ function setupGame(s) {
 
   function judge() {
     const diff = (hoopX + 48) - W() / 2;
-    const made = Math.abs(diff) <= 22;
+    const made = Math.abs(diff) <= 20;
     const r = ball.getBoundingClientRect();
     if (made) {
       score++;
@@ -825,8 +914,11 @@ function setupGame(s) {
       popText(score >= s.goal ? "you win!! ♡" : "swish!", r.left + 18, r.top);
       melody([784, 988]);
     } else {
+      misses++;
+      $("#misses").textContent = `miss: ${misses}`;
       popText("miss!", r.left + 18, r.top);
       blip(196, 0.15);
+      if (misses >= s.skipAfter && !done.has(current)) $("#skipBox").hidden = false;
     }
     const side = diff > 0 ? -1 : 1;
     animate(380,
@@ -834,7 +926,8 @@ function setupGame(s) {
       () => {
         placeBall(restY()); flying = false;
         if (made && score === s.goal) {
-          heartBurst();
+          heartBurst(); hopPets($("#scene"));
+          $("#skipBox").hidden = true;
           if (!done.has(current)) revealPhotos(s);
         }
       });
@@ -843,23 +936,16 @@ function setupGame(s) {
   court.onclick = shoot;
   court.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); shoot(); } };
   $("#shoot").onclick = shoot;
+  $("#skip").onclick = () => { $("#skipBox").hidden = true; revealPhotos(s); };
 }
 
 function revealPhotos(s, quiet) {
   done.add(current);
   $("#hint").textContent = "♡";
   const box = $("#photos");
-  box.innerHTML = s.photos.map((p, i) => `
-    <figure class="polaroid" role="button" tabindex="0" style="--r:${(i % 2 ? 1 : -1) * (1.5 + (i % 3))}deg; --d:${quiet ? 0 : i * 0.15}s"
-      data-src="${esc(p.src)}" data-cap="${esc(p.caption || "")}">
-      <img src="${esc(p.src)}" alt="${esc(p.caption || "a photo from our date")}" loading="lazy">
-      <figcaption>${esc(p.caption || "")}</figcaption>
-    </figure>`).join("");
-  box.querySelectorAll(".polaroid").forEach(f => {
-    const open = () => openLightbox(f.dataset.src, f.dataset.cap);
-    f.onclick = open;
-    f.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
-  });
+  box.innerHTML = s.photos.map((p, i) => polaroid(p, i)).join("");
+  if (!quiet) box.querySelectorAll(".polaroid").forEach((f, i) => f.style.setProperty("--d", i * 0.15 + "s"));
+  wireLightbox(box);
   box.hidden = false;
   $("#nav").hidden = false;
   if (!quiet) {
@@ -888,16 +974,21 @@ $("#lightbox").onclick = () => $("#lightbox").hidden = true;
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#lightbox").hidden = true; });
 
 /* ======================= ending ======================= */
-$("#envelope").innerHTML = sprite("envelope", 128);
-$("#endBuddy").innerHTML = sprite("catOrange", 52);
+$("#endStage").innerHTML = `${cliz(64)}<button class="toy idle" id="envelope" aria-label="open the letter">${sprite("envelope", 128)}</button>${rhey(64)}`;
+$("#recapStrip").innerHTML = SCENES.flatMap(s => s.photos.map(p => ({ p, stop: s.stop })))
+  .map(({ p, stop }, i) => polaroid(p, i, `<span class="stop-tag">${esc(stop)}</span>`)).join("");
+wireLightbox($("#recapStrip"));
+
 $("#envelope").onclick = () => {
   $("#envelope").hidden = true; $("#envHint").hidden = true;
   $("#letter").innerHTML = CONFIG.letter.map(p => `<p>${esc(p)}</p>`).join("")
-    + `<p class="sign">love, ${esc(CONFIG.yourName)} ♡</p>`;
+    + `<p class="sign">${CONFIG.signature.map(esc).join("<br>")}</p>`
+    + `<div class="sign-luffy">${sprite("luffy", 48)}</div>`;
   $("#letter").hidden = false;
-  replay($("#endBuddy"));
+  hopPets($("#endStage"));
   melody([784, 659, 784, 1046]);
-  setTimeout(() => { $("#again").hidden = false; }, 1200);
+  setTimeout(() => { $("#recap").hidden = false; }, 900);
+  setTimeout(() => { $("#again").hidden = false; }, 1500);
 };
 document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   heartBurst(); melody([523, 659, 784, 1046, 1318]);
@@ -910,16 +1001,17 @@ $("#endBack").onclick = () => {
 $("#restart").onclick = () => {
   current = 0; done.clear();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
-  $("#letter").hidden = true; $("#again").hidden = true; $("#final").hidden = true;
+  ["#letter", "#recap", "#again", "#final"].forEach(id => $(id).hidden = true);
   show("start");
 };
 
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
 document.querySelectorAll("[data-ears]").forEach(c => c.insertAdjacentHTML("afterbegin", EARS));
+$("#greeting").textContent = CONFIG.greeting;
 $("#dateLabel").textContent = CONFIG.dateLabel;
 $("#intro").textContent = CONFIG.intro;
-$("#heroCats").innerHTML = sprite("cat", 72) + sprite("heart", 28) + sprite("catOrange", 72);
+$("#heroCats").innerHTML = cliz(104) + `<span class="float-heart">${sprite("heart", 30)}</span>` + rhey(104);
 $("#startBtn").onclick = () => {
   started = true;
   startMusic();
@@ -936,12 +1028,16 @@ $("#sfxBtn").onclick = () => {
   $("#sfxBtn").setAttribute("aria-pressed", sfxOn);
 };
 
-const peek = $("#peek");
-peek.innerHTML = sprite("catPeek", 60);
-peek.onclick = e => {
-  const [x, y] = eventPoint(e, peek);
-  popText("meow ♡", x + 20, y);
-  if (sfxOn) melody([1046, 1318]);
+// jamiel, the grumpy cat in the corner
+const jamiel = $("#jamiel");
+const grumbles = ["hmph.", "...", "what.", "leave me alone", "fine. ♡"];
+let grumbleIdx = 0;
+jamiel.innerHTML = pet("jamiel", "jamiel", 76);
+jamiel.onclick = e => {
+  const [x, y] = eventPoint(e, jamiel);
+  popText(grumbles[grumbleIdx++ % grumbles.length], x + 30, y);
+  replay(jamiel.querySelector(".pet"));
+  blip(180, 0.18);
 };
 
 const floaters = $("#floaters");
