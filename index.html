@@ -79,9 +79,9 @@
   .pxbtn:hover { background: #f8c6d3; }
   .pxbtn:active { transform: translateY(3px); }
   .pxbtn.big { font-size: 22px; padding: 14px 28px; }
-  .pxbtn:focus-visible, .toy:focus-visible, .linkbtn:focus-visible, .back:focus-visible, .court:focus-visible, .jamiel:focus-visible {
-    outline: 3px dashed var(--pink-d); outline-offset: 8px;
-  }
+  /* no outlines or highlight boxes when tapping things */
+  *:focus, *:focus-visible { outline: none; }
+  button::-moz-focus-inner { border: 0; }
 
   .toolbar { position: fixed; top: 10px; right: 10px; z-index: 20; display: flex; }
   .toolbar .pxbtn { padding: 5px 10px; font-size: 14px; margin: 4px 6px; }
@@ -128,8 +128,8 @@
   .trail li svg { display: block; }
   .trail-label { text-align: center; color: var(--muted); font-size: 14px; margin: 6px 0 0; }
   .walker {
-    position: absolute; top: 0; width: 68px; display: flex; gap: 4px; align-items: flex-end;
-    left: calc(14px + var(--p, 0) * (100% - 28px) - 34px);
+    position: absolute; top: -6px; width: 76px; display: flex; gap: 4px; align-items: flex-end;
+    left: calc(14px + var(--p, 0) * (100% - 28px) - 38px);
     transition: left .9s steps(9);
   }
   .walker svg { display: block; animation: hop .5s steps(2) infinite; }
@@ -418,49 +418,64 @@ const SCENES = [
 
 /* ======================= pixel art ======================= */
 const PALETTE = {
-  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", l: "#a9c4d6",
+  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", 
   o: "#f2b46b", O: "#c9773c", y: "#f6d26b", Y: "#e0ae3c", N: "#9b7350", n: "#c9a274",
   v: "#c7a2e6", R: "#e05a5a", B: "#7b9be0", s: "#f7d2ad", h: "#3a2e2a", q: "#ef8e4f",
-  F: "#c99a6e", d: "#9a6b45",               // cliz: brown cat
-  z: "#211b1c", K: "#433a3c", e: "#f3d36a",   // rhey: black cat with white
-  G: "#b3aca8", g: "#8c8480",               // jamiel: grumpy grey cat
+  z: "#14141c", K: "#2b2e3d", L: "#4a5068", l: "#c5cfe0", e: "#f3d36a",              // rhey: tuxedo cat
+  x: "#1e1612", T: "#3b2a22", A: "#c4803f", a: "#e3b27a", m: "#6b4a35", j: "#d6dba0", // cliz: tortie
+  G: "#b3aca8", g: "#8c8480",                                                       // jamiel: grumpy grey cat
 };
 const SPRITES = {
-  catBrown: [
-    "..k.........k...",
-    ".kFk.......kFk..",
-    ".kpFk.....kFpk..",
-    ".kFFFkkkkkFFFk..",
-    ".kFFdFFdFFdFFk..",
-    "kFFFFFFFFFFFFFk.",
-    "kFFkkFFFFFkkFFk.",
-    "kFFkkFFFFFkkFFk.",
-    "kFrwwwwkwwwwrFk.",
-    "kFwwwwkwkwwwwFk.",
-    ".kwwwwwwwwwwwk..",
-    "..kkFFFFFFFkk...",
-    "...kFFdFdFFk.kk.",
-    "...kFwwwwwFkkFk.",
-    "...kFkFFFkFkkk..",
-    "...kkk.k.kkk....",
+  rhey: [
+    "...z.......z........",
+    "..zKz.....zKz.......",
+    "..zpKz...zKpz.......",
+    "..zKKKzzzKKKz.......",
+    ".zKKKKKKKKKKKz......",
+    ".zKLKKKKKKKKKz......",
+    ".zKKezKKKezKKz......",
+    ".zKKeeKKKeeKKz......",
+    ".zKKKwwpwwKKKz......",
+    "..zKwwzwzwwKz.......",
+    "...zzwwwwwzzKzz.....",
+    "....zwwwwwKKKKKz....",
+    "...zwwwwwKKKKKLKz...",
+    "...zwwwwlKKKKKKLKz..",
+    "..zwwwwlKKKKKKKKKz..",
+    "..zwwwlKKKKKKKKKKKz.",
+    "..zwwlKKKKKKKKKKKKz.",
+    "..zwwKKKKKKKKKKKKKz.",
+    "..zwKzKKKKKKKKKKKz..",
+    "..zwKzKKKKKKKKKKzzz.",
+    ".zwwzwwzzzzzzzzzKKKz",
+    ".zzzzzzz.......zzzz.",
   ],
-  catBlack: [
-    "..z.........z...",
-    ".zKz.......zKz..",
-    ".zpKz.....zKpz..",
-    ".zKKKzzzzzKKKz..",
-    ".zKKKKKKKKKKKz..",
-    "zKKKKKKKKKKKKKz.",
-    "zKKeeKKKKKeeKKz.",
-    "zKKezKKKKKezKKz.",
-    "zKrKKwwzwwKKrKz.",
-    "zKKKwwzwzwwKKKz.",
-    ".zKKKwwwwwKKKz..",
-    "..zzKwwwwwKzz...",
-    "...zKwwwwwKz.zz.",
-    "...zKwwwwwKzzKz.",
-    "...zwzKKKzwzzz..",
-    "...zzz.z.zzz....",
+  cliz: [
+    "..yy..x.......x.....",
+    ".yYYyxAx.....xTx....",
+    "..yyxApAx...xTpTx...",
+    "....xAAAxxxxxTTTx...",
+    "....xAAmTTTTmTTTx...",
+    "...xAATTTTTTTTaTTx..",
+    "...xAAjjTTTTTjjTTx..",
+    "...xAAjxTTTTTxjTTx..",
+    "...xAAAAATpTTTTTTx..",
+    "....xAAAaxaTTTTTx...",
+    ".....xxAaaaTTTxx....",
+    ".....xTAaaaATTTx....",
+    "....xTTAaaAATmTTx...",
+    "....xTmAAaAATTTTx...",
+    "....xTTxAAxTTmTTx...",
+    "....xTTxaaxTTTTTx...",
+    "....xTTTxxTTTATTx...",
+    "....xTmTTTTTAATTx...",
+    "....xTTTATTTTTmTx...",
+    ".xx.xTTAATTTTTTTx...",
+    "xATx.xTTTTTTTTTx....",
+    "xTx..xTTTxTTTTTx....",
+    "xTAxxxTTAxxTTATx....",
+    ".xTAATTxxx.xxxxx....",
+    "..xxxxx.............",
   ],
   jamiel: [
     "..k.........k...",
@@ -471,9 +486,9 @@ const SPRITES = {
     "kGGGGGGGGGGGGGk.",
     "kGkkGGGGGGGkkGk.",
     "kGGGkkGGGkkGGGk.",
-    "kGGkkkGGGkkkGGk.",
-    "kGwGGGGkGGGGwGk.",
-    "kGwGGGkkkGGGwGk.",
+    "kGGkeekGkeekGGk.",
+    "kGGGGGGpGGGGGGk.",
+    "kGGGGGkkkGGGGGk.",
     ".kGGGkGGGkGGGk..",
     "..kkGGGGGGGkk...",
     "...kGGgGgGGk.kk.",
@@ -645,13 +660,13 @@ const SPRITES = {
   ],
 };
 // rhey wearing luffy's straw hat
-SPRITES.catBlackHat = [
-  "....kkkkkkk.....",
-  "...kyyyyyyyk....",
-  "...kRRRRRRRk....",
-  ".kkyyyyyyyyykk..",
-  ".kkkkkkkkkkkkk..",
-  ...SPRITES.catBlack.slice(4),
+SPRITES.rheyHat = [
+  "....kkkkkkk.........",
+  "...kyyyyyyyk........",
+  "...kRRRRRRRk........",
+  ".kkyyyyyyyyykk......",
+  ".kkkkkkkkkkkkk......",
+  ...SPRITES.rhey.slice(4),
 ];
 
 function sprite(name, size) {
@@ -668,8 +683,8 @@ const EARS = `<div class="ears">${sprite("ear", 40)}${sprite("ear", 40)}</div>`;
 function pet(spriteName, name, size, cls = "") {
   return `<figure class="pet">${sprite(spriteName, size)}<figcaption class="tag ${cls}">${esc(name)}</figcaption></figure>`;
 }
-const cliz = size => pet("catBrown", CONFIG.herName, size, "her");
-const rhey = (size, hat) => pet(hat ? "catBlackHat" : "catBlack", CONFIG.yourName, size);
+const cliz = size => pet("cliz", CONFIG.herName, size, "her");
+const rhey = (size, hat) => pet(hat ? "rheyHat" : "rhey", CONFIG.yourName, size);
 
 /* ======================= sound & music ======================= */
 let actx, sfxOn = true, musicOn = true, musicTimer = null, musicStep = 0, musicNext = 0, started = false;
@@ -694,6 +709,24 @@ function tone(freq, when, dur, type, vol) {
 function blip(freq = 660, dur = 0.09) {
   if (!sfxOn) return;
   const ctx = audio(); if (ctx) tone(freq, ctx.currentTime, dur, "square", 0.035);
+}
+// jamiel's grumpy "hmph": a low growl that drops in pitch, then a short huff
+function grunt() {
+  if (!sfxOn) return;
+  const ctx = audio(); if (!ctx) return;
+  const t = ctx.currentTime;
+  [[0, 0.12, 130, 110], [0.13, 0.26, 165, 70]].forEach(([start, len, from, to]) => {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(from, t + start);
+    o.frequency.exponentialRampToValueAtTime(to, t + start + len);
+    f.type = "lowpass"; f.frequency.value = 650;
+    g.gain.setValueAtTime(0.0001, t + start);
+    g.gain.linearRampToValueAtTime(0.14, t + start + 0.025);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + start + len);
+    o.connect(f).connect(g).connect(ctx.destination);
+    o.start(t + start); o.stop(t + start + len + 0.02);
+  });
 }
 function melody(notes) { notes.forEach((f, i) => setTimeout(() => blip(f, 0.12), i * 110)); }
 
@@ -808,7 +841,7 @@ function renderTrail() {
   ).join("");
   $("#trailLabel").textContent = stops[current];
   const hat = (SCENES[current] || {}).hat;
-  $("#walker").innerHTML = sprite("catBrown", 32) + sprite(hat ? "catBlackHat" : "catBlack", 32);
+  $("#walker").innerHTML = sprite("cliz", 36) + sprite(hat ? "rheyHat" : "rhey", 36);
   $("#walker").style.setProperty("--p", current / (stops.length - 1));
 }
 
@@ -841,7 +874,7 @@ function renderScene() {
     <h2>${esc(s.title)}</h2>
     <p class="story">${esc(s.text)}</p>
     ${play}
-    <p class="hint" id="hint">${s.game ? `tap to shoot. make ${s.goal} baskets to win a prize!` : `tap to ${esc(s.action)}`} <span class="count"></span></p>
+    <p class="hint" id="hint">${s.game ? `tap on the court where you want to throw. make ${s.goal} baskets to win a prize!` : `tap to ${esc(s.action)}`} <span class="count"></span></p>
     <div class="photos" id="photos" hidden></div>
     <div class="nav" id="nav" hidden><button class="pxbtn" id="next">${last ? "one last thing ♡" : "next stop →"}</button></div>`;
   $("#back").onclick = goBack;
@@ -871,7 +904,9 @@ function setupGame(s) {
   let score = 0, misses = 0, flying = false, hoopX = 0;
   const t0 = performance.now();
   const W = () => court.clientWidth, H = () => court.clientHeight;
-  const restY = () => H() - 52;
+  const RIM_Y = 14 + 33;          // hoop top + rim row, in court pixels
+  const GRAVITY = 1500;          // px/s²
+  const startX = () => W() / 2, startY = () => H() - 34;   // ball centre at rest
 
   // "1000 percent difficulty": the hoop speeds up and wobbles
   (function loop(now) {
@@ -882,60 +917,79 @@ function setupGame(s) {
     requestAnimationFrame(loop);
   })(t0);
 
-  function placeBall(y, scale = 1, dx = 0, opacity = 1) {
-    ball.style.transform = `translate(${W() / 2 - 18 + dx}px, ${y}px) scale(${scale})`;
+  function placeBall(cx, cy, scale = 1, opacity = 1) {
+    ball.style.transform = `translate(${cx - 18}px, ${cy - 18}px) scale(${scale})`;
     ball.style.opacity = opacity;
   }
-  placeBall(restY());
+  placeBall(startX(), startY());
 
-  function animate(ms, step, then) {
-    const start = performance.now();
-    (function frame(now) {
-      const p = Math.min((now - start) / ms, 1);
-      step(p);
-      if (p < 1) requestAnimationFrame(frame); else then();
-    })(start);
+  function popAtBall(text) {
+    const r = ball.getBoundingClientRect();
+    popText(text, r.left + r.width / 2, r.top);
   }
 
-  function shoot() {
+  // throw in a real arc: up past the rim, then down onto wherever she aimed
+  function shoot(aimX) {
     if (flying) return;
     flying = true; blip(440, 0.06);
-    const y0 = restY(), yTop = 6;
-    animate(420, p => { const e = 1 - (1 - p) * (1 - p); placeBall(y0 + (yTop - y0) * e, 1 - 0.3 * e); }, judge);
-  }
+    const x0 = startX(), y0 = startY(), peak = RIM_Y - 38;
+    let vy = -Math.sqrt(2 * GRAVITY * (y0 - peak));
+    const tRim = -vy / GRAVITY + Math.sqrt(2 * (RIM_Y - peak) / GRAVITY);
+    const target = aimX == null ? x0 : Math.max(18, Math.min(W() - 18, aimX));
+    let vx = (target - x0) / tRim, x = x0, y = y0, age = 0, judged = false, made = false;
+    let last = performance.now();
+    ball.style.zIndex = 3;   // in front of the hoop on the way up
 
-  function judge() {
-    const diff = (hoopX + 48) - W() / 2;
-    const made = Math.abs(diff) <= 20;
-    const r = ball.getBoundingClientRect();
-    if (made) {
-      score++;
-      $("#score").textContent = `${score} / ${s.goal}`;
-      popText(score >= s.goal ? "you win!! ♡" : "swish!", r.left + 18, r.top);
-      melody([784, 988]);
-    } else {
-      misses++;
-      $("#misses").textContent = `miss: ${misses}`;
-      popText("miss!", r.left + 18, r.top);
-      blip(196, 0.15);
-      if (misses >= s.skipAfter && !done.has(current)) $("#skipBox").hidden = false;
-    }
-    const side = diff > 0 ? -1 : 1;
-    animate(380,
-      p => placeBall(6 + p * (made ? 80 : 150), 0.7, made ? 0 : side * p * 70, 1 - p),
-      () => {
-        placeBall(restY()); flying = false;
-        if (made && score === s.goal) {
-          heartBurst(); hopPets($("#scene"));
-          $("#skipBox").hidden = true;
-          if (!done.has(current)) revealPhotos(s);
+    (function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.03); last = now; age += dt;
+      const prevY = y;
+      vy += GRAVITY * dt; x += vx * dt; y += vy * dt;
+
+      if (!judged && vy > 0 && prevY < RIM_Y && y >= RIM_Y) {
+        judged = true;
+        const off = x - (hoopX + 48);
+        if (Math.abs(off) <= 20) {            // swish: drop through the net
+          made = true; ball.style.zIndex = 1;
+          vx = 0; vy = Math.min(vy, 260);
+          score++;
+          $("#score").textContent = `${score} / ${s.goal}`;
+          popAtBall(score >= s.goal ? "you win!! ♡" : "swish!");
+          melody([784, 988]);
+        } else {
+          if (Math.abs(off) <= 44) {           // clank off the rim
+            vy = -vy * 0.45; vx = Math.sign(off || 1) * (140 + Math.random() * 80);
+            popAtBall("clank!"); blip(150, 0.12);
+          } else {
+            popAtBall("miss!"); blip(196, 0.15);
+          }
+          misses++;
+          $("#misses").textContent = `miss: ${misses}`;
+          if (misses >= s.skipAfter && !done.has(current)) $("#skipBox").hidden = false;
         }
-      });
+      }
+
+      const scale = 1 - 0.3 * Math.min(age / tRim, 1);
+      const fade = judged && y > RIM_Y ? Math.max(0, 1 - (y - RIM_Y) / 150) : 1;
+      placeBall(x, y, scale, fade);
+      if (fade > 0 && y < H() + 40) requestAnimationFrame(frame); else land();
+    })(last);
+
+    function land() {
+      ball.style.zIndex = 3;
+      placeBall(startX(), startY());
+      flying = false;
+      if (made && score === s.goal) {
+        heartBurst(); hopPets($("#scene"));
+        $("#skipBox").hidden = true;
+        if (!done.has(current)) revealPhotos(s);
+      }
+    }
   }
 
-  court.onclick = shoot;
+  // tap anywhere on the court to throw there; the button throws straight up
+  court.onclick = e => shoot(e.clientX - court.getBoundingClientRect().left);
   court.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); shoot(); } };
-  $("#shoot").onclick = shoot;
+  $("#shoot").onclick = () => shoot();
   $("#skip").onclick = () => { $("#skipBox").hidden = true; revealPhotos(s); };
 }
 
@@ -1037,7 +1091,7 @@ jamiel.onclick = e => {
   const [x, y] = eventPoint(e, jamiel);
   popText(grumbles[grumbleIdx++ % grumbles.length], x + 30, y);
   replay(jamiel.querySelector(".pet"));
-  blip(180, 0.18);
+  grunt();
 };
 
 const floaters = $("#floaters");
