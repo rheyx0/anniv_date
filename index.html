@@ -27,9 +27,9 @@
     min-height: 100vh;
     color: var(--ink);
     font-family: "Pixelify Sans", monospace;
-    background-color: var(--bg);
-    background-image: var(--motif, none), repeating-conic-gradient(var(--bg) 0 25%, var(--bg2) 0 50%);
-    background-size: 180px 180px, 40px 40px;
+    background: var(--bg);
+    background-image: repeating-conic-gradient(var(--bg) 0 25%, var(--bg2) 0 50%);
+    background-size: 40px 40px;
     overflow-x: hidden;
     font-variant-ligatures: none;
     cursor: var(--paw), auto;
@@ -116,10 +116,6 @@
   .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
   .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
 
-  /* dark backgrounds (the arcade) need lighter trail text */
-  body.dark .trail-label { color: #eadff5; }
-  body.dark .trail::before { background: repeating-linear-gradient(90deg, #cdbfe0 0 8px, transparent 8px 14px); }
-
   /* the jeepney ride: mintal to roxas */
   .road {
     position: relative; height: 240px; margin: 18px -22px 8px; overflow: hidden;
@@ -141,7 +137,7 @@
   .jeep > svg { display: block; width: 100%; height: auto; }
   .jeep.idle > svg { animation: hop .6s steps(2) infinite; }
   .jeep.rev { animation: rev .1s steps(2) infinite; }
-  .jeep.go { transform: translateX(170%); transition: transform 1.7s cubic-bezier(.55, 0, .9, .45); }
+  .jeep.go { animation: drive 1.8s cubic-bezier(.55, 0, .9, .45) forwards; }
   .jeep-sign {
     position: absolute; left: 4.8%; width: 71%; top: 10.7%; height: 14.3%;
     display: flex; align-items: center; justify-content: center; pointer-events: none;
@@ -151,6 +147,7 @@
   .rider svg { display: block; width: 100%; height: auto; }
   .puff { position: absolute; width: 10px; height: 10px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
   @keyframes dash { to { background-position: -52px 0; } }
+  @keyframes drive { from { transform: translateX(-50%); } to { transform: translateX(170%); } }
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
   @keyframes puff { to { transform: translate(-40px, -26px) scale(2.4); opacity: 0; } }
 
@@ -541,18 +538,6 @@ const SCENES = [
     ],
   },
 ];
-
-// each stop gets its own background colours + a faint pattern of that stop's item
-const THEMES = {
-  "squishies":     { bg: ["#fdf3c8", "#f8e8a6"], motif: "banana" },
-  "bags & makeup": { bg: ["#fde4ea", "#f8d0dc"], motif: "lipstick" },
-  "crochet":       { bg: ["#ece2f7", "#e0d0f2"], motif: "octopus" },
-  "rain":          { bg: ["#dde6ee", "#cfdbe6"], motif: "umbrella" },
-  "toy store":     { bg: ["#d8ecf8", "#c6e1f3"], motif: "luffy" },
-  "arcade":        { bg: ["#2f2547", "#3a2d58"], motif: "ball", dark: true },
-  "the bag":       { bg: ["#efe0cc", "#e5d0b5"], motif: "bag" },
-  "wings":         { bg: ["#fde3cc", "#f8d2b0"], motif: "wing" },
-};
 
 /* ======================= pixel art ======================= */
 const PALETTE = {
@@ -985,20 +970,7 @@ function setRain(on) {
   if (!on) rain.innerHTML = "";
   rain.hidden = !on;
 }
-function motif(name) {
-  const one = (x, y) => sprite(name, 40).replace("<svg ", `<svg x="${x}" y="${y}" `);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><g opacity=".3">${one(22, 22)}${one(112, 108)}</g></svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-}
-function setTheme(t) {
-  const st = document.body.style;
-  document.body.classList.toggle("dark", !!(t && t.dark));
-  if (!t) { ["--bg", "--bg2", "--motif"].forEach(p => st.removeProperty(p)); return; }
-  st.setProperty("--bg", t.bg[0]); st.setProperty("--bg2", t.bg[1]);
-  st.setProperty("--motif", motif(t.motif));
-}
 function show(id) {
-  if (id !== "journey") setTheme(null);
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
@@ -1035,7 +1007,6 @@ function renderScene() {
   const s = SCENES[current];
   const last = current === SCENES.length - 1;
   setRain(s.effect === "rain");
-  setTheme(THEMES[s.stop]);
   const play = s.game
     ? `<div class="court" id="court" tabindex="0" role="button" aria-label="shoot the ball">
          <div class="hoop" id="hoop">${sprite("hoop", 96)}</div>
@@ -1485,7 +1456,7 @@ $("#jeep").onclick = () => {
     clearInterval(smoke);
     current = 0; renderTrail(); renderScene(); show("journey");
     resetJeep();
-  }, 2500);
+  }, 2600);
 };
 $("#jeepBack").onclick = () => show("start");
 $("#musicBtn").onclick = () => {
