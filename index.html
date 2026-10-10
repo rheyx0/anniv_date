@@ -200,7 +200,7 @@
   .sign-luffy svg { display: block; animation: hop 1s steps(2) infinite; }
 
   /* the whole date, in one swipeable strip */
-  .recap { margin-top: 34px; animation: drop .6s ease-out both; }
+  .recap { margin-top: 0; }
   .recap h3 { font-size: 22px; font-weight: 600; margin: 0 0 2px; }
   .recap .hint { margin: 0; }
   .recap-strip {
@@ -214,44 +214,38 @@
     background: var(--pink); padding: 1px 6px; box-shadow: 0 0 0 2px var(--ink);
   }
 
-  /* photo booth */
-  .booth { margin-top: 34px; animation: drop .6s ease-out both; }
-  .booth h3 { font-size: 22px; font-weight: 600; margin: 0 0 2px; }
-  .booth .hint { margin: 0; }
-  .booth-cam {
-    position: relative; width: 100%; max-width: 420px; aspect-ratio: 4 / 3; margin: 16px auto 6px;
-    background: #3b2f2a; overflow: hidden; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 0 4px var(--ink), 4px 10px 0 4px rgba(91, 70, 54, .15);
-  }
-  .booth-cam video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
-  .cam-off { color: var(--card); padding: 16px; font-size: 15px; line-height: 1.6; }
-  .cam-off .pxbtn { display: block; margin: 12px auto 0; }
-  .countdown {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
-    font: 64px "Press Start 2P", monospace; color: var(--card); text-shadow: 5px 5px 0 var(--ink);
-  }
-  .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
-  .booth.bw video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
-  .booth-controls { margin-top: 6px; }
+  /* photo booth: the live camera plays inside every empty box of the strip */
+  .booth { animation: drop .6s ease-out both; }
+  .cam-msg { color: var(--pink-d); font-size: 15px; margin: 14px 0 0; }
+  .booth-controls { margin-top: 14px; }
   .booth-controls .pxbtn { font-size: 16px; padding: 9px 16px; }
   .upload { display: inline-block; font-size: 14px; color: var(--muted); text-decoration: underline dotted; margin-top: 6px; }
   .upload input { display: none; }
   .strip {
-    position: relative; width: 230px; margin: 26px auto 0; background: var(--card); padding: 14px 14px 10px;
+    position: relative; width: min(300px, 100%); margin: 26px auto 0; background: var(--card); padding: 14px 14px 10px;
     box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15);
   }
   .strip::before {
-    content: ""; position: absolute; top: -12px; left: 50%; width: 76px; height: 20px; transform: translateX(-50%) rotate(-3deg);
+    content: ""; position: absolute; top: -12px; left: 50%; width: 80px; height: 20px; z-index: 2; transform: translateX(-50%) rotate(-3deg);
     background: repeating-linear-gradient(90deg, rgba(246, 184, 200, .85) 0 8px, rgba(253, 230, 236, .85) 8px 16px);
   }
   .frame {
-    aspect-ratio: 4 / 3; margin-bottom: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+    position: relative; aspect-ratio: 4 / 3; margin-bottom: 10px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
     background: repeating-conic-gradient(var(--pink-l) 0 25%, #fff 0 50%) 0 0 / 16px 16px;
-    box-shadow: 0 0 0 3px var(--ink); font: 14px "Press Start 2P", monospace; color: var(--pink-d);
+    box-shadow: 0 0 0 3px var(--ink); font: 16px "Press Start 2P", monospace; color: var(--pink-d);
   }
-  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; animation: develop .8s ease-out; }
+  .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame video { transform: scaleX(-1); background: #3b2f2a; }
+  .frame img { animation: develop .8s ease-out; }
   .frame.next { box-shadow: 0 0 0 3px var(--pink-d); animation: blink 1s steps(2) infinite; }
-  .strip-foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 2px; font: 9px "Press Start 2P", monospace; }
+  .frame .countdown {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+    font: 44px "Press Start 2P", monospace; color: var(--card); text-shadow: 4px 4px 0 var(--ink);
+  }
+  .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
+  .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
+  .strip-foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 2px; font: 10px "Press Start 2P", monospace; }
   .strip-foot span { text-align: center; line-height: 1.6; padding-bottom: 4px; }
   .strip-foot svg { display: block; }
   @keyframes flash { from { opacity: .95; } to { opacity: 0; } }
@@ -339,32 +333,31 @@
       <div class="stage" id="endStage"></div>
       <p class="hint" id="envHint">tap to open</p>
       <article class="px letter" id="letter" hidden></article>
-      <div class="booth" id="booth" hidden>
-        <h3>photo booth ♡</h3>
-        <p class="hint" id="boothHint">turn on the camera to start</p>
-        <div class="booth-cam">
-          <video id="cam" playsinline muted hidden></video>
-          <div class="cam-off" id="camOff">
-            <span id="camMsg">4 pictures, one strip. smile!</span>
-            <button class="pxbtn" id="camBtn">turn on camera</button>
-          </div>
-          <div class="countdown" id="countdown"></div>
-        </div>
-        <div class="booth-controls">
-          <button class="pxbtn" id="snapBtn" hidden>snap!</button>
-          <button class="pxbtn" id="bwBtn">b&amp;w</button>
-          <button class="pxbtn" id="retakeBtn" hidden>retake</button>
-          <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
-        </div>
-        <label class="upload" id="uploadLabel">no camera? upload photos instead
-          <input type="file" id="uploadInput" accept="image/*" multiple>
-        </label>
-        <div class="strip">
-          <div id="stripFrames"></div>
-          <div class="strip-foot" id="stripFoot"></div>
-        </div>
+    </div>
+
+    <div class="px card scene booth" id="booth" data-ears hidden>
+      <p class="kicker">one more thing</p>
+      <h2>photo booth ♡</h2>
+      <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
+      <div class="strip" id="strip">
+        <div id="stripFrames"></div>
+        <div class="strip-foot" id="stripFoot"></div>
       </div>
-      <div class="recap" id="recap" hidden>
+      <p class="cam-msg" id="camMsg" hidden></p>
+      <div class="booth-controls">
+        <button class="pxbtn" id="camBtn">turn on camera</button>
+        <button class="pxbtn" id="snapBtn" hidden>snap!</button>
+        <button class="pxbtn" id="bwBtn">b&amp;w</button>
+        <button class="pxbtn" id="retakeBtn" hidden>retake</button>
+        <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
+      </div>
+      <label class="upload" id="uploadLabel">no camera? upload photos instead
+        <input type="file" id="uploadInput" accept="image/*" multiple>
+      </label>
+    </div>
+
+    <div class="px card scene" id="afterCard" data-ears hidden>
+      <div class="recap">
         <h3>our whole date ♡</h3>
         <p class="hint">swipe through everything →</p>
         <div class="recap-strip" id="recapStrip"></div>
@@ -1110,7 +1103,7 @@ $("#envelope").onclick = () => {
   $("#letter").hidden = false;
   hopPets($("#endStage"));
   melody([784, 659, 784, 1046]);
-  setTimeout(() => { $("#booth").hidden = false; $("#recap").hidden = false; }, 900);
+  setTimeout(() => { $("#booth").hidden = false; $("#afterCard").hidden = false; }, 900);
   setTimeout(() => { $("#again").hidden = false; }, 1500);
 };
 document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
@@ -1118,20 +1111,20 @@ document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   $("#again").hidden = true; $("#final").hidden = false;
 });
 $("#endBack").onclick = () => {
-  stopCamera();
+  stopCamera(); renderStrip();
   current = SCENES.length - 1;
   show("journey"); renderTrail(); renderScene();
 };
 $("#restart").onclick = () => {
   current = 0; done.clear();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
-  ["#letter", "#booth", "#recap", "#again", "#final"].forEach(id => $(id).hidden = true);
+  ["#letter", "#booth", "#afterCard", "#again", "#final"].forEach(id => $(id).hidden = true);
   resetBooth();
   show("start");
 };
 
 /* ======================= photo booth ======================= */
-// each snap fills the next box of the strip; after the last one she can download it
+// the live camera plays inside every empty box; each snap freezes the next box
 const SHOTS = 4;
 const BOOTH_CAPTION = ["CLIZ & RHEY", "3 YEARS"];
 let camStream = null, shots = [], snapping = false, boothBW = false;
@@ -1139,38 +1132,43 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 function renderStrip() {
   const full = shots.length >= SHOTS;
-  $("#stripFrames").innerHTML = Array.from({ length: SHOTS }, (_, i) => shots[i]
-    ? `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`
-    : `<div class="frame ${i === shots.length && camStream ? "next" : ""}">${i + 1}</div>`).join("");
+  $("#stripFrames").innerHTML = Array.from({ length: SHOTS }, (_, i) => {
+    if (shots[i]) return `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`;
+    const next = i === shots.length && camStream;
+    return `<div class="frame ${next ? "next" : ""}">
+        ${camStream ? `<video muted playsinline autoplay></video>` : i + 1}
+        ${next ? `<div class="countdown"></div>` : ""}
+      </div>`;
+  }).join("");
+  $("#stripFrames").querySelectorAll("video").forEach(v => { v.srcObject = camStream; v.play().catch(() => {}); });
+  $("#camBtn").hidden = !!camStream || full;
   $("#snapBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
   $("#uploadLabel").hidden = full || !!camStream;
   $("#boothHint").textContent = full ? "cute!! download your strip ♡"
-    : camStream ? `smile! photo ${shots.length + 1} of ${SHOTS}` : "turn on the camera to start";
+    : camStream ? `smile! photo ${shots.length + 1} of ${SHOTS}` : "4 pictures, one strip. smile!";
+}
+function camMessage(text) {
+  $("#camMsg").textContent = text || "";
+  $("#camMsg").hidden = !text;
 }
 
 async function startCamera() {
+  camMessage("");
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
     });
-    const v = $("#cam");
-    v.srcObject = camStream; v.hidden = false;
-    await v.play();
-    $("#camOff").hidden = true;
   } catch (e) {
     camStream = null;
-    $("#camMsg").textContent = "the camera didn't turn on :( you can upload photos below instead";
+    camMessage("the camera didn't turn on :( you can upload photos instead");
   }
   renderStrip();
 }
-function stopCamera(msg) {
+function stopCamera() {
   if (camStream) camStream.getTracks().forEach(t => t.stop());
   camStream = null;
-  $("#cam").hidden = true;
-  $("#camOff").hidden = false;
-  if (msg) $("#camMsg").textContent = msg;
 }
 
 // crop any picture to a 4:3 frame (mirrored for the selfie camera, like a real booth)
@@ -1184,24 +1182,24 @@ function grab(src, w, h, mirror) {
 }
 function addShot(canvas) {
   shots.push({ canvas, url: canvas.toDataURL("image/jpeg", 0.9) });
-  renderStrip();
   if (shots.length >= SHOTS) {
-    stopCamera("all done ♡ want a new strip? tap retake");
-    renderStrip();
+    stopCamera();
     heartBurst(); melody([659, 784, 988, 1318]);
   }
+  renderStrip();
 }
 
 async function snap() {
   if (snapping || !camStream || shots.length >= SHOTS) return;
   snapping = true;
-  const cd = $("#countdown");
+  const frame = $("#stripFrames .frame.next"), cd = frame.querySelector(".countdown");
   for (const n of [3, 2, 1]) { cd.textContent = n; blip(660, 0.08); await wait(750); }
   cd.textContent = "";
-  const v = $("#cam");
+  const v = frame.querySelector("video");
   const flash = document.createElement("div"); flash.className = "cam-flash";
-  v.parentElement.appendChild(flash); setTimeout(() => flash.remove(), 500);
+  frame.appendChild(flash);
   blip(1400, 0.05);
+  await wait(120);
   addShot(grab(v, v.videoWidth, v.videoHeight, true));
   snapping = false;
 }
@@ -1277,7 +1275,7 @@ async function downloadStrip() {
   }, "image/png");
 }
 function resetBooth() {
-  stopCamera("4 pictures, one strip. smile!");
+  stopCamera(); camMessage("");
   shots = []; renderStrip();
 }
 
@@ -1291,7 +1289,7 @@ $("#bwBtn").onclick = () => {
   $("#booth").classList.toggle("bw", boothBW);
   $("#bwBtn").textContent = boothBW ? "color" : "b&w";
 };
-$("#stripFoot").innerHTML = `${sprite("cliz", 34)}<span>${BOOTH_CAPTION.map(esc).join("<br>")}</span>${sprite("rhey", 34)}`;
+$("#stripFoot").innerHTML = `${sprite("cliz", 40)}<span>${BOOTH_CAPTION.map(esc).join("<br>")}</span>${sprite("rhey", 40)}`;
 renderStrip();
 
 /* ======================= setup ======================= */
