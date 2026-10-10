@@ -27,9 +27,9 @@
     min-height: 100vh;
     color: var(--ink);
     font-family: "Pixelify Sans", monospace;
-    background: var(--bg);
-    background-image: repeating-conic-gradient(var(--bg) 0 25%, var(--bg2) 0 50%);
-    background-size: 40px 40px;
+    background-color: var(--bg);
+    background-image: var(--motif, none), repeating-conic-gradient(var(--bg) 0 25%, var(--bg2) 0 50%);
+    background-size: 180px 180px, 40px 40px;
     overflow-x: hidden;
     font-variant-ligatures: none;
     cursor: var(--paw), auto;
@@ -115,6 +115,44 @@
   .cats .pet + .float-heart + .pet svg { animation-delay: -1.2s; }
   .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
   .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
+
+  /* dark backgrounds (the arcade) need lighter trail text */
+  body.dark .trail-label { color: #eadff5; }
+  body.dark .trail::before { background: repeating-linear-gradient(90deg, #cdbfe0 0 8px, transparent 8px 14px); }
+
+  /* the jeepney ride: mintal to roxas */
+  .road {
+    position: relative; height: 240px; margin: 18px -22px 8px; overflow: hidden;
+    background: linear-gradient(#dff0f7 0 64%, #8f8a86 64% 100%);
+  }
+  .road::before {   /* little pixel clouds */
+    content: ""; position: absolute; left: 10%; top: 26px; width: 48px; height: 12px; background: #fff;
+    box-shadow: 8px -8px 0 #fff, 22px -8px 0 #fff, 190px 18px 0 #fff, 204px 10px 0 #fff, 214px 18px 0 #fff;
+  }
+  .road::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 36px; height: 6px;
+    background: repeating-linear-gradient(90deg, #f6d26b 0 26px, transparent 26px 52px);
+  }
+  .road.moving::after { animation: dash .3s linear infinite; }
+  .jeep {
+    position: absolute; left: 50%; bottom: 30px; width: min(340px, 88%); padding: 0; border: 0; background: none;
+    transform: translateX(-50%);
+  }
+  .jeep > svg { display: block; width: 100%; height: auto; }
+  .jeep.idle > svg { animation: hop .6s steps(2) infinite; }
+  .jeep.rev { animation: rev .1s steps(2) infinite; }
+  .jeep.go { transform: translateX(170%); transition: transform 1.7s cubic-bezier(.55, 0, .9, .45); }
+  .jeep-sign {
+    position: absolute; left: 4.8%; width: 71%; top: 10.7%; height: 14.3%;
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+    font: clamp(7px, 2.4vw, 10px) "Press Start 2P", monospace; color: #fffaf2; letter-spacing: .04em; white-space: nowrap;
+  }
+  .rider { position: absolute; bottom: 53.6%; width: 9.7%; pointer-events: none; }
+  .rider svg { display: block; width: 100%; height: auto; }
+  .puff { position: absolute; width: 10px; height: 10px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
+  @keyframes dash { to { background-position: -52px 0; } }
+  @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
+  @keyframes puff { to { transform: translate(-40px, -26px) scale(2.4); opacity: 0; } }
 
   /* paw-print trail */
   .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 40px; }
@@ -315,6 +353,22 @@
     </div>
   </section>
 
+  <section id="jeepScreen" class="screen" hidden>
+    <div class="px card scene" data-ears>
+      <button class="back" id="jeepBack">← back</button>
+      <p class="kicker">first, we ride</p>
+      <h2>hop in ♡</h2>
+      <div class="road" id="road">
+        <button class="jeep idle" id="jeep" aria-label="ride the jeep from mintal to roxas">
+          <div class="jeep-sign">MINTAL - ROXAS</div>
+          <div class="rider" id="riderCliz" style="left: 34.7%"></div>
+          <div class="rider" id="riderRhey" style="left: 44.4%"></div>
+        </button>
+      </div>
+      <p class="hint" id="jeepHint">tap the jeep to ride</p>
+    </div>
+  </section>
+
   <section id="journey" class="screen" hidden>
     <div class="trail-wrap" aria-hidden="true">
       <div class="walker" id="walker"></div>
@@ -488,6 +542,18 @@ const SCENES = [
   },
 ];
 
+// each stop gets its own background colours + a faint pattern of that stop's item
+const THEMES = {
+  "squishies":     { bg: ["#fdf3c8", "#f8e8a6"], motif: "banana" },
+  "bags & makeup": { bg: ["#fde4ea", "#f8d0dc"], motif: "lipstick" },
+  "crochet":       { bg: ["#ece2f7", "#e0d0f2"], motif: "octopus" },
+  "rain":          { bg: ["#dde6ee", "#cfdbe6"], motif: "umbrella" },
+  "toy store":     { bg: ["#d8ecf8", "#c6e1f3"], motif: "luffy" },
+  "arcade":        { bg: ["#2f2547", "#3a2d58"], motif: "ball", dark: true },
+  "the bag":       { bg: ["#efe0cc", "#e5d0b5"], motif: "bag" },
+  "wings":         { bg: ["#fde3cc", "#f8d2b0"], motif: "wing" },
+};
+
 /* ======================= pixel art ======================= */
 const PALETTE = {
   k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", 
@@ -495,7 +561,8 @@ const PALETTE = {
   v: "#c7a2e6", R: "#e05a5a", B: "#7b9be0", s: "#f7d2ad", h: "#3a2e2a", q: "#ef8e4f",
   z: "#14141c", K: "#2b2e3d", L: "#4a5068", l: "#c5cfe0", e: "#f3d36a",              // rhey: tuxedo cat
   x: "#1e1612", T: "#3b2a22", A: "#c4803f", a: "#e3b27a", m: "#6b4a35", j: "#d6dba0", // cliz: tortie
-  G: "#b3aca8", g: "#8c8480", u: "#4a4646",                                                       // jamiel: grumpy grey cat
+  G: "#b3aca8", g: "#8c8480", u: "#4a4646",
+  J: "#d13b3b", S: "#c9cdd4", D: "#55525a", W: "#bcd6e6",                           // the jeepney                                                       // jamiel: grumpy grey cat
 };
 const SPRITES = {
   rhey: [
@@ -730,6 +797,40 @@ const SPRITES = {
     "kkkkkkkkkkkk",
   ],
 };
+// the black & red jeepney (side view, facing right)
+SPRITES.jeep = [
+  "..............................................................",
+  "......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...................",
+  "......S.....S.....S.....S.....S.....S.....S...................",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.............",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.........SJJJ.",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz..........SJJJ.",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz..........S....",
+  "..zJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ.........S....",
+  "..zzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzzzWWWWz..........S....",
+  "..zzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzzzWWWWz......ySy.S....",
+  "..zzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzzzWWWW.SS.....S..S....",
+  "..zzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzzzWWWW.z......S..S....",
+  "..zzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzWWWWWzzzWWWW..zzzzzzzzzzzS..",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzJJJJJJJJJJyD..",
+  "..zJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJyS..",
+  "..zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzJzzzzzzzzzJD..",
+  "..zwwwwwwSSSSSwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwSSSSSJJJJJJJJJS..",
+  "..zzzzzzSSzzzSSzzzzzzzzzzzzzzzzzzzzzzzzzzzzzSSzzzSSJJJJJJJJD..",
+  "SSzJJJJSzzzzzzzSJJJJJSJJJJJJJJJJJSJJJJJJJJJSzzzzzzzSJJJJJJJS..",
+  "SSzJJJSzzzzzzzzzSJJJSJSJJJJJJJJJSJSJJJJJJJSzzzzzzzzzSJJJJJJS..",
+  ".DzJJSSzzzSSSzzzSSJJJJJJJJJJJJJJJJJJJJJJJSSzzzSSSzzzSSSSSSSSSS",
+  "..DDDSzzzSSDSSzzzSDDDDDDDDDDDDDDDDDDDDDDDSzzzSSDSSzzzSDDDDD...",
+  ".......zzSDDDSzz...........................zzSDDDSzz..........",
+  ".......zzSSDSSzz...........................zzSSDSSzz..........",
+  ".......zzzSSSzzz...........................zzzSSSzzz..........",
+  "........zzzzzzz.............................zzzzzzz...........",
+  ".........zzzzz...............................zzzzz............",
+  ".............................................................."
+];
+// cat heads peeking out of the jeep windows
+SPRITES.clizHead = SPRITES.cliz.slice(0, 13);
+SPRITES.rheyHead = SPRITES.rhey.slice(0, 13);
 // rhey wearing luffy's straw hat
 SPRITES.rheyHat = [
   "......kkkkkkkk......",
@@ -884,7 +985,20 @@ function setRain(on) {
   if (!on) rain.innerHTML = "";
   rain.hidden = !on;
 }
+function motif(name) {
+  const one = (x, y) => sprite(name, 40).replace("<svg ", `<svg x="${x}" y="${y}" `);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><g opacity=".3">${one(22, 22)}${one(112, 108)}</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+function setTheme(t) {
+  const st = document.body.style;
+  document.body.classList.toggle("dark", !!(t && t.dark));
+  if (!t) { ["--bg", "--bg2", "--motif"].forEach(p => st.removeProperty(p)); return; }
+  st.setProperty("--bg", t.bg[0]); st.setProperty("--bg2", t.bg[1]);
+  st.setProperty("--motif", motif(t.motif));
+}
 function show(id) {
+  if (id !== "journey") setTheme(null);
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
@@ -921,6 +1035,7 @@ function renderScene() {
   const s = SCENES[current];
   const last = current === SCENES.length - 1;
   setRain(s.effect === "rain");
+  setTheme(THEMES[s.stop]);
   const play = s.game
     ? `<div class="court" id="court" tabindex="0" role="button" aria-label="shoot the ball">
          <div class="hoop" id="hoop">${sprite("hoop", 96)}</div>
@@ -1086,7 +1201,7 @@ function goNext() {
   else { melody([523, 659, 784]); show("ending"); }
 }
 function goBack() {
-  if (current === 0) { show("start"); return; }
+  if (current === 0) { show("jeepScreen"); return; }
   current--;
   renderTrail(); renderScene();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1319,8 +1434,60 @@ $("#startBtn").onclick = () => {
   started = true;
   startMusic();
   melody([523, 659, 784]);
-  renderTrail(); renderScene(); show("journey");
+  show("jeepScreen");
 };
+
+// the jeepney ride: horn, engine, smoke puffs, then off to the first stop
+$("#riderCliz").innerHTML = sprite("clizHead", 40);
+$("#riderRhey").innerHTML = sprite("rheyHead", 40);
+$("#jeep").insertAdjacentHTML("afterbegin", sprite("jeep", 340));
+let riding = false;
+function jeepSound() {
+  if (!sfxOn) return;
+  const ctx = audio(); if (!ctx) return;
+  const t = ctx.currentTime;
+  [[0, 0.14], [0.2, 0.22]].forEach(([at, len]) => { tone(466, t + at, len, "square", 0.05); tone(587, t + at, len, "square", 0.035); });
+  const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(55, t + 0.45);
+  o.frequency.exponentialRampToValueAtTime(150, t + 1.6);
+  o.frequency.exponentialRampToValueAtTime(90, t + 2.4);
+  f.type = "lowpass"; f.frequency.value = 500;
+  g.gain.setValueAtTime(0.0001, t + 0.45);
+  g.gain.linearRampToValueAtTime(0.1, t + 0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+  o.connect(f).connect(g).connect(ctx.destination);
+  o.start(t + 0.45); o.stop(t + 2.6);
+}
+function puff() {
+  const j = $("#jeep").getBoundingClientRect(), r = $("#road").getBoundingClientRect();
+  const p = document.createElement("span"); p.className = "puff";
+  p.style.left = (j.left - r.left + j.width * 0.01) + "px";
+  p.style.top = (j.top - r.top + j.height * 0.68) + "px";
+  $("#road").appendChild(p); setTimeout(() => p.remove(), 950);
+}
+function resetJeep() {
+  riding = false;
+  $("#jeep").classList.remove("go", "rev"); $("#jeep").classList.add("idle");
+  $("#road").classList.remove("moving");
+  $("#jeepHint").textContent = "tap the jeep to ride";
+}
+$("#jeep").onclick = () => {
+  if (riding) return;
+  riding = true;
+  const jeep = $("#jeep");
+  jeepSound();
+  $("#jeepHint").textContent = "beep beep! here we go ♡";
+  jeep.classList.remove("idle"); jeep.classList.add("rev");
+  const smoke = setInterval(puff, 110);
+  setTimeout(() => { jeep.classList.remove("rev"); jeep.classList.add("go"); $("#road").classList.add("moving"); }, 700);
+  setTimeout(() => {
+    clearInterval(smoke);
+    current = 0; renderTrail(); renderScene(); show("journey");
+    resetJeep();
+  }, 2500);
+};
+$("#jeepBack").onclick = () => show("start");
 $("#musicBtn").onclick = () => {
   musicOn = !musicOn;
   $("#musicBtn").setAttribute("aria-pressed", musicOn);
