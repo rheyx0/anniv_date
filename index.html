@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Our Little Date</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -423,7 +424,7 @@ const PALETTE = {
   v: "#c7a2e6", R: "#e05a5a", B: "#7b9be0", s: "#f7d2ad", h: "#3a2e2a", q: "#ef8e4f",
   z: "#14141c", K: "#2b2e3d", L: "#4a5068", l: "#c5cfe0", e: "#f3d36a",              // rhey: tuxedo cat
   x: "#1e1612", T: "#3b2a22", A: "#c4803f", a: "#e3b27a", m: "#6b4a35", j: "#d6dba0", // cliz: tortie
-  G: "#b3aca8", g: "#8c8480",                                                       // jamiel: grumpy grey cat
+  G: "#b3aca8", g: "#8c8480", u: "#4a4646",                                                       // jamiel: grumpy grey cat
 };
 const SPRITES = {
   rhey: [
@@ -478,23 +479,27 @@ const SPRITES = {
     "..xxxxx.............",
   ],
   jamiel: [
-    "..k.........k...",
-    ".kGk.......kGk..",
-    ".kpGk.....kGpk..",
-    ".kGGGkkkkkGGGk..",
-    ".kGGgGGgGGgGGk..",
-    "kGGGGGGGGGGGGGk.",
-    "kGkkGGGGGGGkkGk.",
-    "kGGGkkGGGkkGGGk.",
-    "kGGkeekGkeekGGk.",
-    "kGGGGGGpGGGGGGk.",
-    "kGGGGGkkkGGGGGk.",
-    ".kGGGkGGGkGGGk..",
-    "..kkGGGGGGGkk...",
-    "...kGGgGgGGk.kk.",
-    "...kGwwwwwGkkGk.",
-    "...kGkGGGkGkkk..",
-    "...kkk.k.kkk....",
+    "......uuuuuuuu......",
+    "uu..uuGGGGgGGGuu..uu",
+    "upuuGGGGGgGGGGGGuupu",
+    ".uppGGGGGgGGGGGGppu.",
+    "..uuGGgGGgGGgGGGuu..",
+    "..uGGGGGGGGGGGGGGu..",
+    "..uGuuGGGGGGGGuuGu..",
+    "..uGGGuuGGGGuuGGGu..",
+    "..ugGuuuuGGuuuuGgu..",
+    "..uGgGGwwppwwGGgGu..",
+    "..uGGGwwwuuwwwGGGu..",
+    "...uGGwwuwwuwwGGu...",
+    "....uuGwwwwwwGuu....",
+    "....uGGGGGGGGGGu....",
+    "...uGGGGwwwwGGGGu...",
+    "...uGgGGwwwwGGgGu...",
+    "...uGGGuGwwGuGGGu...",
+    "uu.uGgGuGGGGuGgGu...",
+    "uGuuGGGuGGGGuGGGu...",
+    "uGGuGwwuGGGGuwwGu...",
+    ".uuuuuuuuuuuuuuu....",
   ],
   ear: [
     "...kk...",
@@ -866,7 +871,7 @@ function renderScene() {
          ${cliz(64)}
          <button class="toy idle ${s.anim || "bounce"}" id="toy" aria-label="${esc(s.action)}">${sprite(s.sprite, s.size || 150)}</button>
          ${rhey(64, s.hat)}
-         ${s.jamiel ? pet("jamiel", "jamiel", 64) : ""}
+         ${s.jamiel ? pet("jamiel", "jamiel", 72) : ""}
        </div>`;
   $("#scene").innerHTML = `${EARS}
     <button class="back" id="back">← back</button>
@@ -1086,7 +1091,7 @@ $("#sfxBtn").onclick = () => {
 const jamiel = $("#jamiel");
 const grumbles = ["hmph.", "...", "what.", "leave me alone", "fine. ♡"];
 let grumbleIdx = 0;
-jamiel.innerHTML = pet("jamiel", "jamiel", 76);
+jamiel.innerHTML = pet("jamiel", "jamiel", 88);
 jamiel.onclick = e => {
   const [x, y] = eventPoint(e, jamiel);
   popText(grumbles[grumbleIdx++ % grumbles.length], x + 30, y);
