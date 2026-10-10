@@ -333,9 +333,13 @@
       <div class="stage" id="endStage"></div>
       <p class="hint" id="envHint">tap to open</p>
       <article class="px letter" id="letter" hidden></article>
+      <div class="nav" id="letterNav" hidden><button class="pxbtn" id="toBooth">one more thing →</button></div>
     </div>
+  </section>
 
-    <div class="px card scene booth" id="booth" data-ears hidden>
+  <section id="boothPage" class="screen" hidden>
+    <div class="px card scene booth" id="booth" data-ears>
+      <button class="back" id="boothBack">← back</button>
       <p class="kicker">one more thing</p>
       <h2>photo booth ♡</h2>
       <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
@@ -354,9 +358,14 @@
       <label class="upload" id="uploadLabel">no camera? upload photos instead
         <input type="file" id="uploadInput" accept="image/*" multiple>
       </label>
+      <div class="nav"><button class="pxbtn" id="toRecap">next →</button></div>
     </div>
+  </section>
 
-    <div class="px card scene" id="afterCard" data-ears hidden>
+  <section id="recapPage" class="screen" hidden>
+    <div class="px card scene" id="afterCard" data-ears>
+      <button class="back" id="recapBack">← back</button>
+      <p class="kicker">the end ♡</p>
       <div class="recap">
         <h3>our whole date ♡</h3>
         <p class="hint">swipe through everything →</p>
@@ -878,6 +887,7 @@ function setRain(on) {
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (id !== "journey") setRain(false);
+  if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function polaroid(p, i, extra = "") {
@@ -1103,8 +1113,7 @@ $("#envelope").onclick = () => {
   $("#letter").hidden = false;
   hopPets($("#endStage"));
   melody([784, 659, 784, 1046]);
-  setTimeout(() => { $("#booth").hidden = false; $("#afterCard").hidden = false; }, 900);
-  setTimeout(() => { $("#again").hidden = false; }, 1500);
+  setTimeout(() => { $("#letterNav").hidden = false; }, 900);
 };
 document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   heartBurst(); melody([523, 659, 784, 1046, 1318]);
@@ -1115,10 +1124,17 @@ $("#endBack").onclick = () => {
   current = SCENES.length - 1;
   show("journey"); renderTrail(); renderScene();
 };
+$("#toBooth").onclick = () => show("boothPage");
+$("#boothBack").onclick = () => show("ending");
+$("#toRecap").onclick = () => {
+  show("recapPage");
+  if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
+};
+$("#recapBack").onclick = () => show("boothPage");
 $("#restart").onclick = () => {
   current = 0; done.clear();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
-  ["#letter", "#booth", "#afterCard", "#again", "#final"].forEach(id => $(id).hidden = true);
+  ["#letter", "#letterNav", "#again", "#final"].forEach(id => $(id).hidden = true);
   resetBooth();
   show("start");
 };
