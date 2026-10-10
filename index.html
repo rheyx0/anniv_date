@@ -18,6 +18,7 @@
     --pink-d: #ee8fa8;
     --pink-l: #fde6ec;
     --px: 4px;
+    --paw: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='-1 -1 7 7' shape-rendering='crispEdges'><path fill='%23ee8fa8' stroke='%235b4636' stroke-width='.35' d='M1 0h1v1H1zM3 0h1v1H3zM0 1h1v1H0zM4 1h1v1H4zM1 2h3v1H1zM0 3h5v1H0zM1 4h3v1H1z'/></svg>") 11 11;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
@@ -29,9 +30,12 @@
     background-image: repeating-conic-gradient(var(--bg) 0 25%, var(--bg2) 0 50%);
     background-size: 40px 40px;
     overflow-x: hidden;
+    font-variant-ligatures: none;
+    cursor: var(--paw), auto;
     -webkit-tap-highlight-color: transparent;
   }
-  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; position: relative; z-index: 1; }
+  button, .polaroid, .court { cursor: var(--paw), pointer; }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 16px 90px; position: relative; z-index: 1; }
   h1, h2 { font-weight: 600; margin: 0 0 8px; line-height: 1.2; }
   h1 { font-size: clamp(28px, 7vw, 40px); }
   h2 { font-size: clamp(24px, 6vw, 32px); }
@@ -49,7 +53,13 @@
       var(--px) calc(3 * var(--px)) 0 0 rgba(91, 70, 54, .18);
     margin: var(--px);
   }
-  .card { padding: 28px 22px; text-align: center; }
+  .card { padding: 30px 22px; text-align: center; position: relative; margin-top: 40px; }
+  /* cat ears sitting on top of every card */
+  .ears {
+    position: absolute; left: 0; right: 0; top: -30px; height: 30px;
+    display: flex; justify-content: space-between; padding: 0 16%; pointer-events: none;
+  }
+  .ears svg { display: block; }
 
   .pxbtn {
     font: 600 18px "Pixelify Sans", monospace;
@@ -58,7 +68,6 @@
     border: 0;
     padding: 12px 22px;
     margin: 8px;
-    cursor: pointer;
     box-shadow:
       0 calc(-1 * var(--px)) 0 0 var(--ink),
       0 var(--px) 0 0 var(--ink),
@@ -70,31 +79,42 @@
   .pxbtn:hover { background: #f8c6d3; }
   .pxbtn:active { transform: translateY(3px); }
   .pxbtn.big { font-size: 22px; padding: 14px 28px; }
-  .pxbtn:focus-visible, .toy:focus-visible, .linkbtn:focus-visible { outline: 3px dashed var(--pink-d); outline-offset: 8px; }
+  .pxbtn:focus-visible, .toy:focus-visible, .linkbtn:focus-visible, .back:focus-visible, .court:focus-visible {
+    outline: 3px dashed var(--pink-d); outline-offset: 8px;
+  }
+
+  .toolbar { position: fixed; top: 10px; right: 10px; z-index: 20; display: flex; }
+  .toolbar .pxbtn { padding: 5px 10px; font-size: 14px; margin: 4px 6px; }
+  .toolbar .pxbtn[aria-pressed="false"] { background: var(--card); color: var(--muted); text-decoration: line-through; box-shadow: 0 0 0 3px var(--ink); }
 
   .kicker { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
   .story { font-family: "Gaegu", cursive; font-size: 22px; margin: 6px auto 4px; max-width: 32ch; }
   .hint { color: var(--muted); font-size: 15px; margin: 4px 0 0; }
   .hint .count { color: var(--pink-d); }
+  .back {
+    position: absolute; top: 10px; left: 10px; background: none; border: 0; padding: 6px 8px;
+    font: 15px "Pixelify Sans", monospace; color: var(--muted);
+  }
+  .back:hover { color: var(--ink); }
 
   /* start screen */
   .cats { display: flex; justify-content: center; align-items: flex-end; gap: 6px; margin-bottom: 14px; }
   .cats svg:nth-child(2) { animation: hop 1.6s steps(2) infinite; }
   .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
+  .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
 
-  /* trail */
-  .trail-wrap { position: relative; margin: 6px 4px 28px; padding-top: 34px; }
+  /* paw-print trail */
+  .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 34px; }
   .trail { list-style: none; display: flex; justify-content: space-between; margin: 0; padding: 0; position: relative; }
   .trail::before {
     content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 4px; transform: translateY(-50%);
     background: repeating-linear-gradient(90deg, var(--muted) 0 8px, transparent 8px 14px);
   }
-  .trail li { width: 28px; display: flex; flex-direction: column; align-items: center; position: relative; }
-  .dot { width: 16px; height: 16px; background: var(--card); box-shadow: 0 0 0 4px var(--ink); position: relative; z-index: 1; }
-  .trail li.done .dot { background: var(--pink); }
+  .trail li { width: 28px; height: 20px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; }
+  .dot { width: 14px; height: 14px; background: var(--card); box-shadow: 0 0 0 4px var(--ink); }
   .trail li.here .dot { background: var(--pink-d); }
-  .lbl { position: absolute; top: 26px; white-space: nowrap; font-size: 13px; color: var(--muted); display: none; }
-  .trail li.here .lbl { display: block; color: var(--ink); }
+  .trail li svg { display: block; }
+  .trail-label { text-align: center; color: var(--muted); font-size: 14px; margin: 6px 0 0; }
   .walker {
     position: absolute; top: 0; width: 28px;
     left: calc(var(--p, 0) * (100% - 28px));
@@ -104,36 +124,56 @@
 
   /* scene */
   .scene { text-align: center; }
+  .stage { display: flex; justify-content: center; align-items: flex-end; margin-top: 12px; }
   .toy {
-    background: none; border: 0; padding: 10px; margin: 14px auto 0; cursor: pointer; display: block;
+    background: none; border: 0; padding: 10px; display: block;
     filter: drop-shadow(4px 6px 0 rgba(91, 70, 54, .15));
   }
-  .toy svg { display: block; transform-origin: 50% 100%; }
+  .toy svg, .buddy svg { display: block; transform-origin: 50% 100%; }
   .toy.idle svg { animation: idle 2.4s ease-in-out infinite; }
   .toy.go.bounce svg { animation: bounce .35s ease-out; }
   .toy.go.squish svg { animation: squish .45s ease-out; }
   .toy.go.wiggle svg { animation: wiggle .4s ease-out; }
+  .buddy { margin: 0 0 10px -8px; }
+  .buddy.go svg { animation: bounce .4s ease-out; }
+
+  /* basketball minigame */
+  .court {
+    position: relative; width: 100%; max-width: 340px; height: 280px; margin: 18px auto 4px; overflow: hidden;
+    background: linear-gradient(#efe0f7, #fde6ec);
+    box-shadow: 0 0 0 4px var(--ink), 4px 10px 0 4px rgba(91, 70, 54, .15);
+    touch-action: manipulation; user-select: none;
+  }
+  .court::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
+    background: repeating-conic-gradient(#f9d5df 0 25%, var(--card) 0 50%); background-size: 24px 24px; z-index: 0; }
+  .hoop { position: absolute; top: 14px; left: 0; z-index: 2; }
+  .ball { position: absolute; top: 0; left: 0; z-index: 1; }
+  .hoop svg, .ball svg { display: block; }
+  .score {
+    position: absolute; right: 10px; bottom: 10px; z-index: 3; font: 600 18px "Pixelify Sans", monospace;
+    background: var(--card); padding: 2px 10px; box-shadow: 0 0 0 3px var(--ink);
+  }
 
   .photos {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 22px; margin: 30px 4px 8px;
+    gap: 30px 22px; margin: 34px 4px 8px;
   }
   .polaroid {
-    background: #fff; padding: 10px 10px 4px; border: 0; cursor: zoom-in; text-align: center;
+    position: relative; margin: 0;
+    background: #fff; padding: 10px 10px 4px; text-align: center;
     box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15);
     transform: rotate(var(--r, 0deg));
     animation: drop .5s ease-out both; animation-delay: var(--d, 0s);
-    font: inherit; color: inherit;
+  }
+  .polaroid::before { /* washi tape */
+    content: ""; position: absolute; top: -12px; left: 50%; width: 64px; height: 20px; z-index: 1;
+    transform: translateX(-50%) rotate(-4deg);
+    background: repeating-linear-gradient(90deg, rgba(246, 184, 200, .85) 0 8px, rgba(253, 230, 236, .85) 8px 16px);
   }
   .polaroid:hover { transform: rotate(0) scale(1.03); transition: transform .2s; }
-  .polaroid img, .polaroid .ph { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; background: var(--pink-l); }
-  .polaroid .ph {
-    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;
-    font-size: 13px; color: var(--muted); padding: 10px; word-break: break-all;
-    background: repeating-linear-gradient(45deg, var(--pink-l) 0 10px, #fff 10px 20px);
-  }
-  .polaroid figcaption { font-family: "Gaegu", cursive; font-size: 20px; padding: 8px 2px 6px; }
-  .nav { margin-top: 26px; }
+  .polaroid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; background: var(--pink-l); }
+  .polaroid figcaption { font-family: "Gaegu", cursive; font-size: 20px; padding: 8px 2px 6px; line-height: 1.2; }
+  .nav { margin-top: 28px; }
 
   /* ending */
   .letter { text-align: left; padding: 26px 24px; margin-top: 26px; animation: drop .6s ease-out both;
@@ -143,22 +183,26 @@
   .again { margin-top: 30px; }
   .again p { font-size: 20px; }
   .final { font-family: "Gaegu", cursive; font-size: 30px; font-weight: 700; color: var(--pink-d); }
-  .linkbtn { background: none; border: 0; font: 16px "Pixelify Sans", monospace; color: var(--muted); cursor: pointer; margin-top: 30px; text-decoration: underline dotted; }
+  .linkbtn { background: none; border: 0; font: 16px "Pixelify Sans", monospace; color: var(--muted); margin-top: 30px; text-decoration: underline dotted; }
 
   /* overlays & effects */
-  .floaters { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .floaters, .rain { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .floaters span { position: absolute; bottom: -40px; opacity: .45; animation: floatUp linear infinite; }
+  .rain i { position: absolute; top: -20px; width: 4px; height: 14px; background: #a9c4d6; opacity: .8; animation: fall linear infinite; }
+  .peek {
+    position: fixed; left: 12px; bottom: 0; z-index: 15; background: none; border: 0; padding: 0;
+    transform: translateY(68%); animation: peek 10s ease-in-out infinite;
+  }
+  .peek svg { display: block; }
   .pop {
     position: fixed; z-index: 30; pointer-events: none; font: 600 22px "Pixelify Sans", monospace; color: var(--pink-d);
-    text-shadow: 2px 2px 0 var(--card); transform: translate(-50%, -50%); animation: pop 0.9s ease-out forwards;
+    text-shadow: 2px 2px 0 var(--card); transform: translate(-50%, -50%); animation: pop 0.9s ease-out forwards; white-space: nowrap;
   }
-  .flash { position: fixed; inset: 0; background: #fff; z-index: 40; pointer-events: none; animation: flash .5s ease-out forwards; }
   .burst { position: fixed; z-index: 35; pointer-events: none; left: 50%; top: 50%; animation: burst 1.2s ease-out forwards; }
   .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(91, 70, 54, .75); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
   .lightbox figure { margin: 0; background: #fff; padding: 12px 12px 6px; box-shadow: 0 0 0 4px var(--ink); max-width: min(92vw, 640px); text-align: center; }
   .lightbox img { max-width: 100%; max-height: 74vh; display: block; margin: 0 auto; }
   .lightbox figcaption { font-family: "Gaegu", cursive; font-size: 22px; padding: 8px 0 4px; }
-  .sound { position: fixed; top: 12px; right: 12px; z-index: 20; padding: 6px 10px; font-size: 14px; margin: 4px; }
 
   @keyframes hop { 50% { transform: translateY(-4px); } }
   @keyframes idle { 50% { transform: translateY(-6px); } }
@@ -167,28 +211,35 @@
   @keyframes wiggle { 25% { transform: rotate(-10deg); } 50% { transform: rotate(9deg); } 75% { transform: rotate(-5deg); } }
   @keyframes drop { from { opacity: 0; transform: translateY(-30px) rotate(var(--r, 0deg)); } to { opacity: 1; transform: rotate(var(--r, 0deg)); } }
   @keyframes pop { to { opacity: 0; transform: translate(-50%, -150%) scale(1.3); } }
-  @keyframes flash { from { opacity: .95; } to { opacity: 0; } }
   @keyframes floatUp { to { transform: translateY(-115vh) rotate(20deg); } }
+  @keyframes fall { to { transform: translate(-30px, 110vh); } }
+  @keyframes peek { 0%, 55%, 100% { transform: translateY(68%); } 62%, 88% { transform: translateY(6%); } }
   @keyframes burst { 0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1); opacity: 0; } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
-    .floaters { display: none; }
+    .floaters, .rain { display: none; }
   }
 </style>
 </head>
 <body>
 <div class="floaters" id="floaters"></div>
-<button class="pxbtn sound" id="sound" aria-pressed="true">sound: on</button>
+<div class="rain" id="rain" hidden></div>
+<div class="toolbar">
+  <button class="pxbtn" id="musicBtn" aria-pressed="true">♪ music</button>
+  <button class="pxbtn" id="sfxBtn" aria-pressed="true">sfx</button>
+</div>
+<button class="peek" id="peek" aria-label="a cat says hi"></button>
 
 <main>
   <section id="start" class="screen">
-    <div class="px card hero">
+    <div class="px card hero" data-ears>
       <div class="cats" id="heroCats"></div>
       <p class="kicker" id="dateLabel"></p>
       <h1>hi, <span class="her"></span> ♡</h1>
       <p id="intro"></p>
       <button class="pxbtn big" id="startBtn">start our date</button>
+      <div class="kaomoji">ฅ^•ﻌ•^ฅ</div>
     </div>
   </section>
 
@@ -196,16 +247,21 @@
     <div class="trail-wrap" aria-hidden="true">
       <div class="walker" id="walker"></div>
       <ol class="trail" id="trail"></ol>
+      <p class="trail-label" id="trailLabel"></p>
     </div>
     <div class="px card scene" id="scene"></div>
   </section>
 
   <section id="ending" class="screen" hidden>
-    <div class="px card scene">
+    <div class="px card scene" data-ears>
+      <button class="back" id="endBack">← back</button>
       <p class="kicker">last stop</p>
       <h2>goodnight, <span class="her"></span></h2>
       <p class="story">before you go... i left something for you</p>
-      <button class="toy idle" id="envelope" aria-label="open the letter"></button>
+      <div class="stage">
+        <button class="toy idle" id="envelope" aria-label="open the letter"></button>
+        <div class="buddy" id="endBuddy"></div>
+      </div>
       <p class="hint" id="envHint">tap to open</p>
       <article class="px letter" id="letter" hidden></article>
       <div class="again" id="again" hidden>
@@ -224,75 +280,110 @@
 <script>
 /* =========================================================
    EDIT THIS PART ♡
-   - Put your photos in the "photos" folder next to this file
-   - Change the text, stops and file names below
    ========================================================= */
 const CONFIG = {
   herName: "my love",
   yourName: "your favorite person",
-  dateLabel: "a date from miles away",
-  intro: "i know we're far apart right now, so i took you with me today. tap through and come on our little date with me.",
+  dateLabel: "our anniversary date ♡",
+  intro: "i know we're miles apart, so today i took you along with me. tap through and come on our little date.",
   letter: [
     "hi baby,",
-    "i wish you were really here with me today. every stop, i kept thinking about what you'd say, what you'd pick, and how you'd laugh at me.",
-    "the distance is hard, but dates like this remind me that you're with me everywhere i go. one day we won't need a website for this.",
+    "happy anniversary. i wish you were really here with me today. at every stop i kept thinking about what you'd pick, what you'd say, and how hard you'd laugh at me in that straw hat.",
+    "the distance is hard, but you're with me everywhere i go. one day we'll do all of this together for real, and i'll hold the umbrella.",
     "i love you so much.",
   ],
 };
 
-// Each stop of the date. sprite: cat, heart, squishy, onigiri, boba, camera
-// anim: bounce | squish | wiggle    taps: how many taps before photos appear
-// flash: true makes a camera flash on tap
+// Each stop of the date, in order.
+// sprite: which pixel drawing to tap   anim: bounce | squish | wiggle
+// taps: taps needed before photos appear   buddy: the little cat beside it
 const SCENES = [
   {
-    stop: "meet up", title: "first, i come pick you up",
-    text: "you look so pretty today. ready to go?",
-    sprite: "heart", anim: "bounce", action: "hold my hand", taps: 1, pops: ["♡"],
+    stop: "squishies", title: "first stop: squishy heaven",
+    text: "the tiniest shop, packed wall to wall with squishies. and look, a banana one!",
+    sprite: "banana", anim: "squish", action: "squish the banana", taps: 3,
+    pops: ["squish!", "squish!!", "SQUISH ♡"],
     photos: [
-      { src: "photos/01-meetup.jpg", caption: "on my way to you" },
+      { src: "photos/01-squishy-1.jpg", caption: "me vs. the squishy wall" },
+      { src: "photos/01-squishy-2.jpg", caption: "the squishy kingdom" },
     ],
   },
   {
-    stop: "squishies", title: "squishy hunting",
-    text: "you know i can't walk past a squishy shop. this one reminded me of you.",
-    sprite: "squishy", anim: "squish", action: "squish it", taps: 3, pops: ["squish!", "squish!!", "SQUISH ♡"],
+    stop: "bags & makeup", title: "window shopping",
+    text: "we looked at bags and makeup. i kept picturing which ones you'd pick.",
+    sprite: "lipstick", anim: "wiggle", action: "try the lipstick", taps: 2,
+    pops: ["mwah!", "so pretty ♡"],
     photos: [
-      { src: "photos/02-squishy-1.jpg", caption: "the shelf of dreams" },
-      { src: "photos/02-squishy-2.jpg", caption: "i got us one!" },
+      { src: "photos/02-shopping-1.jpg", caption: "which one would you get?" },
+      { src: "photos/02-shopping-2.jpg", caption: "the makeup shop" },
     ],
   },
   {
-    stop: "food", title: "snack time",
-    text: "i saved you a bite, i promise.",
-    sprite: "onigiri", anim: "wiggle", action: "take a bite", taps: 3, pops: ["nom", "nom nom", "all gone :3"],
+    stop: "crochet", title: "a little crochet friend",
+    text: "i found a crochet octopus kit. maybe we can make it together someday.",
+    sprite: "octopus", anim: "squish", action: "boop the octopus", taps: 3,
+    pops: ["boop", "boop!", "it likes you ♡"],
     photos: [
-      { src: "photos/03-food-1.jpg", caption: "your share" },
-      { src: "photos/03-food-2.jpg", caption: "my share (smaller, for you)" },
+      { src: "photos/03-crochet-1.jpg", caption: "look who's coming home with me" },
+      { src: "photos/03-crochet-2.jpg", caption: "the cutest craft shop" },
     ],
   },
   {
-    stop: "boba", title: "boba break",
-    text: "brown sugar, less ice, extra pearls. just how you like it.",
-    sprite: "boba", anim: "bounce", action: "take a sip", taps: 3, pops: ["slurp", "sluuurp", "pearls!"],
+    stop: "rain", title: "then it started pouring",
+    text: "we got stuck in the rain. i wish we could hide under one umbrella together.",
+    sprite: "umbrella", anim: "bounce", action: "share my umbrella", taps: 1, effect: "rain",
+    pops: ["come here ☂"],
     photos: [
-      { src: "photos/04-boba.jpg", caption: "cheers ♡" },
+      { src: "photos/04-rain-1.jpg", caption: "pedicab ride through the rain" },
+      { src: "photos/04-rain-2.jpg", caption: "stuck in the rain (still cute tho)" },
     ],
   },
   {
-    stop: "pictures", title: "smile for me",
-    text: "one picture together before the day ends.",
-    sprite: "camera", anim: "bounce", action: "take a photo", taps: 1, pops: ["click!"], flash: true,
+    stop: "toy store", title: "the anime toy store",
+    text: "i put on luffy's straw hat and became the pirate king for a minute.",
+    sprite: "luffy", anim: "bounce", action: "say hi to luffy", taps: 3, buddy: "catHat",
+    pops: ["shishishi!", "gomu gomu no...", "MEAT!!"],
     photos: [
-      { src: "photos/05-photo-1.jpg", caption: "us (kind of)" },
-      { src: "photos/05-photo-2.jpg", caption: "the sunset i wanted to show you" },
+      { src: "photos/05-toystore-1.jpg", caption: "so many figures" },
+      { src: "photos/05-toystore-2.jpg", caption: "king of the pirates" },
+      { src: "photos/05-toystore-3.jpg", caption: "zoro mode activated" },
+    ],
+  },
+  {
+    stop: "arcade", title: "arcade time!",
+    text: "all the neon lights made me miss you more. play a round with me?",
+    game: "basketball", goal: 3,
+    photos: [
+      { src: "photos/06-arcade-1.jpg", caption: "the arcade" },
+      { src: "photos/06-arcade-2.jpg", caption: "neon me" },
+    ],
+  },
+  {
+    stop: "the bag", title: "a little bag",
+    text: "this cute brown bag came home with me. the pizza charm got me.",
+    sprite: "bag", anim: "wiggle", action: "open the bag", taps: 2,
+    pops: ["zip!", "cute right?"],
+    photos: [
+      { src: "photos/07-bag.jpg", caption: "pizza charm included" },
+    ],
+  },
+  {
+    stop: "wings", title: "dinner: chicken wings",
+    text: "we ended the day with wings, rice and fries. i saved you a seat.",
+    sprite: "wing", anim: "wiggle", action: "take a bite", taps: 3,
+    pops: ["nom", "nom nom", "only bones left"],
+    photos: [
+      { src: "photos/08-wings-1.jpg", caption: "dinner time!" },
+      { src: "photos/08-wings-2.jpg", caption: "full and happy" },
     ],
   },
 ];
 
 /* ======================= pixel art ======================= */
 const PALETTE = {
-  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", c: "#f3c6cf",
-  l: "#a9c4d6", b: "#e9cfae", g: "#4f6b4a", o: "#e8b07a",
+  k: "#5b4636", w: "#fffaf2", p: "#f6b8c8", r: "#ee8fa8", c: "#f3c6cf", l: "#a9c4d6",
+  o: "#f2b46b", O: "#c9773c", y: "#f6d26b", Y: "#e0ae3c", N: "#9b7350", n: "#c9a274",
+  v: "#c7a2e6", R: "#e05a5a", B: "#7b9be0", s: "#f7d2ad", h: "#3a2e2a", q: "#ef8e4f",
 };
 const SPRITES = {
   cat: [
@@ -331,6 +422,14 @@ const SPRITES = {
     "...kwkwwwkwk....",
     "...kkk.k.kkk....",
   ],
+  ear: [
+    "...kk...",
+    "..kppk..",
+    "..kppk..",
+    ".kwppwk.",
+    ".kwwwwk.",
+    "kwwwwwwk",
+  ],
   heart: [
     ".kk.kk.",
     "kppkppk",
@@ -340,54 +439,140 @@ const SPRITES = {
     "..kpk..",
     "...k...",
   ],
-  squishy: [
-    "....kkkkk....",
-    "..kkpppppkk..",
-    ".kpwwppppppk.",
-    "kpwpppppppppk",
-    "kppkpppppkppk",
-    "kprppppppprpk",
-    "kpppppkpppppk",
-    "kppppkpkppppk",
-    ".kpppppppppk.",
-    "..kkkkkkkkk..",
+  paw: [
+    ".p.p.",
+    "p...p",
+    ".ppp.",
+    "ppppp",
+    ".ppp.",
   ],
-  onigiri: [
-    ".....kk.....",
-    "....kwwk....",
-    "...kwwwwk...",
-    "..kwkwwkwk..",
-    "..kwwwwwwk..",
-    ".kwrwwwwrwk.",
-    ".kwwwggwwwk.",
-    "kwwwggggwwwk",
-    "kwwwggggwwwk",
-    ".kkkkkkkkkk.",
+  banana: [
+    "kk..............kk",
+    "kNk............kNk",
+    "kyyk..........kyyk",
+    "kyyyk........kyyyk",
+    ".kyyyykkkkkkyyyyk.",
+    ".kyyyyyyyyyyyyyyk.",
+    ".kyykyyyyyyyykyyk.",
+    "..kryyyykkyyyyrk..",
+    "...kyyyyyyyyyyk...",
+    "....kkyyyyyykk....",
+    "......kkkkkk......",
   ],
-  boba: [
-    "........kk..",
-    ".......kk...",
-    "..kkkkkkkk..",
-    "..kppppppk..",
-    ".kkkkkkkkkk.",
-    ".kbbbbbbbbk.",
-    ".kbwbbbbbbk.",
-    "..kbbbbbbk..",
-    "..kbkbbkbk..",
-    "..kkbkkbkk..",
-    "...kkkkkk...",
+  lipstick: [
+    "...kk...",
+    "..kRRk..",
+    "..kRRk..",
+    "..kRRk..",
+    ".kyyyyk.",
+    ".kyYYyk.",
+    ".kkkkkk.",
+    ".kppppk.",
+    ".kpwppk.",
+    ".kpwppk.",
+    ".kppppk.",
+    ".kkkkkk.",
   ],
-  camera: [
-    "..kkkk......",
-    "kkkkkkkkkkkk",
-    "kcccckkkcwck",
-    "kccckwwwkcck",
-    "kcckwlllwkck",
-    "kcckwlwlwkck",
-    "kcckwlllwkck",
-    "kccckwwwkcck",
-    "kcccckkkccck",
-    "kkkkkkkkkkkk",
+  octopus: [
+    "....kkkkkk....",
+    "...kvvvvvvk...",
+    "..kvwvvvvvvk..",
+    ".kvvvvvvvvvvk.",
+    ".kvvkvvvvkvvk.",
+    ".kvrvvkkvvrvk.",
+    ".kvvvvvvvvvvk.",
+    "kvvvvvvvvvvvvk",
+    "kvvkkvvvvkkvvk",
+    "kvk.kvkkvk.kvk",
+    "kk..kk..kk..kk",
+  ],
+  umbrella: [
+    ".......kk.......",
+    ".....kkppkk.....",
+    "...kkppppppkk...",
+    "..kpwppppppppk..",
+    ".kppppppppppppk.",
+    "kppppppppppppppk",
+    "kk.kkkk..kkkk.kk",
+    "......kNk.......",
+    "......kNk.......",
+    "......kNk.......",
+    "......kNk.......",
+    "...kNk.kNk......",
+    "...kkNNNk.......",
+  ],
+  luffy: [
+    ".....kkkkkk.....",
+    "....kyyyyyyk....",
+    "....kRRRRRRk....",
+    "kkyyyyyyyyyyyykk",
+    ".kkkkkkkkkkkkkk.",
+    "..khhhhhhhhhhk..",
+    "..khshhsshhshk..",
+    "..kssssssssssk..",
+    "..kssksssskssk..",
+    "..kskssssssssk..",
+    "..ksssskkssssk..",
+    "...kssssssssk...",
+    "..kRRRRssRRRRk..",
+    ".ksRRRRssRRRRsk.",
+    ".ksRRRRRRRRRRsk.",
+    "..kkkkkkkkkkkk..",
+    "..kBBBBBBBBBBk..",
+    "..kBBBBkkBBBBk..",
+    "...kssk..kssk...",
+    "...kkkk..kkkk...",
+  ],
+  bag: [
+    ".....kkkkkk.....",
+    "....kN....Nk....",
+    "....kN....Nk....",
+    "..kkkkkkkkkkkk..",
+    ".knnnnnnnnnnnnk.",
+    "knnnyNnnnnnyNnnk",
+    "knnnnnnnnnnnnnnk",
+    "knnnnnnnnnnkYYYk",
+    "knnnnnnnnnnkyRyk",
+    "knnnnnnnnnnnkyk.",
+    ".knnnnnnnnnnnk..",
+    "..kkkkkkkkkkk...",
+  ],
+  wing: [
+    ".....kkkk.....",
+    "...kkOOOOkk...",
+    "..kOOoOOOOOk..",
+    ".kOOoOOOOOOOk.",
+    ".kOOOOOOOOOOk.",
+    ".kOOOOOOOOOOk.",
+    "..kOOOOOOOOk..",
+    "...kOOOOOOk...",
+    "....kkOOkk....",
+    "......kwk.....",
+    ".....kwwwk....",
+    "....kwwkwwk...",
+    "....kkk.kkk...",
+  ],
+  hoop: [
+    "kkkkkkkkkkkkkkkk",
+    "kwwwwwwwwwwwwwwk",
+    "kwwwwkkkkkkwwwwk",
+    "kwwwwkwwwwkwwwwk",
+    "kkkkkkkkkkkkkkkk",
+    "..RRRRRRRRRRRR..",
+    "...kwkwkwkwkwk..",
+    "....kwkwkwkwk...",
+    ".....kwkwkwk....",
+    "......kkkkk.....",
+  ],
+  ball: [
+    "..kkkk..",
+    ".kqqkqk.",
+    "kqqkqqqk",
+    "kkkkkkkk",
+    "kqqqkqqk",
+    "kqqkqqqk",
+    ".kqkqqk.",
+    "..kkkk..",
   ],
   envelope: [
     "kkkkkkkkkkkk",
@@ -399,14 +584,17 @@ const SPRITES = {
     "kwwwwwwwwwwk",
     "kkkkkkkkkkkk",
   ],
-  paw: [
-    ".p.p.",
-    "p...p",
-    ".ppp.",
-    "ppppp",
-    ".ppp.",
-  ],
 };
+// cat wearing luffy's straw hat, and a cat head for peeking
+SPRITES.catHat = [
+  "....kkkkkkk.....",
+  "...kyyyyyyyk....",
+  "...kRRRRRRRk....",
+  ".kkyyyyyyyyykk..",
+  ".kkkkkkkkkkkkk..",
+  ...SPRITES.cat.slice(4),
+];
+SPRITES.catPeek = SPRITES.cat.slice(0, 12);
 
 function sprite(name, size) {
   const rows = SPRITES[name];
@@ -417,25 +605,78 @@ function sprite(name, size) {
   }));
   return `<svg viewBox="0 0 ${w} ${h}" width="${size}" height="${Math.round(size * h / w)}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
+const EARS = `<div class="ears">${sprite("ear", 40)}${sprite("ear", 40)}</div>`;
+
+/* ======================= sound & music ======================= */
+let actx, sfxOn = true, musicOn = true, musicTimer = null, musicStep = 0, musicNext = 0, started = false;
+
+function audio() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+function tone(freq, when, dur, type, vol) {
+  const ctx = audio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.linearRampToValueAtTime(vol, when + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  o.connect(g).connect(ctx.destination);
+  o.start(when); o.stop(when + dur + 0.02);
+}
+function blip(freq = 660, dur = 0.09) {
+  if (!sfxOn) return;
+  const ctx = audio(); if (ctx) tone(freq, ctx.currentTime, dur, "square", 0.035);
+}
+function melody(notes) { notes.forEach((f, i) => setTimeout(() => blip(f, 0.12), i * 110)); }
+
+// a little 8-bit loop: C - Am - F - G
+const hz = n => {
+  const k = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[n[0]];
+  return 440 * Math.pow(2, (k + (+n[n.length - 1] - 4) * 12 - 9) / 12);
+};
+const TUNE = [ // [note, length in eighth notes]
+  ["E5",1],["G5",1],["C6",2],["B5",1],["G5",1],["E5",2],
+  ["A5",1],["C6",1],["E6",2],["D6",1],["C6",1],["A5",2],
+  ["F5",1],["A5",1],["C6",1],["A5",1],["G5",2],["F5",2],
+  ["D5",1],["G5",1],["B5",2],["A5",2],["G5",2],
+  ["E5",1],["G5",1],["C6",2],["E6",2],["D6",1],["C6",1],
+  ["A5",2],["C6",1],["B5",1],["A5",2],["E5",2],
+  ["F5",1],["A5",1],["C6",2],["B5",1],["D6",1],["G5",2],
+  ["C6",2],["G5",1],["E5",1],["C5",2],[null,2],
+];
+const BASS = "C3 G3 C3 G3 A2 E3 A2 E3 F2 C3 F2 C3 G2 D3 G2 D3 C3 G3 C3 G3 A2 E3 A2 E3 F2 C3 G2 D3 C3 G3 C3 C3".split(" ");
+const STEPS = Array.from({ length: 64 }, () => []);
+{ let s = 0; TUNE.forEach(([n, len]) => { if (n) STEPS[s].push([hz(n), len, "square", 0.022]); s += len; }); }
+BASS.forEach((n, i) => STEPS[i * 2].push([hz(n), 2, "triangle", 0.06]));
+const EIGHTH = 0.21;
+
+function scheduleMusic() {
+  const ctx = audio(); if (!ctx) return;
+  while (musicNext < ctx.currentTime + 0.25) {
+    STEPS[musicStep % 64].forEach(([f, len, type, vol]) => tone(f, musicNext, len * EIGHTH * 0.9, type, vol));
+    musicNext += EIGHTH; musicStep++;
+  }
+}
+function startMusic() {
+  if (!musicOn || musicTimer) return;
+  const ctx = audio(); if (!ctx) return;
+  musicNext = ctx.currentTime + 0.1;
+  musicTimer = setInterval(scheduleMusic, 60);
+}
+function stopMusic() { clearInterval(musicTimer); musicTimer = null; }
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopMusic(); else if (started) startMusic();
+});
 
 /* ======================= little helpers ======================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-let current = 0, soundOn = true, actx;
-
-function blip(freq = 660, dur = 0.09) {
-  if (!soundOn) return;
-  try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "square"; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.035, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
-    o.connect(g).connect(actx.destination);
-    o.start(); o.stop(actx.currentTime + dur);
-  } catch (e) {}
-}
-function melody(notes) { notes.forEach((f, i) => setTimeout(() => blip(f, 0.12), i * 110)); }
+let current = 0;
+const done = new Set();
 
 function popText(text, x, y) {
   const el = document.createElement("span");
@@ -450,10 +691,6 @@ function eventPoint(e, el) {
   return [r.left + r.width / 2, r.top];
 }
 function replay(el) { el.classList.remove("go"); void el.offsetWidth; el.classList.add("go"); }
-function flash() {
-  const f = document.createElement("div"); f.className = "flash";
-  document.body.appendChild(f); setTimeout(() => f.remove(), 550);
-}
 function heartBurst() {
   for (let i = 0; i < 26; i++) {
     const h = document.createElement("span"); h.className = "burst";
@@ -464,8 +701,23 @@ function heartBurst() {
     document.body.appendChild(h); setTimeout(() => h.remove(), 1250);
   }
 }
+function setRain(on) {
+  const rain = $("#rain");
+  if (on && !rain.childElementCount) {
+    for (let i = 0; i < 45; i++) {
+      const d = document.createElement("i");
+      d.style.left = Math.random() * 110 + "%";
+      d.style.animationDuration = 0.7 + Math.random() * 0.6 + "s";
+      d.style.animationDelay = -Math.random() * 2 + "s";
+      rain.appendChild(d);
+    }
+  }
+  if (!on) rain.innerHTML = "";
+  rain.hidden = !on;
+}
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
+  if (id !== "journey") setRain(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -473,65 +725,159 @@ function show(id) {
 function renderTrail() {
   const stops = [...SCENES.map(s => s.stop), "goodnight"];
   $("#trail").innerHTML = stops.map((s, i) =>
-    `<li class="${i < current ? "done" : ""} ${i === current ? "here" : ""}"><span class="dot"></span><span class="lbl">${esc(s)}</span></li>`
+    `<li class="${i === current ? "here" : ""}">${i < current ? sprite("paw", 18) : '<span class="dot"></span>'}</li>`
   ).join("");
+  $("#trailLabel").textContent = stops[current];
+  $("#walker").innerHTML = sprite((SCENES[current] || {}).buddy || "cat", 28);
   $("#walker").style.setProperty("--p", current / (stops.length - 1));
 }
 
 function renderScene() {
   const s = SCENES[current];
   const last = current === SCENES.length - 1;
-  $("#scene").innerHTML = `
+  setRain(s.effect === "rain");
+  const play = s.game
+    ? `<div class="court" id="court" tabindex="0" role="button" aria-label="shoot the ball">
+         <div class="hoop" id="hoop">${sprite("hoop", 96)}</div>
+         <div class="ball" id="ball">${sprite("ball", 36)}</div>
+         <div class="score" id="score">0 / ${s.goal}</div>
+       </div>
+       <button class="pxbtn" id="shoot">shoot!</button>`
+    : `<div class="stage">
+         <button class="toy idle ${s.anim || "bounce"}" id="toy" aria-label="${esc(s.action)}">${sprite(s.sprite, 128)}</button>
+         <div class="buddy" id="buddy">${sprite(s.buddy || "cat", 52)}</div>
+       </div>`;
+  $("#scene").innerHTML = `${EARS}
+    <button class="back" id="back">← back</button>
     <p class="kicker">stop ${current + 1} of ${SCENES.length}</p>
     <h2>${esc(s.title)}</h2>
     <p class="story">${esc(s.text)}</p>
-    <button class="toy idle ${s.anim || "bounce"}" id="toy" aria-label="${esc(s.action)}">${sprite(s.sprite, 128)}</button>
-    <p class="hint" id="hint">tap to ${esc(s.action)} <span class="count"></span></p>
+    ${play}
+    <p class="hint" id="hint">${s.game ? `tap to shoot. make ${s.goal} baskets to win a prize!` : `tap to ${esc(s.action)}`} <span class="count"></span></p>
     <div class="photos" id="photos" hidden></div>
     <div class="nav" id="nav" hidden><button class="pxbtn" id="next">${last ? "one last thing ♡" : "next stop →"}</button></div>`;
+  $("#back").onclick = goBack;
+  $("#next").onclick = goNext;
+  if (s.game) setupGame(s); else setupToy(s);
+  if (done.has(current)) revealPhotos(s, true);
+}
 
+function setupToy(s) {
   let taps = 0;
-  const toy = $("#toy");
+  const toy = $("#toy"), buddy = $("#buddy");
   toy.onclick = e => {
     taps++;
     toy.classList.remove("idle");
-    replay(toy);
+    replay(toy); replay(buddy);
     blip(500 + Math.min(taps, 6) * 110);
     const [x, y] = eventPoint(e, toy);
     popText(s.pops[Math.min(taps, s.pops.length) - 1], x, y);
-    if (s.flash) flash();
+    if (done.has(current)) return;
     if (taps < s.taps) $("#hint .count").textContent = `(${taps}/${s.taps})`;
     if (taps === s.taps) revealPhotos(s);
   };
-  $("#next").onclick = () => {
-    current++;
-    renderTrail();
-    if (current < SCENES.length) { renderScene(); window.scrollTo({ top: 0, behavior: "smooth" }); }
-    else { melody([523, 659, 784]); show("ending"); }
-  };
 }
 
-function revealPhotos(s) {
+function setupGame(s) {
+  const court = $("#court"), hoop = $("#hoop"), ball = $("#ball");
+  let score = 0, flying = false, hoopX = 0;
+  const t0 = performance.now();
+  const W = () => court.clientWidth, H = () => court.clientHeight;
+  const restY = () => H() - 52;
+
+  (function loop(now) {
+    if (!document.body.contains(court)) return;
+    const amp = (W() - 96) / 2 - 4;
+    hoopX = (W() - 96) / 2 + amp * Math.sin((now - t0) / 600);
+    hoop.style.transform = `translateX(${hoopX}px)`;
+    requestAnimationFrame(loop);
+  })(t0);
+
+  function placeBall(y, scale = 1, dx = 0, opacity = 1) {
+    ball.style.transform = `translate(${W() / 2 - 18 + dx}px, ${y}px) scale(${scale})`;
+    ball.style.opacity = opacity;
+  }
+  placeBall(restY());
+
+  function animate(ms, step, then) {
+    const start = performance.now();
+    (function frame(now) {
+      const p = Math.min((now - start) / ms, 1);
+      step(p);
+      if (p < 1) requestAnimationFrame(frame); else then();
+    })(start);
+  }
+
+  function shoot() {
+    if (flying) return;
+    flying = true; blip(440, 0.06);
+    const y0 = restY(), yTop = 6;
+    animate(420, p => { const e = 1 - (1 - p) * (1 - p); placeBall(y0 + (yTop - y0) * e, 1 - 0.3 * e); }, judge);
+  }
+
+  function judge() {
+    const diff = (hoopX + 48) - W() / 2;
+    const made = Math.abs(diff) <= 22;
+    const r = ball.getBoundingClientRect();
+    if (made) {
+      score++;
+      $("#score").textContent = `${score} / ${s.goal}`;
+      popText(score >= s.goal ? "you win!! ♡" : "swish!", r.left + 18, r.top);
+      melody([784, 988]);
+    } else {
+      popText("miss!", r.left + 18, r.top);
+      blip(196, 0.15);
+    }
+    const side = diff > 0 ? -1 : 1;
+    animate(380,
+      p => placeBall(6 + p * (made ? 80 : 150), 0.7, made ? 0 : side * p * 70, 1 - p),
+      () => {
+        placeBall(restY()); flying = false;
+        if (made && score === s.goal) {
+          heartBurst();
+          if (!done.has(current)) revealPhotos(s);
+        }
+      });
+  }
+
+  court.onclick = shoot;
+  court.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); shoot(); } };
+  $("#shoot").onclick = shoot;
+}
+
+function revealPhotos(s, quiet) {
+  done.add(current);
   $("#hint").textContent = "♡";
   const box = $("#photos");
   box.innerHTML = s.photos.map((p, i) => `
-    <figure class="polaroid" role="button" tabindex="0" style="--r:${(i % 2 ? 1 : -1) * (1.5 + (i % 3))}deg; --d:${i * 0.15}s"
+    <figure class="polaroid" role="button" tabindex="0" style="--r:${(i % 2 ? 1 : -1) * (1.5 + (i % 3))}deg; --d:${quiet ? 0 : i * 0.15}s"
       data-src="${esc(p.src)}" data-cap="${esc(p.caption || "")}">
       <img src="${esc(p.src)}" alt="${esc(p.caption || "a photo from our date")}" loading="lazy">
       <figcaption>${esc(p.caption || "")}</figcaption>
     </figure>`).join("");
-  box.querySelectorAll("img").forEach(img => img.onerror = () => {
-    img.outerHTML = `<div class="ph">${sprite("cat", 48)}<span>add photo:<br>${esc(img.getAttribute("src"))}</span></div>`;
-  });
   box.querySelectorAll(".polaroid").forEach(f => {
-    const open = () => { if (f.querySelector("img")) openLightbox(f.dataset.src, f.dataset.cap); };
+    const open = () => openLightbox(f.dataset.src, f.dataset.cap);
     f.onclick = open;
     f.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
   });
   box.hidden = false;
   $("#nav").hidden = false;
-  melody([659, 784, 988]);
-  setTimeout(() => box.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+  if (!quiet) {
+    melody([659, 784, 988]);
+    setTimeout(() => box.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+  }
+}
+
+function goNext() {
+  current++;
+  if (current < SCENES.length) { renderTrail(); renderScene(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  else { melody([523, 659, 784]); show("ending"); }
+}
+function goBack() {
+  if (current === 0) { show("start"); return; }
+  current--;
+  renderTrail(); renderScene();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function openLightbox(src, cap) {
@@ -543,11 +889,13 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $("#lightbox
 
 /* ======================= ending ======================= */
 $("#envelope").innerHTML = sprite("envelope", 128);
+$("#endBuddy").innerHTML = sprite("catOrange", 52);
 $("#envelope").onclick = () => {
   $("#envelope").hidden = true; $("#envHint").hidden = true;
   $("#letter").innerHTML = CONFIG.letter.map(p => `<p>${esc(p)}</p>`).join("")
     + `<p class="sign">love, ${esc(CONFIG.yourName)} ♡</p>`;
   $("#letter").hidden = false;
+  replay($("#endBuddy"));
   melody([784, 659, 784, 1046]);
   setTimeout(() => { $("#again").hidden = false; }, 1200);
 };
@@ -555,8 +903,12 @@ document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   heartBurst(); melody([523, 659, 784, 1046, 1318]);
   $("#again").hidden = true; $("#final").hidden = false;
 });
+$("#endBack").onclick = () => {
+  current = SCENES.length - 1;
+  show("journey"); renderTrail(); renderScene();
+};
 $("#restart").onclick = () => {
-  current = 0;
+  current = 0; done.clear();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
   $("#letter").hidden = true; $("#again").hidden = true; $("#final").hidden = true;
   show("start");
@@ -564,18 +916,32 @@ $("#restart").onclick = () => {
 
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
+document.querySelectorAll("[data-ears]").forEach(c => c.insertAdjacentHTML("afterbegin", EARS));
 $("#dateLabel").textContent = CONFIG.dateLabel;
 $("#intro").textContent = CONFIG.intro;
 $("#heroCats").innerHTML = sprite("cat", 72) + sprite("heart", 28) + sprite("catOrange", 72);
-$("#walker").innerHTML = sprite("cat", 28);
 $("#startBtn").onclick = () => {
+  started = true;
+  startMusic();
   melody([523, 659, 784]);
   renderTrail(); renderScene(); show("journey");
 };
-$("#sound").onclick = () => {
-  soundOn = !soundOn;
-  $("#sound").textContent = "sound: " + (soundOn ? "on" : "off");
-  $("#sound").setAttribute("aria-pressed", soundOn);
+$("#musicBtn").onclick = () => {
+  musicOn = !musicOn;
+  $("#musicBtn").setAttribute("aria-pressed", musicOn);
+  if (musicOn) { started = true; startMusic(); } else stopMusic();
+};
+$("#sfxBtn").onclick = () => {
+  sfxOn = !sfxOn;
+  $("#sfxBtn").setAttribute("aria-pressed", sfxOn);
+};
+
+const peek = $("#peek");
+peek.innerHTML = sprite("catPeek", 60);
+peek.onclick = e => {
+  const [x, y] = eventPoint(e, peek);
+  popText("meow ♡", x + 20, y);
+  if (sfxOn) melody([1046, 1318]);
 };
 
 const floaters = $("#floaters");
