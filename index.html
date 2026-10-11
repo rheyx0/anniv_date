@@ -131,7 +131,7 @@
     background: repeating-linear-gradient(90deg, #f6d26b 0 34px, transparent 34px 68px);
   }
   .jeep-stage.moving::after { animation: dash .3s linear infinite; }
-  .stage-back { position: fixed; top: 14px; left: 14px; z-index: 8; }
+  .stage-back { position: fixed; top: 14px; left: 14px; z-index: 8; background: var(--card) !important; color: var(--ink) !important; padding: 8px 12px !important; }
   .jeep {
     position: absolute; left: 50%; bottom: 18vh; width: min(560px, 86vw); padding: 0; border: 0; background: none;
     transform: translateX(-160vw);
@@ -187,7 +187,7 @@
     padding: 3px 5px 2px; box-shadow: 0 0 0 2px var(--ink); margin: 0 2px;
   }
   .dialog {
-    position: absolute; z-index: 7; left: 50%; bottom: 22px; transform: translateX(-50%);
+    position: fixed; z-index: 30; left: 50%; bottom: 22px; transform: translateX(-50%);
     width: min(640px, calc(100vw - 40px)); min-height: 92px; padding: 18px 22px; background: var(--card); cursor: var(--paw), pointer;
     box-shadow: 0 0 0 4px var(--ink), inset 0 0 0 4px var(--pink-l), 4px 10px 0 4px rgba(91, 70, 54, .25);
   }
@@ -205,6 +205,82 @@
   .abtn { width: 68px; height: 68px; font: 18px "Press Start 2P", monospace; opacity: .9; }
   @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
   .trail-wrap { display: none !important; }
+  /* store interiors */
+  #interior { position: fixed; inset: 0; z-index: 5; background: #2a2224; overflow: hidden; }
+  #roomCanvas { position: absolute; inset: 0; width: 100vw; height: 100vh; object-fit: cover; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .room-title { left: 50%; transform: translateX(-50%); }
+  .room-stage {
+    position: absolute; left: 50%; bottom: 6vh; transform: translateX(-50%); z-index: 2;
+    width: min(1100px, 96vw); height: min(64vh, 600px);
+    display: flex; align-items: flex-end; justify-content: center; gap: 3vw;
+  }
+  .room-stage .pet { margin-bottom: 4px; }
+  .act { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .act-row { display: flex; flex-direction: row; align-items: flex-end; gap: 3vw; }
+  .say-bubble {
+    position: absolute; left: 50%; bottom: calc(100% + 20px); z-index: 4; transform: translateX(-50%);
+    padding: 12px 18px; background: var(--card); white-space: nowrap;
+    font: 600 20px "Pixelify Sans", monospace; color: var(--ink);
+    box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .18);
+    animation: bubble 1s steps(2) infinite;
+  }
+  .say-bubble::after {
+    content: ""; position: absolute; left: calc(50% - 8px); bottom: -16px; width: 16px; height: 12px;
+    background: var(--card); box-shadow: 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink);
+  }
+  .tapme { position: relative; }
+  /* makeup mirror with kiss marks */
+  .mirror { position: relative; width: min(250px, 28vw); aspect-ratio: 4 / 5; background: #e0ae3c;
+    clip-path: polygon(30% 0, 70% 0, 100% 22%, 100% 78%, 70% 100%, 30% 100%, 0 78%, 0 22%); }
+  .mirror-glass { position: absolute; inset: 12px; background: linear-gradient(135deg, #f4fbfe 0 30%, #d7ebf4 30% 60%, #c6e1ee 60%);
+    clip-path: polygon(30% 0, 70% 0, 100% 22%, 100% 78%, 70% 100%, 30% 100%, 0 78%, 0 22%); }
+  .kiss { position: absolute; z-index: 2; animation: kissIn .35s ease-out; }
+  .kiss svg { display: block; }
+  @keyframes kissIn { from { opacity: 0; scale: 1.6; } }
+  /* crochet octopus appearing row by row */
+  .crochet-wrap { position: relative; }
+  .crochet-ghost { opacity: .18; filter: grayscale(1); }
+  .crochet-ghost svg { display: block; width: 100%; height: auto; }
+  .crochet-wip { position: absolute; inset: 0; transition: clip-path .4s steps(4); filter: drop-shadow(4px 6px 0 rgba(91, 70, 54, .15)); }
+  .crochet-wip svg { display: block; width: 100%; height: auto; }
+  /* rain: the cats on a bench under the umbrella */
+  .act-rain { width: min(440px, 50vw); align-items: center; }
+  .bench-pets { display: flex; gap: 10px; position: relative; z-index: 1; margin-bottom: -8px; }
+  .bench { width: 100%; height: 22px; background: #9b7350; box-shadow: 0 0 0 4px #5b4636; position: relative; }
+  .bench::before, .bench::after { content: ""; position: absolute; top: 26px; width: 10px; height: 30px; background: #5b4636; }
+  .bench::before { left: 30px; } .bench::after { right: 30px; }
+  .open-umbrella { position: absolute; left: 50%; bottom: 120px; z-index: 3; opacity: 0;
+    transform: translate(-50%, 60px) scale(.2); transition: transform .6s cubic-bezier(.3, 1.5, .5, 1), opacity .3s; }
+  .open-umbrella.up { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  .open-umbrella svg { display: block; width: min(300px, 36vw); height: auto; }
+  /* toy store */
+  .hat-btn { z-index: 5; }
+  .luffy-fig { padding: 0; }
+  .luffy-fig svg { display: block; width: 100%; height: auto; }
+  #rheySpot { align-self: flex-end; }
+  /* bag shop */
+  .bags { gap: 2vw; }
+  .pizza-pop { position: absolute; left: 50%; top: 0; z-index: 3; animation: pizzaPop .6s cubic-bezier(.3, 1.5, .5, 1) forwards; }
+  .pizza-pop svg { display: block; }
+  @keyframes pizzaPop { from { transform: translate(-50%, 40px) scale(.2); opacity: 0; } to { transform: translate(-50%, -70px) scale(1); opacity: 1; } }
+  /* unli wings */
+  .table { background: #9b7350; box-shadow: 0 0 0 4px #5b4636, 6px 10px 0 4px rgba(0, 0, 0, .2); padding: 0 24px 34px; margin-top: 70px; }
+  .plate { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; width: min(330px, 40vw); padding: 12px 18px;
+    background: #fffaf2; box-shadow: 0 0 0 4px #5b4636, inset 0 0 0 8px #efe6d8; transform: translateY(-40px); }
+  .tapme.eaten { visibility: hidden; }
+  /* arcade */
+  .arcade-act { width: min(380px, 40vw); }
+  .arcade-act .court { margin-top: 0; }
+  .arcade-act .skip-msg { color: #f6b8c8; }
+  /* the photos box after an activity */
+  .photo-box { position: fixed; inset: 0; z-index: 9; background: rgba(43, 34, 36, .55); overflow-y: auto; padding: 30px 16px 60px; }
+  .photo-card { max-width: 720px; margin: 40px auto; animation: drop .5s ease-out both; }
+  @media (max-width: 700px) {
+    .room-stage { gap: 1vw; height: 70vh; }
+    .room-stage .pet svg { width: 70px; height: auto; }
+    .say-bubble { font-size: 15px; padding: 8px 12px; }
+  }
+
 
   /* paw-print trail */
   .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 40px; }
@@ -421,7 +497,6 @@
     <canvas id="mapCanvas" aria-label="a little pixel town to walk around"></canvas>
     <p class="hud-pill hud-kicker" id="mapKicker">our town</p>
     <p class="hud-pill hud-prompt" id="mapPrompt"></p>
-    <div class="dialog" id="dialog" hidden><p id="dialogText"></p><span class="dialog-more">▼</span></div>
     <div class="pad">
       <div class="dpad">
         <button class="pxbtn" data-pad="up" aria-label="walk up">▲</button>
@@ -430,6 +505,21 @@
         <button class="pxbtn" data-pad="down" aria-label="walk down">▼</button>
       </div>
       <button class="pxbtn abtn" id="padE" aria-label="interact">E</button>
+    </div>
+  </section>
+
+  <section id="interior" class="screen" hidden>
+    <canvas id="roomCanvas" width="320" height="180"></canvas>
+    <button class="back pxbtn stage-back" id="roomBack">← outside</button>
+    <p class="hud-pill hud-kicker room-title" id="roomTitle"></p>
+    <div class="room-stage" id="roomStage"></div>
+    <div class="photo-box" id="photoBox" hidden>
+      <div class="px card scene photo-card" data-ears>
+        <p class="kicker" id="photoKicker"></p>
+        <h2 id="photoTitle"></h2>
+        <div class="photos" id="photoGrid"></div>
+        <div class="nav"><button class="pxbtn" id="photoOut">back outside →</button></div>
+      </div>
     </div>
   </section>
 
@@ -500,6 +590,7 @@
   </section>
 </main>
 
+<div class="dialog" id="dialog" hidden><p id="dialogText"></p><span class="dialog-more">▼</span></div>
 <div class="lightbox" id="lightbox" hidden><figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure></div>
 
 <script>
@@ -954,31 +1045,63 @@ function grunt() {
 }
 function melody(notes) { notes.forEach((f, i) => setTimeout(() => blip(f, 0.12), i * 110)); }
 
-// a little 8-bit loop: C - Am - F - G
+// a bouncy, melodic 8-bit loop in G major: lead melody, walking bass, sparkly arpeggios and a soft drum kit
 const hz = n => {
-  const k = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[n[0]];
+  const k = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[n[0]] + (n[1] === "#" ? 1 : 0);
   return 440 * Math.pow(2, (k + (+n[n.length - 1] - 4) * 12 - 9) / 12);
 };
-const TUNE = [ // [note, length in eighth notes]
-  ["E5",1],["G5",1],["C6",2],["B5",1],["G5",1],["E5",2],
-  ["A5",1],["C6",1],["E6",2],["D6",1],["C6",1],["A5",2],
-  ["F5",1],["A5",1],["C6",1],["A5",1],["G5",2],["F5",2],
-  ["D5",1],["G5",1],["B5",2],["A5",2],["G5",2],
-  ["E5",1],["G5",1],["C6",2],["E6",2],["D6",1],["C6",1],
-  ["A5",2],["C6",1],["B5",1],["A5",2],["E5",2],
-  ["F5",1],["A5",1],["C6",2],["B5",1],["D6",1],["G5",2],
-  ["C6",2],["G5",1],["E5",1],["C5",2],[null,2],
+// one bar per line, 8 eighth notes each; "-" holds the note, "." is a rest
+const LEAD = [
+  "D5 - G5 - B5 - A5 G5",   "E5 - G5 - B5 - - .",     "C5 E5 G5 E5 A5 - G5 E5", "D5 - F#5 - A5 - - .",
+  "D5 - G5 - B5 - D6 -",    "C6 B5 A5 G5 E5 - - .",   "C5 - E5 G5 C6 - B5 A5",  "G5 - - - . . D5 -",
+  "E5 - E5 F#5 G5 - E5 -",  "F#5 - F#5 G5 A5 - F#5 -", "D5 F#5 B5 - A5 - F#5 -", "G5 - B5 - E6 - - .",
+  "E6 D6 C6 B5 A5 - G5 -",  "F#5 - A5 - D6 - C6 B5",  "B5 - G5 - E5 - G5 A5",   "G5 - - - . . . .",
 ];
-const BASS = "C3 G3 C3 G3 A2 E3 A2 E3 F2 C3 F2 C3 G2 D3 G2 D3 C3 G3 C3 G3 A2 E3 A2 E3 F2 C3 G2 D3 C3 G3 C3 C3".split(" ");
-const STEPS = Array.from({ length: 64 }, () => []);
-{ let s = 0; TUNE.forEach(([n, len]) => { if (n) STEPS[s].push([hz(n), len, "square", 0.022]); s += len; }); }
-BASS.forEach((n, i) => STEPS[i * 2].push([hz(n), 2, "triangle", 0.06]));
-const EIGHTH = 0.21;
+const CHORDS = ["G", "Em", "C", "D", "G", "Em", "C", "D", "C", "D", "Bm", "Em", "C", "D", "G", "G"];
+const CHORD_NOTES = { G: ["G", "B", "D"], Em: ["E", "G", "B"], C: ["C", "E", "G"], D: ["D", "F#", "A"], Bm: ["B", "D", "F#"] };
+const STEPS = Array.from({ length: LEAD.length * 8 }, () => []);
+LEAD.forEach((bar, b) => {
+  const t = bar.split(" ");
+  t.forEach((n, i) => {
+    if (n === "-" || n === ".") return;
+    let len = 1; while (t[i + len] === "-") len++;
+    STEPS[b * 8 + i].push([hz(n), len, "square", 0.02]);
+  });
+  const [r, third, fifth] = CHORD_NOTES[CHORDS[b]];
+  [[r + "2", 0], [fifth + "2", 2], [r + "3", 4], [fifth + "2", 6]].forEach(([n, i]) => STEPS[b * 8 + i].push([hz(n), 2, "triangle", 0.06]));
+  [1, 3, 5, 7].forEach((i, k) => STEPS[b * 8 + i].push([hz([r, third, fifth, third][k] + "4"), 1, "square", 0.007]));
+  [0, 4].forEach(i => STEPS[b * 8 + i].push([0, 1, "kick", 0.16]));
+  [2, 6].forEach(i => STEPS[b * 8 + i].push([0, 1, "hat", 0.025]));
+});
+const EIGHTH = 0.17;
+let noiseBuf = null;
+function hat(when, vol) {
+  const ctx = audio(); if (!ctx) return;
+  if (!noiseBuf) {
+    noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.1), ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = noiseBuf; f.type = "highpass"; f.frequency.value = 6000;
+  g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+  src.connect(f).connect(g).connect(ctx.destination);
+  src.start(when); src.stop(when + 0.06);
+}
+function kick(when, vol) {
+  const ctx = audio(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(150, when); o.frequency.exponentialRampToValueAtTime(45, when + 0.12);
+  g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.14);
+  o.connect(g).connect(ctx.destination);
+  o.start(when); o.stop(when + 0.15);
+}
 
 function scheduleMusic() {
   const ctx = audio(); if (!ctx) return;
   while (musicNext < ctx.currentTime + 0.25) {
-    STEPS[musicStep % 64].forEach(([f, len, type, vol]) => tone(f, musicNext, len * EIGHTH * 0.9, type, vol));
+    STEPS[musicStep % STEPS.length].forEach(([f, len, type, vol]) => type === "hat" ? hat(musicNext, vol) : type === "kick" ? kick(musicNext, vol) : tone(f, musicNext, len * EIGHTH * 0.9, type, vol));
     musicNext += EIGHTH; musicStep++;
   }
 }
@@ -1040,7 +1163,8 @@ function setRain(on) {
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (typeof startTown === "function") { if (id === "map") startTown(); else stopTown(); }
-  document.body.classList.toggle("fullscreen", id === "map" || id === "jeepScreen");
+  if (typeof startRoom === "function") { if (id === "interior") startRoom(); else stopRoom(); }
+  document.body.classList.toggle("fullscreen", ["map", "jeepScreen", "interior"].includes(id));
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1107,7 +1231,7 @@ function renderScene() {
   $("#back").onclick = goBack;
   $("#next").onclick = goNext;
   if (s.game) setupGame(s); else setupToy(s);
-  if (done.has(current)) revealPhotos(s, true);
+  if (done.has(current)) revealPhotosInCard(s, true);
 }
 
 function setupToy(s) {
@@ -1220,7 +1344,7 @@ function setupGame(s) {
   $("#skip").onclick = () => { $("#skipBox").hidden = true; revealPhotos(s); };
 }
 
-function revealPhotos(s, quiet) {
+function revealPhotosInCard(s, quiet) {
   done.add(current);
   $("#hint").textContent = "♡";
   const box = $("#photos");
@@ -1273,8 +1397,8 @@ $("#toBooth").onclick = () => {
   show("recapPage");
   if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
 };
-$("#boothBack").onclick = () => show("map");
-$("#toRecap").onclick = () => show("map");
+$("#boothBack").onclick = () => { standAt(BOOTH.x + 2, BOOTH.y + 5); show("map"); };
+$("#toRecap").onclick = () => { standAt(BOOTH.x + 2, BOOTH.y + 5); show("map"); };
 $("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
   current = 0; done.clear(); resetTown();
@@ -1456,7 +1580,7 @@ renderStrip();
 /* ======================= the town (pokemon-style walking map) ======================= */
 // full-screen town: cliz walks (arrow keys / WASD), rhey follows one step behind.
 // stores open each stop of the date; little things around town can be poked with E.
-const TILE = 16, MAP_W = 44, MAP_H = 36, STEP_MS = 170;
+const TILE = 16, MAP_W = 44, MAP_H = 36, STEP_MS = 125;
 const INK_C = "#5b4636";
 
 // one store per stop, in the same order as SCENES. a store is 5x5 tiles with its door bottom-middle;
@@ -1472,8 +1596,8 @@ const STORES = [
   { x: 13, y: 26, name: "unli wings",          icon: "wing",     roof: ["#f2b46b", "#c9773c"], wall: "#fffaf2", awning: ["#c9773c", "#fffaf2"] },
 ];
 const BOOTH = { x: 7, y: 17, name: "the photo booth", roof: ["#ee8fa8", "#d9738f"], wall: "#fde6ec", awning: ["#5b4636", "#ee8fa8"], booth: true };
-const JEEP_SPOT = { x: 5, y: 29 };            // parked jeep covers 4x2 tiles
-const SPAWN = { x: 9, y: 31 };
+const JEEP_SPOT = { x: 1, y: 7 };             // parked jeep covers 4x2 tiles, right beside the squishy store
+const SPAWN = { x: 5, y: 9 };
 const POND = { x0: 18, y0: 3, x1: 27, y1: 7 };
 const FOUNTAIN = { x0: 21, y0: 14, x1: 24, y1: 17 };
 
@@ -1689,36 +1813,50 @@ function drawTown() {
   c.fillStyle = "#e3c79c"; c.fillRect(11 * TILE + 2, 30 * TILE + 2, 12, 7);
   c.fillStyle = INK_C; c.fillRect(11 * TILE + 4, 30 * TILE + 4, 8, 1); c.fillRect(11 * TILE + 4, 30 * TILE + 6, 6, 1);
   [...STORES, BOOTH].forEach(s => drawStore(c, s));
-  c.drawImage(pixelCanvas(SPRITES.jeep), JEEP_SPOT.x * TILE + 1, JEEP_SPOT.y * TILE + 2);
 }
 
 /* ---------- characters, particles, dialog ---------- */
 const hero = { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "up", frame: 0, moving: null };
 const buddy = { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", frame: 0, moving: null };
-const held = new Set();
-let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0, jamielHop = 0, dialog = null;
+const order = [];        // directions being held, most recent last
+let tapped = null;       // a quick tap still counts as one step
+const clearHeld = () => { order.length = 0; tapped = null; };
+let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0, jamielHop = 0;
+let arrival = null, arriveByJeep = false;
+const jeepImg = pixelCanvas(SPRITES.jeep);
 
 function resetTown() {
-  Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "up", moving: null });
+  Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "right", moving: null });
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
-  flowersPicked = 0; particles = []; held.clear(); closeDialog();
+  flowersPicked = 0; particles = []; clearHeld();
+  if (dialog) { dialog.after = null; closeDialog(); }
+}
+// put the cats just outside a door (used when leaving a store)
+function standAt(x, y) {
+  Object.assign(hero, { x, y, fx: x, fy: y, dir: "down", moving: null });
+  const bx = walkable(x - 1, y) ? x - 1 : x + 1;
+  Object.assign(buddy, { x: bx, y, fx: bx, fy: y, dir: bx < x ? "right" : "left", moving: null });
+  clearHeld();
 }
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 function tryStep(now) {
-  if (hero.moving || dialog) return;
-  const dir = ["up", "down", "left", "right"].find(d => held.has(d));
+  if (hero.moving || dialog || arrival) return;
+  const dir = order[order.length - 1] || tapped;
   if (!dir) return;
+  tapped = null;
   hero.dir = dir;
   const [dx, dy] = DIRS[dir], nx = hero.x + dx, ny = hero.y + dy;
   if (!walkable(nx, ny)) return;
+  // carry on from where the last step ended so holding a key walks smoothly
+  const t0 = hero.lastEnd && now - hero.lastEnd < 80 ? hero.lastEnd : now;
   const bdx = hero.x - buddy.x, bdy = hero.y - buddy.y;
   if (bdx || bdy) {
     buddy.dir = bdx > 0 ? "right" : bdx < 0 ? "left" : bdy > 0 ? "down" : "up";
-    buddy.moving = { from: [buddy.x, buddy.y], to: [hero.x, hero.y], t0: now };
+    buddy.moving = { from: [buddy.x, buddy.y], to: [hero.x, hero.y], t0 };
     buddy.x = hero.x; buddy.y = hero.y; buddy.frame ^= 1;
   }
-  hero.moving = { from: [hero.x, hero.y], to: [nx, ny], t0: now };
+  hero.moving = { from: [hero.x, hero.y], to: [nx, ny], t0 };
   hero.x = nx; hero.y = ny; hero.frame ^= 1;
 }
 function advance(ch, now) {
@@ -1726,7 +1864,7 @@ function advance(ch, now) {
   const p = Math.min((now - ch.moving.t0) / STEP_MS, 1);
   ch.fx = ch.moving.from[0] + (ch.moving.to[0] - ch.moving.from[0]) * p;
   ch.fy = ch.moving.from[1] + (ch.moving.to[1] - ch.moving.from[1]) * p;
-  if (p >= 1) ch.moving = null;
+  if (p >= 1) { ch.lastEnd = ch.moving.t0 + STEP_MS; ch.moving = null; }
 }
 function burst(kind, px, py, n) {
   for (let i = 0; i < n; i++) particles.push({
@@ -1735,18 +1873,37 @@ function burst(kind, px, py, n) {
   });
 }
 
+// pokemon-style text box, shared by the town and the store interiors
+let dialog = null, dialogTimer = null;
 function say(lines, after) {
   dialog = { lines, i: 0, chars: 0, after };
   $("#dialog").hidden = false;
-  held.clear();
+  clearHeld();
+  typeLine();
 }
-function closeDialog() { if (dialog && dialog.after) dialog.after(); dialog = null; $("#dialog").hidden = true; }
+function typeLine() {
+  clearInterval(dialogTimer);
+  const line = dialog.lines[dialog.i];
+  dialog.chars = 0; $("#dialogText").textContent = "";
+  dialogTimer = setInterval(() => {
+    if (!dialog) return clearInterval(dialogTimer);
+    dialog.chars++;
+    $("#dialogText").textContent = line.slice(0, dialog.chars);
+    if (dialog.chars >= line.length) clearInterval(dialogTimer);
+  }, 26);
+}
+function closeDialog() {
+  clearInterval(dialogTimer);
+  const after = dialog && dialog.after;
+  dialog = null; $("#dialog").hidden = true;
+  if (after) after();
+}
 function advanceDialog() {
   const line = dialog.lines[dialog.i];
-  if (dialog.chars < line.length) { dialog.chars = line.length; return; }
-  dialog.i++; dialog.chars = 0;
+  if (dialog.chars < line.length) { dialog.chars = line.length; clearInterval(dialogTimer); $("#dialogText").textContent = line; return; }
+  dialog.i++;
   if (dialog.i >= dialog.lines.length) closeDialog();
-  else blip(880, 0.03);
+  else { blip(880, 0.03); typeLine(); }
 }
 
 // what cliz can open right now: a door (standing below it), the jeep, or a thing she's facing
@@ -1764,12 +1921,11 @@ const nextStop = () => SCENES.findIndex((_, i) => !done.has(i));
 function interact() {
   if (dialog) { advanceDialog(); return; }
   const n = nearby();
-  if (!n || hero.moving) return;
+  if (!n || hero.moving || arrival) return;
   const hx = (hero.x + 0.5) * TILE, hy = hero.y * TILE;
   if (n.kind === "store") {
     melody([523, 659, 784]);
-    current = n.i;
-    show("journey"); renderScene();
+    enterStore(n.i);
   } else if (n.kind === "booth") {
     melody([784, 988]);
     show("boothPage");
@@ -1824,11 +1980,6 @@ function renderHud() {
   if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; el.hidden = !html; }
   const k = `our town · ${done.size}/${SCENES.length} places`;
   if ($("#mapKicker").textContent !== k) $("#mapKicker").textContent = k;
-  if (dialog) {
-    const line = dialog.lines[dialog.i];
-    dialog.chars = Math.min(line.length, dialog.chars + 0.8);
-    $("#dialogText").textContent = line.slice(0, Math.floor(dialog.chars));
-  }
 }
 
 function sizeCanvas() {
@@ -1841,8 +1992,13 @@ function drawFrame(now) {
   const cv = $("#mapCanvas"), c = cv.getContext("2d"), VW = cv.width, VH = cv.height;
   c.imageSmoothingEnabled = false;
   const MW = MAP_W * TILE, MH = MAP_H * TILE;
-  const camX = MW <= VW ? -(VW - MW) / 2 : Math.max(0, Math.min(MW - VW, Math.round((hero.fx + 0.5) * TILE - VW / 2)));
-  const camY = MH <= VH ? -(VH - MH) / 2 : Math.max(0, Math.min(MH - VH, Math.round((hero.fy + 0.5) * TILE - VH / 2)));
+  // while the jeep is arriving the camera follows the jeep, otherwise it follows cliz
+  const ARRIVE_MS = 2600, jeepParkX = JEEP_SPOT.x * TILE + 1;
+  const ap = arrival ? Math.min((now - arrival.t0) / ARRIVE_MS, 1) : 1;
+  const jeepX = arrival ? -90 + (jeepParkX + 90) * (1 - Math.pow(1 - ap, 3)) : jeepParkX;
+  const focusX = arrival ? jeepX + 32 : (hero.fx + 0.5) * TILE, focusY = arrival ? JEEP_SPOT.y * TILE + 16 : (hero.fy + 0.5) * TILE;
+  const camX = MW <= VW ? -(VW - MW) / 2 : Math.max(0, Math.min(MW - VW, Math.round(focusX - VW / 2)));
+  const camY = MH <= VH ? -(VH - MH) / 2 : Math.max(0, Math.min(MH - VH, Math.round(focusY - VH / 2)));
   c.fillStyle = "#4f7d4a"; c.fillRect(0, 0, VW, VH);
   c.drawImage(townCanvas, -camX, -camY);
   const sx = x => Math.round(x - camX), sy = y => Math.round(y - camY);
@@ -1897,8 +2053,17 @@ function drawFrame(now) {
   }
   c.fillStyle = INK_C; c.fillRect(ax - 7, ay - 12, 15, 6); c.fillRect(ax - 5, ay - 6, 11, 3); c.fillRect(ax - 3, ay - 3, 7, 2); c.fillRect(ax - 1, ay - 1, 3, 2);
   c.fillStyle = "#ee8fa8"; c.fillRect(ax - 6, ay - 11, 13, 4); c.fillRect(ax - 4, ay - 7, 9, 2); c.fillRect(ax - 2, ay - 5, 5, 2); c.fillRect(ax, ay - 3, 1, 2);
-  // cats, back to front
-  [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
+  // the jeep (it drives in on arrival, with little smoke puffs)
+  c.drawImage(jeepImg, sx(jeepX), sy(JEEP_SPOT.y * TILE + 2) + (arrival && Math.floor(now / 90) % 2 ? -1 : 0));
+  if (arrival && ap < 1 && Math.random() < 0.35) particles.push({ kind: "smoke", x: jeepX, y: JEEP_SPOT.y * TILE + 22, vx: -20, vy: -8, t: now });
+  if (arrival && ap >= 1) {
+    arrival = null;
+    burst("heart", (SPAWN.x + 0.5) * TILE, SPAWN.y * TILE, 8);
+    melody([523, 659, 784, 1046]);
+    say(["we're here! ♡", "first stop: the squishy store, right over there →"]);
+  }
+  // cats, back to front (hidden until they hop out of the jeep)
+  if (!arrival) [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
     const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
     const img = catSprites[who][dir][ch.moving ? ch.frame : 0];
     const px = sx(ch.fx * TILE + 1), py = sy(ch.fy * TILE + 1);
@@ -1914,12 +2079,13 @@ function drawFrame(now) {
     c.globalAlpha = Math.max(0, 1 - age);
     if (p.kind === "heart") c.drawImage(heartImg, X, Y, 7, 7);
     else if (p.kind === "spark") { c.fillStyle = age * 10 % 2 < 1 ? "#fffaf2" : "#f6d26b"; c.fillRect(X, Y, 2, 2); }
+    else if (p.kind === "smoke") { c.fillStyle = "#d9d4cf"; c.fillRect(X, Y, 4 + age * 6, 4 + age * 6); }
     else { c.fillStyle = "#b9dcef"; c.fillRect(X, Y, 2, 2); }
     c.globalAlpha = 1;
     return true;
   });
   // "E" bubble when something can be opened
-  if (nearby() && !hero.moving && !dialog) {
+  if (!arrival && nearby() && !hero.moving && !dialog) {
     const bx = sx(hero.fx * TILE + 3), by = sy(hero.fy * TILE - 12);
     c.fillStyle = INK_C; c.fillRect(bx - 1, by - 1, 12, 11);
     c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
@@ -1928,7 +2094,8 @@ function drawFrame(now) {
 }
 
 function tick(now) {
-  tryStep(now);
+  advance(hero, now); advance(buddy, now);
+  tryStep(now);                                // start the next step the same frame the last one ends
   advance(hero, now); advance(buddy, now);
   drawFrame(now);
   renderHud();
@@ -1937,26 +2104,440 @@ function tick(now) {
 function startTown() {
   if (!townDrawn) { drawTown(); townDrawn = true; }
   sizeCanvas();
+  if (arriveByJeep) {
+    arriveByJeep = false;
+    resetTown();
+    arrival = { t0: performance.now() };
+    jeepSound();
+  }
   cancelAnimationFrame(townLoop);
   townLoop = requestAnimationFrame(tick);
 }
-function stopTown() { cancelAnimationFrame(townLoop); townLoop = null; held.clear(); }
+function stopTown() { cancelAnimationFrame(townLoop); townLoop = null; clearHeld(); }
 
 const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right", W: "up", S: "down", A: "left", D: "right" };
 document.addEventListener("keydown", e => {
-  if ($("#map").hidden) return;
-  if (KEYS[e.key]) { held.add(KEYS[e.key]); e.preventDefault(); }
-  if (e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!e.repeat) interact(); }
+  const act = e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ";
+  if ($("#map").hidden) {
+    // the text box inside stores also moves on with E / enter / space
+    if (dialog && act && !e.repeat) { e.preventDefault(); advanceDialog(); }
+    return;
+  }
+  const d = KEYS[e.key];
+  if (d) {
+    e.preventDefault();
+    if (!e.repeat) { const k = order.indexOf(d); if (k >= 0) order.splice(k, 1); order.push(d); tapped = d; }
+  }
+  if (act) { e.preventDefault(); if (!e.repeat) interact(); }
 });
-document.addEventListener("keyup", e => { if (KEYS[e.key]) held.delete(KEYS[e.key]); });
-window.addEventListener("blur", () => held.clear());
+document.addEventListener("keyup", e => { const d = KEYS[e.key]; if (d) { const k = order.indexOf(d); if (k >= 0) order.splice(k, 1); } });
+window.addEventListener("blur", clearHeld);
 document.querySelectorAll("[data-pad]").forEach(b => {
   const d = b.dataset.pad;
-  b.addEventListener("pointerdown", e => { e.preventDefault(); held.add(d); });
-  ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, () => held.delete(d)));
+  b.addEventListener("pointerdown", e => { e.preventDefault(); order.push(d); tapped = d; });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, () => { const k = order.indexOf(d); if (k >= 0) order.splice(k, 1); }));
 });
 $("#padE").onclick = interact;
 $("#dialog").onclick = () => { if (dialog) advanceDialog(); };
+
+/* ======================= inside the places ======================= */
+// every store has its own pixel room and its own little activity; finishing it opens the photos
+SPRITES.lips = [
+  ".RR.RR.",
+  "RRRRRRR",
+  ".RRRRR.",
+  "..RRR..",
+];
+SPRITES.yarn = [
+  "...kkkk...",
+  ".kkvvvvkk.",
+  ".kvwvvkvk.",
+  "kvvvvkvvvk",
+  "kvvvkvvvvk",
+  "kvvkvvvkvk",
+  "kvkvvvkvvk",
+  ".kvvvkvvk.",
+  ".kkvvvvkk.",
+  "...kkkk..k",
+];
+SPRITES.pizza = [
+  "kkkkkkkkkk",
+  "kYYYYYYYYk",
+  ".kyRyyyRk.",
+  ".kyyyRyyk.",
+  "..kyyyyk..",
+  "..kyRyyk..",
+  "...kyyk...",
+  "....kk....",
+];
+SPRITES.hat = SPRITES.rheyHat.slice(0, 5);
+
+const pcCache = {};
+const pc = n => pcCache[n] || (pcCache[n] = pixelCanvas(SPRITES[n]));
+
+/* ---------- the rooms (drawn on a 320x180 pixel canvas, scaled up to fill the screen) ---------- */
+function roomKit(c) {
+  const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  const S = (n, x, y, s = 1) => c.drawImage(pc(n), x, y, pc(n).width * s, pc(n).height * s);
+  const ball = (cx, cy, r, col, ring) => {
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+      const d = x * x + y * y;
+      if (d <= r * r) R(cx + x, cy + y, 1, 1, ring && d > (r - 1.2) * (r - 1.2) ? ring : col);
+    }
+  };
+  const checker = (y0, a, b, size = 16) => { for (let y = y0; y < 180; y += size) for (let x = 0; x < 320; x += size) R(x, y, size, size, ((x + y) / size) % 2 ? a : b); };
+  const planks = (y0, a, line) => { R(0, y0, 320, 180 - y0, a); for (let y = y0 + 10; y < 180; y += 12) R(0, y, 320, 1, line); for (let y = y0; y < 180; y += 12) for (let x = (y / 12 % 2) * 30; x < 320; x += 60) R(x, y, 1, 12, line); };
+  const shelf = (x, y, w) => { R(x, y, w, 4, "#9b7350"); R(x, y + 4, w, 1, "#5b4636"); R(x + 4, y + 5, 3, 5, "#7a5a3c"); R(x + w - 7, y + 5, 3, 5, "#7a5a3c"); };
+  const frame = (x, y, w, h, fill) => { R(x - 2, y - 2, w + 4, h + 4, "#5b4636"); R(x, y, w, h, fill); };
+  const base = (y, col) => { R(0, y, 320, 3, col); };
+  return { R, S, ball, checker, planks, shelf, frame, base };
+}
+
+const ROOMS = [
+  // 0: sari-sari x squishy store
+  (c, now) => {
+    const { R, S, ball, checker, shelf, frame, base } = roomKit(c);
+    R(0, 0, 320, 120, "#fbeec4");
+    for (let x = 0; x < 320; x += 16) R(x, 0, 8, 120, "#f8e6b0");
+    const packs = ["#f6d26b", "#ee8fa8", "#c7a2e6", "#7b9be0", "#e05a5a", "#7fc8a9"];
+    for (let x = 6, k = 0; x < 320; x += 13, k++) {        // hanging sachets
+      R(x + 3, 0, 1, 5, "#5b4636");
+      frame(x, 5, 8, 11, packs[k % 6]); R(x + 2, 8, 4, 2, "#fffaf2");
+      frame(x, 19, 8, 11, packs[(k + 3) % 6]); R(x + 2, 22, 4, 2, "#fffaf2");
+    }
+    for (const sx of [6, 226]) for (const sy of [62, 86, 110]) {
+      shelf(sx, sy, 88);
+      for (let i = 0; i < 6; i++) { ball(sx + 8 + i * 14, sy - 5, 5, packs[(i + sy) % 6], "#5b4636"); R(sx + 6 + i * 14, sy - 6, 1, 1, "#5b4636"); R(sx + 10 + i * 14, sy - 6, 1, 1, "#5b4636"); }
+    }
+    frame(122, 40, 76, 30, "#fffaf2"); S("banana", 142, 44, 2);
+    base(120, "#c9a274");
+    checker(123, "#e9d8b8", "#e0cba6");
+  },
+  // 1: bags & makeup
+  (c, now) => {
+    const { R, S, frame, base, planks } = roomKit(c);
+    R(0, 0, 320, 120, "#fde4ea");
+    R(8, 12, 120, 100, "#f6d3dc");
+    for (let y = 16; y < 110; y += 8) for (let x = 12; x < 126; x += 8) R(x, y, 1, 1, "#e5adbd");
+    [[14, 20], [52, 20], [90, 20], [14, 62], [52, 62], [90, 62]].forEach(([x, y], k) => { R(x + 15, y - 4, 2, 4, "#5b4636"); S("bag", x, y, 2); });
+    // makeup shelves
+    for (const y of [40, 70, 100]) {
+      R(212, y, 100, 4, "#fffaf2"); R(212, y + 4, 100, 1, "#d9a7b5");
+      for (let i = 0; i < 8; i++) { const col = ["#e05a5a", "#ee8fa8", "#c7a2e6", "#f6d26b"][i % 4]; R(216 + i * 12, y - 10, 5, 10, "#5b4636"); R(217 + i * 12, y - 9, 3, 4, col); R(217 + i * 12, y - 5, 3, 4, "#e0ae3c"); }
+    }
+    for (let x = 140; x < 200; x += 10) R(x, 6, 4, 4, Math.floor(now / 400 + x) % 2 ? "#f6d26b" : "#fffaf2");
+    base(120, "#e5adbd");
+    planks(123, "#ead2b4", "#dcc0a0");
+  },
+  // 2: crochet shop
+  (c, now) => {
+    const { R, ball, shelf, frame, base, planks } = roomKit(c);
+    R(0, 0, 320, 120, "#ece2f7");
+    for (let x = 0; x < 320; x += 20) R(x, 0, 2, 120, "#e1d3f2");
+    frame(130, 14, 60, 40, "#dff0f7"); R(159, 14, 2, 40, "#5b4636"); R(130, 33, 60, 2, "#5b4636");
+    R(134, 18, 10, 4, "#fffaf2");
+    const yarn = ["#ee8fa8", "#c7a2e6", "#f6d26b", "#7fc8a9", "#7b9be0", "#f2b46b"];
+    for (const sx of [10, 220]) for (const sy of [56, 84, 112]) {
+      shelf(sx, sy, 90);
+      for (let i = 0; i < 6; i++) { ball(sx + 8 + i * 15, sy - 6, 6, yarn[(i + sy) % 6], "#5b4636"); R(sx + 5 + i * 15, sy - 8, 6, 1, "rgba(255,255,255,.5)"); }
+    }
+    for (let x = 18; x < 310; x += 26) {           // little crochet flowers hanging
+      if (x > 120 && x < 200) continue;
+      R(x + 2, 0, 1, 8, "#5b4636");
+      ball(x + 2, 11, 3, yarn[(x / 26 | 0) % 6], "#5b4636"); R(x + 2, 11, 1, 1, "#f6d26b");
+    }
+    base(120, "#c9a8e0");
+    planks(123, "#e2c9a6", "#cfb48f");
+    R(90, 140, 140, 30, "#f6b8c8"); for (let x = 94; x < 226; x += 8) R(x, 140, 4, 30, "#fde6ec");
+  },
+  // 3: the waiting shed in the rain
+  (c, now) => {
+    const { R, frame } = roomKit(c);
+    for (let y = 0; y < 130; y += 10) R(0, y, 320, 10, y < 40 ? "#8e9aa8" : y < 80 ? "#9aa7b4" : "#a7b3bf");
+    for (const [x, w, h] of [[0, 40, 50], [44, 30, 70], [80, 50, 40], [190, 40, 60], [236, 34, 80], [276, 44, 50]]) {
+      R(x, 130 - h, w, h, "#7f8b98");
+      for (let wy = 130 - h + 6; wy < 124; wy += 10) for (let wx = x + 5; wx < x + w - 5; wx += 9) R(wx, wy, 4, 5, Math.floor(now / 900 + wx + wy) % 5 ? "#a9b6c3" : "#f6d26b");
+    }
+    R(0, 130, 320, 50, "#6f6f73");
+    for (let x = 0; x < 320; x += 40) R(x + ((now / 30) % 40), 156, 20, 3, "#8a8a8f");
+    R(0, 0, 320, 22, "#5b4636"); for (let y = 0; y < 20; y++) R(0, y, 320, 1, Math.floor(y / 4) % 2 ? "#8798ab" : "#a9b8c9");
+    R(16, 22, 6, 130, "#5b4636"); R(298, 22, 6, 130, "#5b4636");
+    R(0, 128, 320, 3, "#8a8a8f");
+    // rain, but not under the roof
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 53 + Math.floor(now / 8)) % 340 - 10, y = (i * 37 + Math.floor(now / 3)) % 190;
+      if (y > 22) R(x, y, 1, 5, "#c9d8e6");
+    }
+    for (let i = 0; i < 6; i++) { const t = (now / 500 + i * 0.7) % 1; R(40 + i * 46 - t * 6, 165, 4 + t * 12, 1, "#9fb4c8"); }
+  },
+  // 4: anime toy store
+  (c, now) => {
+    const { R, S, shelf, frame, base, checker } = roomKit(c);
+    R(0, 0, 320, 120, "#fff3d6");
+    for (let x = 0; x < 320; x += 12) R(x, 4 + (x % 24 ? 2 : 0), 2, 2, "#5b4636");
+    for (let x = 4, k = 0; x < 320; x += 12, k++) R(x, 7 + (k % 2) * 2, 4, 4, Math.floor(now / 350 + k) % 3 ? ["#ee8fa8", "#f6d26b", "#7b9be0", "#7fc8a9"][k % 4] : "#fffaf2");
+    frame(134, 18, 52, 64, "#d8ecf8"); S("luffy", 144, 24, 2);
+    const box = ["#e05a5a", "#7b9be0", "#f6d26b", "#c7a2e6", "#7fc8a9", "#f2b46b"];
+    for (const sx of [6, 222]) for (const sy of [50, 82, 114]) {
+      shelf(sx, sy, 92);
+      for (let i = 0; i < 6; i++) {
+        const x = sx + 4 + i * 15, col = box[(i * 2 + sy) % 6];
+        frame(x, sy - 20, 11, 18, col); R(x + 2, sy - 17, 7, 8, "#fff3d6"); R(x + 4, sy - 14, 1, 1, "#5b4636"); R(x + 6, sy - 14, 1, 1, "#5b4636"); R(x + 3, sy - 19, 5, 2, "#3a2e2a");
+      }
+    }
+    base(120, "#e0ae3c");
+    checker(123, "#f3d9c4", "#f8e6d6");
+  },
+  // 5: the arcade
+  (c, now) => {
+    const { R, frame, base, checker } = roomKit(c);
+    R(0, 0, 320, 120, "#2f2547");
+    const on = Math.floor(now / 450) % 2;
+    R(0, 12, 320, 3, on ? "#ee8fa8" : "#9c5d76"); R(0, 20, 320, 2, on ? "#7b9be0" : "#ee8fa8");
+    for (const [x, col] of [[8, "#7be0c9"], [56, "#f6d26b"], [222, "#ee8fa8"], [270, "#7b9be0"]]) {
+      frame(x, 36, 40, 84, "#4a3a6e");
+      R(x + 4, 40, 32, 8, col);
+      frame(x + 6, 52, 28, 22, Math.floor(now / 250 + x) % 2 ? "#1f1830" : "#2a2142");
+      R(x + 10, 58 + (Math.floor(now / 120 + x) % 10), 4, 4, col); R(x + 22, 62, 6, 2, "#fffaf2");
+      R(x + 4, 80, 32, 8, "#3a2d58"); R(x + 12, 76, 2, 6, "#5b4636"); R(x + 10, 74, 6, 3, "#e05a5a"); R(x + 24, 81, 4, 3, "#f6d26b"); R(x + 30, 81, 4, 3, "#7b9be0");
+    }
+    for (let i = 0; i < 5; i++) R(140 + i * 9, 32, 5, 5, ["#e05a5a", "#f6d26b", "#7be0c9", "#ee8fa8", "#7b9be0"][(i + Math.floor(now / 300)) % 5]);
+    base(120, on ? "#ee8fa8" : "#7b9be0");
+    checker(123, "#3a2d58", "#33284a");
+    for (let i = 0; i < 30; i++) R((i * 71) % 320, 128 + (i * 29) % 50, 2, 2, ["#ee8fa8", "#7be0c9", "#f6d26b"][i % 3]);
+  },
+  // 6: the bag shop (with a sale on)
+  (c, now) => {
+    const { R, S, frame, base, checker } = roomKit(c);
+    R(0, 0, 320, 120, "#efe0cc");
+    for (let y = 0; y < 120; y += 24) R(0, y, 320, 1, "#e3d0b8");
+    frame(118, 8, 84, 26, "#e05a5a"); R(122, 12, 76, 18, "#f6d26b"); R(126, 16, 68, 10, "#e05a5a");
+    for (let x = 128; x < 192; x += 10) R(x, 19, 6, 4, "#fffaf2");
+    for (const sx of [8, 214]) {
+      R(sx, 44, 98, 3, "#5b4636"); R(sx + 4, 44, 2, 70, "#5b4636"); R(sx + 92, 44, 2, 70, "#5b4636");
+      for (let i = 0; i < 3; i++) { R(sx + 16 + i * 30, 47, 1, 6, "#5b4636"); S("bag", sx + 9 + i * 30, 52, 1.5); }
+      R(sx, 92, 98, 3, "#9b7350");
+      for (let i = 0; i < 5; i++) { frame(sx + 6 + i * 19, 74, 10, 16, "#f6b8c8"); R(sx + 8 + i * 19, 72, 6, 2, "#ee8fa8"); }
+    }
+    base(120, "#c9a274");
+    checker(123, "#f4ece1", "#ece0cf");
+  },
+  // 7: unli wings
+  (c, now) => {
+    const { R, ball, frame, base, planks } = roomKit(c);
+    R(0, 0, 320, 120, "#fff3e6");
+    R(0, 72, 320, 48, "#8c3b3b"); R(0, 72, 320, 2, "#5b4636");
+    R(0, 68, 320, 3, Math.floor(now / 600) % 2 ? "#7bb6e0" : "#9fcdf0");
+    // "unli shrimp" and "unli pizza" posters
+    frame(26, 10, 70, 50, "#7a2a2a");
+    for (let i = 0; i < 4; i++) { R(36 + i * 13, 32, 10, 6, "#ef8e4f"); R(44 + i * 13, 30, 2, 3, "#ef8e4f"); }
+    R(32, 16, 58, 6, "#f6d26b");
+    frame(224, 10, 70, 50, "#7a2a2a"); R(230, 16, 58, 6, "#f6d26b");
+    ball(259, 40, 14, "#f6d26b", "#c9773c"); for (const [x, y] of [[253, 36], [263, 42], [257, 46], [265, 34]]) R(x, y, 3, 3, "#e05a5a");
+    base(120, "#5b4636");
+    planks(123, "#6b4f45", "#5a4038");
+  },
+];
+
+/* ---------- activities ---------- */
+const pets = () => [cliz(110), rhey(110)];
+const bubble = text => `<div class="say-bubble">${esc(text)}</div>`;
+let roomFinish = null, roomLoop = null;
+
+const ACTIVITIES = [
+  // 0: squish the banana
+  (st, s, finish) => {
+    const [l, r] = pets();
+    st.innerHTML = `${l}<div class="act">${bubble("squish me! ♡")}<button class="toy squish tapme" style="width:min(340px,38vw)">${sprite("banana", 340)}</button></div>${r}`;
+    let n = 0; const b = st.querySelector(".tapme");
+    b.onclick = e => {
+      if (n >= 3) return;
+      n++; replay(b); hopPets(st); blip(500 + n * 120);
+      const [x, y] = eventPoint(e, b); popText(["squish!", "squish!!", "SQUISH ♡"][n - 1], x, y);
+      if (n === 3) finish();
+    };
+  },
+  // 1: kisses on the mirror
+  (st, s, finish) => {
+    const [l, r] = pets();
+    st.innerHTML = `${l}<div class="act act-row">
+        <div class="mirror" id="mirror"><div class="mirror-glass"></div></div>
+        <div class="act">${bubble("try the lipstick ♡")}<button class="toy wiggle tapme" style="width:min(90px,12vw)">${sprite("lipstick", 90)}</button></div>
+      </div>${r}`;
+    let n = 0; const b = st.querySelector(".tapme"), m = st.querySelector("#mirror");
+    b.onclick = e => {
+      if (n >= 3) return;
+      n++; replay(b); blip(700 + n * 90);
+      const k = document.createElement("div"); k.className = "kiss";
+      k.style.left = 20 + Math.random() * 50 + "%"; k.style.top = 18 + Math.random() * 55 + "%";
+      k.style.transform = `translate(-50%,-50%) rotate(${Math.random() * 40 - 20}deg)`;
+      k.innerHTML = sprite("lips", 56); m.appendChild(k);
+      const [x, y] = eventPoint(e, b); popText(["mwah!", "mwah mwah!", "so pretty ♡"][n - 1], x, y);
+      if (n === 3) finish();
+    };
+  },
+  // 2: crochet the octopus, row by row
+  (st, s, finish) => {
+    const [l, r] = pets();
+    st.innerHTML = `${l}<div class="act act-row">
+        <div class="crochet-wrap" style="width:min(220px,26vw)"><div class="crochet-ghost">${sprite("octopus", 220)}</div><div class="crochet-wip" id="wip">${sprite("octopus", 220)}</div></div>
+        <div class="act">${bubble("crochet with me ♡")}<button class="toy bounce tapme" style="width:min(110px,14vw)">${sprite("yarn", 110)}</button></div>
+      </div>${r}`;
+    let n = 0; const b = st.querySelector(".tapme"), wip = st.querySelector("#wip");
+    wip.style.clipPath = "inset(100% 0 0 0)";
+    b.onclick = e => {
+      if (n >= 4) return;
+      n++; replay(b); blip(520 + n * 110);
+      wip.style.clipPath = `inset(${100 - n * 25}% 0 0 0)`;
+      const [x, y] = eventPoint(e, b); popText(["loop", "loop loop", "almost...", "it's done ♡"][n - 1], x, y);
+      if (n === 4) { hopPets(st); finish(); }
+    };
+  },
+  // 3: share the umbrella in the rain
+  (st, s, finish) => {
+    st.innerHTML = `<div class="act act-rain">
+        <div class="open-umbrella" id="umb">${sprite("umbrella", 260)}</div>
+        <div class="bench-pets">${cliz(110)}${rhey(110)}</div>
+        <div class="bench"></div>
+      </div>
+      <div class="act">${bubble("share the umbrella ☂")}<button class="toy bounce tapme" style="width:min(110px,14vw)">${sprite("umbrella", 110)}</button></div>`;
+    const b = st.querySelector(".tapme"), umb = st.querySelector("#umb");
+    let used = false;
+    b.onclick = e => {
+      if (used) return;
+      used = true; blip(660); melody([523, 659, 784]);
+      b.parentElement.style.visibility = "hidden";
+      umb.classList.add("up"); hopPets(st);
+      const [x, y] = eventPoint(e, b); popText("come here ☂", x, y);
+      setTimeout(finish, 900);
+    };
+  },
+  // 4: the straw hat flies onto rhey
+  (st, s, finish) => {
+    st.innerHTML = `${cliz(110)}
+      <div class="act" style="margin: 0 3vw">${bubble("try on the straw hat!")}<button class="toy tapme hat-btn" style="width:min(170px,20vw)">${sprite("hat", 170)}</button></div>
+      <div class="act"><div class="luffy-fig toy" style="width:min(150px,18vw)">${sprite("luffy", 150)}</div></div>
+      <div id="rheySpot">${rhey(110)}</div>`;
+    const b = st.querySelector(".tapme");
+    let used = false;
+    b.onclick = e => {
+      if (used) return;
+      used = true; blip(660);
+      st.querySelector(".say-bubble").remove();
+      const from = b.getBoundingClientRect(), to = st.querySelector("#rheySpot svg").getBoundingClientRect();
+      b.style.transition = "transform .7s cubic-bezier(.3,1.4,.5,1)";
+      b.style.transform = `translate(${to.left + to.width / 2 - (from.left + from.width / 2)}px, ${to.top - from.top - from.height / 2}px) scale(.55) rotate(-360deg)`;
+      setTimeout(() => {
+        b.style.visibility = "hidden";
+        st.querySelector("#rheySpot").innerHTML = rhey(110, true);
+        replay(st.querySelector(".luffy-fig")); st.querySelector(".luffy-fig").classList.add("bounce");
+        hopPets(st); melody([523, 659, 784, 1046]);
+        const r = st.querySelector("#rheySpot").getBoundingClientRect();
+        popText("KING OF THE PIRATES!!", r.left + r.width / 2, r.top);
+        setTimeout(() => popText("shishishi!", r.left - 120, r.top + 40), 500);
+        finish();
+      }, 720);
+    };
+  },
+  // 5: the basketball game, inside the arcade
+  (st, s, finish) => {
+    const [l, r] = pets();
+    st.innerHTML = `${l}<div class="act arcade-act">
+        <div class="court" id="court" tabindex="0" role="button" aria-label="shoot the ball">
+          <div class="hoop" id="hoop">${sprite("hoop", 96)}</div>
+          <div class="ball" id="ball">${sprite("ball", 36)}</div>
+          <div class="misses" id="misses">miss: 0</div>
+          <div class="score" id="score">0 / ${s.goal}</div>
+        </div>
+        <button class="pxbtn" id="shoot">shoot!</button>
+        <div class="skip-box" id="skipBox" hidden><p class="skip-msg">${esc(s.skipText)}</p><button class="pxbtn" id="skip">skip</button></div>
+      </div>${r}`;
+    setupGame(s);
+  },
+  // 6: find the pizza charm
+  (st, s, finish) => {
+    const [l, r] = pets(), lucky = Math.floor(Math.random() * 3);
+    st.innerHTML = `${l}<div class="act">${bubble("which bag has the pizza charm?")}<div class="act-row bags">
+        ${[0, 1, 2].map(i => `<button class="toy wiggle tapme" data-i="${i}" style="width:min(150px,17vw)">${sprite("bag", 150)}</button>`).join("")}
+      </div></div>${r}`;
+    let found = false;
+    st.querySelectorAll(".tapme").forEach(b => b.onclick = e => {
+      if (found) return;
+      replay(b);
+      const [x, y] = eventPoint(e, b);
+      if (+b.dataset.i !== lucky) { blip(220, 0.12); popText("nope!", x, y); b.style.opacity = .45; return; }
+      found = true; melody([784, 988, 1175]);
+      const p = document.createElement("div"); p.className = "pizza-pop"; p.innerHTML = sprite("pizza", 80); b.appendChild(p);
+      popText("found it! ♡", x, y);
+      st.querySelector(".say-bubble").remove();
+      finish();
+    });
+  },
+  // 7: eat the unli wings (jamiel came too)
+  (st, s, finish) => {
+    st.innerHTML = `${cliz(110)}<div class="act">${bubble("eat! ♡")}
+        <div class="table"><div class="plate">${[0, 1, 2, 3, 4].map(i => `<button class="toy wiggle tapme wing-${i}" style="width:min(70px,9vw)">${sprite("wing", 70)}</button>`).join("")}</div></div>
+      </div>${rhey(110)}${pet("jamiel", "jamiel", 100)}`;
+    let eaten = 0;
+    st.querySelectorAll(".tapme").forEach(b => b.onclick = e => {
+      if (b.classList.contains("eaten")) return;
+      b.classList.add("eaten"); eaten++; blip(440 + eaten * 80);
+      const [x, y] = eventPoint(e, b); popText(["nom", "nom nom", "so good", "one more...", "UNLI WINGS!!"][eaten - 1], x, y);
+      hopPets(st);
+      if (eaten === 5) { grunt(); finish(); }
+    });
+  },
+];
+
+/* ---------- entering and leaving ---------- */
+function drawRoom(now) {
+  const cv = $("#roomCanvas"), c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  ROOMS[current](c, now);
+}
+function roomTick(now) { drawRoom(now); roomLoop = requestAnimationFrame(roomTick); }
+function startRoom() { cancelAnimationFrame(roomLoop); roomLoop = requestAnimationFrame(roomTick); }
+function stopRoom() { cancelAnimationFrame(roomLoop); roomLoop = null; }
+
+function enterStore(i) {
+  current = i;
+  const s = SCENES[i];
+  $("#roomTitle").textContent = STORES[i].name;
+  $("#roomStage").innerHTML = "";
+  $("#photoBox").hidden = true;
+  show("interior");
+  roomFinish = () => {
+    roomFinish = null;
+    done.add(i);
+    setTimeout(() => showRoomPhotos(i), 900);
+  };
+  // his caption first, then the activity
+  say([s.text], () => ACTIVITIES[i]($("#roomStage"), s, () => roomFinish && roomFinish()));
+}
+// the arcade game (and anything else) calls this when it's won
+function revealPhotos() { if (roomFinish) roomFinish(); }
+
+function showRoomPhotos(i) {
+  const s = SCENES[i];
+  $("#photoKicker").textContent = `stop ${i + 1} of ${SCENES.length}`;
+  $("#photoTitle").textContent = s.title;
+  const grid = $("#photoGrid");
+  grid.innerHTML = s.photos.map((p, k) => polaroid(p, k)).join("");
+  grid.querySelectorAll(".polaroid").forEach((f, k) => f.style.setProperty("--d", k * 0.15 + "s"));
+  wireLightbox(grid);
+  $("#photoOut").textContent = done.size === SCENES.length ? "all done! back outside ♡" : "back outside →";
+  $("#photoBox").hidden = false;
+  $("#photoBox").scrollTop = 0;
+  melody([659, 784, 988]);
+}
+function exitTo(place) {
+  stopRoom();
+  if (dialog) { dialog.after = null; closeDialog(); }
+  standAt(place.x + 2, place.y + 5);
+  show("map");
+}
+$("#roomBack").onclick = () => exitTo(STORES[current]);
+$("#photoOut").onclick = () => exitTo(STORES[current]);
 
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
@@ -2037,6 +2618,7 @@ $("#jeep").onclick = () => {
   later(() => {
     clearInterval(smoke);
     $("#road").classList.remove("moving");
+    arriveByJeep = true;
     show("map");
   }, 2700);
 };
