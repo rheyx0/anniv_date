@@ -2228,7 +2228,11 @@ function drawFrame(now) {
     const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
     const img = ch.sitting ? catSprites[who].sit[0] : catSprites[who][dir][ch.moving ? 1 + ch.frame : 0];
     // round the world position first so the cat and camera move in lockstep (no 1px twitch)
-    const px = sx(Math.round(ch.fx * TILE) + 1), py = sy(Math.round(ch.fy * TILE) + 1 + (ch.sitting ? 2 : 0));
+    // round cliz once, and place rhey relative to her, so neither drifts a pixel against the other
+    const hpx = Math.round(hero.fx * TILE), hpy = Math.round(hero.fy * TILE);
+    const wx = ch === hero ? hpx : hpx + Math.round((ch.fx - hero.fx) * TILE);
+    const wy = ch === hero ? hpy : hpy + Math.round((ch.fy - hero.fy) * TILE);
+    const px = sx(wx + 1), py = sy(wy + 1 + (ch.sitting ? 2 : 0));
     c.save();
     if (ch.dir === "left") { c.translate(px + 14, py); c.scale(-1, 1); c.drawImage(img, 0, 0); }
     else c.drawImage(img, px, py);
