@@ -2126,8 +2126,8 @@ function interact() {
       t.tiles.forEach(([x, y]) => grid[y][x] = ".");
       burst("heart", hx, hy, 5); melody([784, 988, 1175]);
       const total = THINGS.filter(o => o.id === "flower").length;
-      say(flowersPicked < total ? [`you picked a flower for cliz ♡ (${flowersPicked}/${total})`]
-                                : [`you picked a flower for cliz ♡ (${total}/${total})`, "that's a whole bouquet now ♡"]);
+      say(flowersPicked < total ? [`picked up a flower ♡ (${flowersPicked}/${total})`]
+                                : [`picked up a flower ♡ (${total}/${total})`, "that's a whole bouquet now ♡"]);
     }
   }
 }
