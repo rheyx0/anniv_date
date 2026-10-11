@@ -116,57 +116,93 @@
   .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
   .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
 
-  /* the jeepney ride: mintal to roxas */
-  .road {
-    position: relative; height: 240px; margin: 18px -22px 8px; overflow: hidden;
-    background: linear-gradient(#dff0f7 0 64%, #8f8a86 64% 100%);
+  /* the jeepney ride: a full-screen road, mintal to roxas */
+  .jeep-stage {
+    position: fixed; inset: 0; z-index: 5; overflow: hidden;
+    background: linear-gradient(#dff0f7 0 62%, #8f8a86 62% 100%);
   }
-  .road::before {   /* little pixel clouds */
-    content: ""; position: absolute; left: 10%; top: 26px; width: 48px; height: 12px; background: #fff;
-    box-shadow: 8px -8px 0 #fff, 22px -8px 0 #fff, 190px 18px 0 #fff, 204px 10px 0 #fff, 214px 18px 0 #fff;
+  .jeep-stage::before {   /* little pixel clouds */
+    content: ""; position: absolute; left: 12%; top: 12%; width: 72px; height: 18px; background: #fff;
+    box-shadow: 12px -12px 0 #fff, 34px -12px 0 #fff, 46vw 30px 0 #fff, calc(46vw + 18px) 18px 0 #fff, calc(46vw + 34px) 30px 0 #fff,
+      70vw -6px 0 #fff, calc(70vw + 20px) -18px 0 #fff;
   }
-  .road::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 36px; height: 6px;
-    background: repeating-linear-gradient(90deg, #f6d26b 0 26px, transparent 26px 52px);
+  .jeep-stage::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 15vh; height: 8px;
+    background: repeating-linear-gradient(90deg, #f6d26b 0 34px, transparent 34px 68px);
   }
-  .road.moving::after { animation: dash .3s linear infinite; }
+  .jeep-stage.moving::after { animation: dash .3s linear infinite; }
+  .stage-back { position: fixed; top: 14px; left: 14px; z-index: 8; }
   .jeep {
-    position: absolute; left: 50%; bottom: 30px; width: min(340px, 88%); padding: 0; border: 0; background: none;
-    transform: translateX(-50%);
+    position: absolute; left: 50%; bottom: 18vh; width: min(560px, 86vw); padding: 0; border: 0; background: none;
+    transform: translateX(-160vw);
   }
   .jeep > svg { display: block; width: 100%; height: auto; }
+  .jeep.arrive { animation: rollin 2.2s cubic-bezier(.2, .7, .3, 1) forwards; }
+  .jeep.idle { transform: translateX(-50%); }
   .jeep.idle > svg { animation: hop .6s steps(2) infinite; }
-  .jeep.rev { animation: rev .1s steps(2) infinite; }
-  .jeep.go { animation: drive 1.8s cubic-bezier(.55, 0, .9, .45) forwards; }
+  .jeep.rev { transform: translateX(-50%); animation: rev .1s steps(2) infinite; }
+  .jeep.go { animation: drive 1.9s cubic-bezier(.55, 0, .9, .45) forwards; }
   .jeep-sign {
     position: absolute; left: 4.8%; width: 71%; top: 10.7%; height: 14.3%;
     display: flex; align-items: center; justify-content: center; pointer-events: none;
-    font: clamp(7px, 2.4vw, 10px) "Press Start 2P", monospace; color: #fffaf2; letter-spacing: .04em; white-space: nowrap;
+    font: clamp(8px, 2.6vw, 15px) "Press Start 2P", monospace; color: #fffaf2; letter-spacing: .04em; white-space: nowrap;
   }
   .rider { position: absolute; bottom: 53.6%; width: 9.7%; pointer-events: none; }
   .rider svg { display: block; width: 100%; height: auto; }
-  .puff { position: absolute; width: 10px; height: 10px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
-  @keyframes dash { to { background-position: -52px 0; } }
-  @keyframes drive { from { transform: translateX(-50%); } to { transform: translateX(170%); } }
+  .puff { position: absolute; width: 14px; height: 14px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
+  .jeep-bubble {
+    position: absolute; left: 50%; bottom: calc(18vh + min(560px, 86vw) * 0.45 + 22px); z-index: 3;
+    transform: translateX(-50%); padding: 12px 18px; background: var(--card); white-space: nowrap;
+    font: 600 20px "Pixelify Sans", monospace; color: var(--ink);
+    box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .18);
+    animation: bubble 1s steps(2) infinite;
+  }
+  .jeep-bubble::after {
+    content: ""; position: absolute; left: calc(50% - 8px); bottom: -16px; width: 16px; height: 12px;
+    background: var(--card); box-shadow: 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink);
+  }
+  @keyframes rollin { from { transform: translateX(-160vw); } to { transform: translateX(-50%); } }
+  @keyframes drive { from { transform: translateX(-50%); } to { transform: translateX(120vw); } }
+  @keyframes dash { to { background-position: -68px 0; } }
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
-  @keyframes puff { to { transform: translate(-40px, -26px) scale(2.4); opacity: 0; } }
+  @keyframes puff { to { transform: translate(-50px, -34px) scale(2.4); opacity: 0; } }
+  @keyframes bubble { 50% { transform: translate(-50%, -6px); } }
+  .hero.poof { animation: poof .45s ease-in forwards; }
+  @keyframes poof { to { transform: scale(.6) translateY(30px); opacity: 0; } }
 
-  /* the town map */
-  .map-card { padding: 26px 16px 22px; }
-  .map-wrap { position: relative; margin: 12px auto 0; max-width: 660px; box-shadow: 0 0 0 4px var(--ink), 4px 10px 0 4px rgba(91, 70, 54, .15); }
-  .map-wrap canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
-  .map-prompt { min-height: 3em; margin: 14px auto 0; max-width: 40ch; font-size: 15px; color: var(--muted); }
-  .map-prompt b { color: var(--ink); font-weight: 600; }
+  /* the full-screen town */
+  #map { position: fixed; inset: 0; z-index: 5; background: #4f7d4a; }
+  #map canvas { position: absolute; inset: 0; width: 100vw; height: 100vh; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  body.fullscreen { overflow: hidden; }
+  body.fullscreen .jamiel { display: none; }
+  .hud-pill {
+    position: absolute; z-index: 6; background: var(--card); color: var(--muted); font-size: 15px; padding: 8px 14px; margin: 0;
+    box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .2);
+  }
+  .hud-pill b { color: var(--ink); font-weight: 600; }
+  .hud-kicker { top: 18px; left: 18px; font: 11px "Press Start 2P", monospace; color: var(--ink); padding: 10px 12px; }
+  .hud-prompt { left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap; max-width: calc(100vw - 40px); overflow: hidden; text-overflow: ellipsis; }
   kbd {
     display: inline-block; font: 11px "Press Start 2P", monospace; color: var(--ink); background: var(--pink);
     padding: 3px 5px 2px; box-shadow: 0 0 0 2px var(--ink); margin: 0 2px;
   }
-  .pad { display: flex; align-items: center; justify-content: center; gap: 34px; margin-top: 12px; touch-action: none; user-select: none; }
-  .dpad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(3, 48px); gap: 4px; }
+  .dialog {
+    position: absolute; z-index: 7; left: 50%; bottom: 22px; transform: translateX(-50%);
+    width: min(640px, calc(100vw - 40px)); min-height: 92px; padding: 18px 22px; background: var(--card); cursor: var(--paw), pointer;
+    box-shadow: 0 0 0 4px var(--ink), inset 0 0 0 4px var(--pink-l), 4px 10px 0 4px rgba(91, 70, 54, .25);
+  }
+  .dialog p { margin: 0; font: 600 20px/1.5 "Pixelify Sans", monospace; color: var(--ink); }
+  .dialog-more { position: absolute; right: 16px; bottom: 10px; color: var(--pink-d); animation: hop .6s steps(2) infinite; }
+  .pad {
+    position: absolute; z-index: 6; left: 0; right: 0; bottom: 84px; padding: 0 22px;
+    display: flex; align-items: center; justify-content: space-between; touch-action: none; user-select: none; pointer-events: none;
+  }
+  .pad > * { pointer-events: auto; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); gap: 4px; opacity: .9; }
   .dpad .pxbtn, .abtn { margin: 0; padding: 0; font-size: 18px; touch-action: none; }
   .dpad [data-pad="up"] { grid-area: 1 / 2; } .dpad [data-pad="left"] { grid-area: 2 / 1; }
   .dpad [data-pad="right"] { grid-area: 2 / 3; } .dpad [data-pad="down"] { grid-area: 3 / 2; }
-  .abtn { width: 64px; height: 64px; border-radius: 0; font: 18px "Press Start 2P", monospace; }
+  .abtn { width: 68px; height: 68px; font: 18px "Press Start 2P", monospace; opacity: .9; }
   @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
   .trail-wrap { display: none !important; }
 
@@ -370,35 +406,30 @@
   </section>
 
   <section id="jeepScreen" class="screen" hidden>
-    <div class="px card scene" data-ears>
-      <button class="back" id="jeepBack">← back</button>
-      <p class="kicker">first, we ride</p>
-      <h2>hop in ♡</h2>
-      <div class="road" id="road">
-        <button class="jeep idle" id="jeep" aria-label="ride the jeep from mintal to roxas">
-          <div class="jeep-sign">MINTAL - ROXAS</div>
-          <div class="rider" id="riderCliz" style="left: 34.7%"></div>
-          <div class="rider" id="riderRhey" style="left: 44.4%"></div>
-        </button>
-      </div>
-      <p class="hint" id="jeepHint">tap the jeep to ride</p>
+    <div class="jeep-stage" id="road">
+      <button class="back pxbtn stage-back" id="jeepBack">← back</button>
+      <div class="jeep-bubble" id="jeepBubble" hidden>tap the jeep ♡</div>
+      <button class="jeep" id="jeep" aria-label="ride the jeep from mintal to roxas">
+        <div class="jeep-sign">MINTAL - ROXAS</div>
+        <div class="rider" id="riderCliz" style="left: 34.7%"></div>
+        <div class="rider" id="riderRhey" style="left: 44.4%"></div>
+      </button>
     </div>
   </section>
 
   <section id="map" class="screen" hidden>
-    <div class="px card scene map-card" data-ears>
-      <p class="kicker" id="mapKicker">our town</p>
-      <div class="map-wrap"><canvas id="mapCanvas" width="240" height="176" aria-label="a little pixel town to walk around"></canvas></div>
-      <p class="map-prompt" id="mapPrompt"></p>
-      <div class="pad">
-        <div class="dpad">
-          <button class="pxbtn" data-pad="up" aria-label="walk up">▲</button>
-          <button class="pxbtn" data-pad="left" aria-label="walk left">◀</button>
-          <button class="pxbtn" data-pad="right" aria-label="walk right">▶</button>
-          <button class="pxbtn" data-pad="down" aria-label="walk down">▼</button>
-        </div>
-        <button class="pxbtn abtn" id="padE" aria-label="go inside">E</button>
+    <canvas id="mapCanvas" aria-label="a little pixel town to walk around"></canvas>
+    <p class="hud-pill hud-kicker" id="mapKicker">our town</p>
+    <p class="hud-pill hud-prompt" id="mapPrompt"></p>
+    <div class="dialog" id="dialog" hidden><p id="dialogText"></p><span class="dialog-more">▼</span></div>
+    <div class="pad">
+      <div class="dpad">
+        <button class="pxbtn" data-pad="up" aria-label="walk up">▲</button>
+        <button class="pxbtn" data-pad="left" aria-label="walk left">◀</button>
+        <button class="pxbtn" data-pad="right" aria-label="walk right">▶</button>
+        <button class="pxbtn" data-pad="down" aria-label="walk down">▼</button>
       </div>
+      <button class="pxbtn abtn" id="padE" aria-label="interact">E</button>
     </div>
   </section>
 
@@ -427,7 +458,7 @@
   <section id="boothPage" class="screen" hidden>
     <div class="px card scene booth" id="booth" data-ears>
       <button class="back" id="boothBack">← back</button>
-      <p class="kicker">one more thing</p>
+      <p class="kicker">say cheese</p>
       <h2>photo booth ♡</h2>
       <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
       <div class="strip" id="strip">
@@ -445,7 +476,7 @@
       <label class="upload" id="uploadLabel">no camera? upload photos instead
         <input type="file" id="uploadInput" accept="image/*" multiple>
       </label>
-      <div class="nav"><button class="pxbtn" id="toRecap">next →</button></div>
+      <div class="nav"><button class="pxbtn" id="toRecap">back outside →</button></div>
     </div>
   </section>
 
@@ -1009,6 +1040,7 @@ function setRain(on) {
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (typeof startTown === "function") { if (id === "map") startTown(); else stopTown(); }
+  document.body.classList.toggle("fullscreen", id === "map" || id === "jeepScreen");
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1237,13 +1269,13 @@ document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   $("#again").hidden = true; $("#final").hidden = false;
 });
 $("#endBack").onclick = () => { stopCamera(); renderStrip(); show("map"); };
-$("#toBooth").onclick = () => show("boothPage");
-$("#boothBack").onclick = () => show("ending");
-$("#toRecap").onclick = () => {
+$("#toBooth").onclick = () => {
   show("recapPage");
   if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
 };
-$("#recapBack").onclick = () => show("boothPage");
+$("#boothBack").onclick = () => show("map");
+$("#toRecap").onclick = () => show("map");
+$("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
   current = 0; done.clear(); resetTown();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
@@ -1422,26 +1454,30 @@ $("#stripFoot").innerHTML = `${sprite("cliz", 40)}<span>${BOOTH_CAPTION.map(esc)
 renderStrip();
 
 /* ======================= the town (pokemon-style walking map) ======================= */
-// cliz walks around with the arrow keys / WASD, rhey follows one step behind,
-// and each store's door opens that stop of the date
-const TILE = 16, MAP_W = 32, MAP_H = 18, VIEW_W = 15, VIEW_H = 11;
-const STEP_MS = 170;
+// full-screen town: cliz walks (arrow keys / WASD), rhey follows one step behind.
+// stores open each stop of the date; little things around town can be poked with E.
+const TILE = 16, MAP_W = 44, MAP_H = 36, STEP_MS = 170;
+const INK_C = "#5b4636";
 
-// one store per stop, in the same order as SCENES; doors are on the bottom-middle tile
+// one store per stop, in the same order as SCENES. a store is 5x5 tiles with its door bottom-middle;
+// you open it from the street tile just below the door.
 const STORES = [
-  { x: 7,  y: 2, name: "the squishy store",   icon: "banana",   roof: ["#f6d26b", "#e0ae3c"], wall: "#fffaf2", awning: ["#f6d26b", "#fffaf2"] },
-  { x: 13, y: 2, name: "bags & makeup",       icon: "lipstick", roof: ["#f6b8c8", "#ee8fa8"], wall: "#fffaf2", awning: ["#ee8fa8", "#fffaf2"] },
-  { x: 19, y: 2, name: "the crochet shop",    icon: "octopus",  roof: ["#c7a2e6", "#a985cc"], wall: "#fffaf2", awning: ["#c7a2e6", "#fffaf2"] },
-  { x: 24, y: 2, name: "the waiting shed",    icon: "umbrella", roof: ["#a9b8c9", "#8798ab"], shed: true },
-  { x: 24, y: 9, name: "the anime toy store", icon: "luffy",    roof: ["#e05a5a", "#b94444"], wall: "#fff3d6", awning: ["#e05a5a", "#f6d26b"] },
-  { x: 19, y: 9, name: "the arcade",          icon: "ball",     roof: ["#3a2d58", "#2f2547"], wall: "#4a3a6e", awning: ["#ee8fa8", "#7b9be0"], arcade: true },
-  { x: 13, y: 9, name: "the bag shop",        icon: "bag",      roof: ["#c9a274", "#9b7350"], wall: "#fffaf2", awning: ["#9b7350", "#fffaf2"] },
-  { x: 7,  y: 9, name: "unli wings",          icon: "wing",     roof: ["#f2b46b", "#c9773c"], wall: "#fffaf2", awning: ["#c9773c", "#fffaf2"] },
+  { x: 6,  y: 4,  name: "the squishy store",   icon: "banana",   roof: ["#f6d26b", "#e0ae3c"], wall: "#fffaf2", awning: ["#f6d26b", "#fffaf2"] },
+  { x: 12, y: 4,  name: "bags & makeup",       icon: "lipstick", roof: ["#f6b8c8", "#ee8fa8"], wall: "#fffaf2", awning: ["#ee8fa8", "#fffaf2"] },
+  { x: 29, y: 4,  name: "the crochet shop",    icon: "octopus",  roof: ["#c7a2e6", "#a985cc"], wall: "#fffaf2", awning: ["#c7a2e6", "#fffaf2"] },
+  { x: 35, y: 4,  name: "the waiting shed",    icon: "umbrella", roof: ["#a9b8c9", "#8798ab"], shed: true },
+  { x: 29, y: 17, name: "the anime toy store", icon: "luffy",    roof: ["#e05a5a", "#b94444"], wall: "#fff3d6", awning: ["#e05a5a", "#f6d26b"] },
+  { x: 35, y: 17, name: "the arcade",          icon: "ball",     roof: ["#3a2d58", "#2f2547"], wall: "#4a3a6e", awning: ["#ee8fa8", "#7b9be0"], arcade: true },
+  { x: 24, y: 26, name: "the bag shop",        icon: "bag",      roof: ["#c9a274", "#9b7350"], wall: "#fffaf2", awning: ["#9b7350", "#fffaf2"] },
+  { x: 13, y: 26, name: "unli wings",          icon: "wing",     roof: ["#f2b46b", "#c9773c"], wall: "#fffaf2", awning: ["#c9773c", "#fffaf2"] },
 ];
-const JEEP_SPOT = { x: 1, y: 5 };          // parked jeep covers 4x2 tiles
-const SPAWN = { x: 4, y: 7 };
+const BOOTH = { x: 7, y: 17, name: "the photo booth", roof: ["#ee8fa8", "#d9738f"], wall: "#fde6ec", awning: ["#5b4636", "#ee8fa8"], booth: true };
+const JEEP_SPOT = { x: 5, y: 29 };            // parked jeep covers 4x2 tiles
+const SPAWN = { x: 9, y: 31 };
+const POND = { x0: 18, y0: 3, x1: 27, y1: 7 };
+const FOUNTAIN = { x0: 21, y0: 14, x1: 24, y1: 17 };
 
-// walking cats: one template, recoloured per cat. O outline, F fur, M patch, B belly, E eye, P pink, Y bow
+// walking cats: one template, recoloured per cat. O outline, F fur, M patch, B belly, E eye, P pink
 const CAT_FRAMES = {
   down: [[
     "..O........O..", ".OPO......OPO.", ".OFFOOOOOOFFO.", "OFMMFFFFFFFFFO", "OFFFFFFFFFFFFO",
@@ -1459,7 +1495,6 @@ const CAT_FRAMES = {
     "..OFFFFFFFFFO.", "...OFFOOOFFO..", "...OFO...OFO..", "...OO....OO...",
   ], null],
 };
-// second walking frame: just the legs change
 CAT_FRAMES.down[1] = [...CAT_FRAMES.down[0].slice(0, 12), "...OFFO.OFFO..", "...OOO..OOO..."];
 CAT_FRAMES.up[1]   = [...CAT_FRAMES.up[0].slice(0, 12),   "...OFFO.OFFO..", "...OOO..OOO..."];
 CAT_FRAMES.side[1] = [...CAT_FRAMES.side[0].slice(0, 12), "....OFO.OFO...", "....OO..OO...."];
@@ -1493,75 +1528,109 @@ for (const [cat, col] of Object.entries(CAT_COLOURS)) {
     });
   }
 }
+const heartImg = pixelCanvas(SPRITES.heart);
+const jamielImg = pixelCanvas(SPRITES.jamiel);
 
-/* ---------- the map ---------- */
-// g grass, p path, T tree (blocks), B building (blocks), J jeep (blocks), f flowers
-const grid = Array.from({ length: MAP_H }, () => Array(MAP_W).fill("g"));
+/* ---------- the map grid ---------- */
+// . grass  p path  s plaza stone  ~ water  T tree  B building  J jeep  X thing  f flowers (decor)
+const grid = Array.from({ length: MAP_H }, () => Array(MAP_W).fill("."));
 const fill = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) grid[y][x] = c; };
+fill(3, 9, 41, 10, "p");  fill(3, 22, 41, 23, "p");  fill(3, 31, 41, 32, "p");    // three streets
+fill(3, 9, 4, 32, "p");   fill(40, 9, 41, 32, "p");                                // side roads
+fill(17, 12, 28, 19, "s");                                                          // plaza
+fill(22, 11, 23, 11, "p"); fill(22, 20, 23, 21, "p");                               // plaza connectors
+for (let y = POND.y0; y <= POND.y1; y++) for (let x = POND.x0; x <= POND.x1; x++) {
+  const nx = (x - (POND.x0 + POND.x1) / 2) / ((POND.x1 - POND.x0) / 2 + 0.6), ny = (y - (POND.y0 + POND.y1) / 2) / ((POND.y1 - POND.y0) / 2 + 0.6);
+  if (nx * nx + ny * ny <= 1) grid[y][x] = "~";
+}
+[...STORES, BOOTH].forEach(s => fill(s.x, s.y, s.x + 4, s.y + 4, "B"));
+fill(JEEP_SPOT.x, JEEP_SPOT.y, JEEP_SPOT.x + 3, JEEP_SPOT.y + 1, "J");
+
+// things you can poke with E (they block like furniture)
+const THINGS = [
+  { id: "fountain", name: "the fountain", tiles: [], verb: "make a wish" },
+  { id: "bench", name: "a little bench", tiles: [[18, 13], [19, 13]], verb: "sit together" },
+  { id: "sign", name: "a signpost", tiles: [[11, 30]], verb: "read" },
+  { id: "jamiel", name: "jamiel", tiles: [[26, 21]], verb: "talk" },
+  { id: "pond", name: "the pond", tiles: [], verb: "look" },
+  { id: "flower", name: "a pretty flower", tiles: [[11, 13]], verb: "pick it", picked: false },
+  { id: "flower", name: "a pretty flower", tiles: [[36, 13]], verb: "pick it", picked: false },
+  { id: "flower", name: "a pretty flower", tiles: [[20, 25]], verb: "pick it", picked: false },
+];
+for (let y = FOUNTAIN.y0; y <= FOUNTAIN.y1; y++) for (let x = FOUNTAIN.x0; x <= FOUNTAIN.x1; x++) THINGS[0].tiles.push([x, y]);
+for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if (grid[y][x] === "~") THINGS[4].tiles.push([x, y]);
+THINGS.forEach(t => t.tiles.forEach(([x, y]) => { if (grid[y][x] !== "~") grid[y][x] = "X"; }));
+
+// border of trees, then scatter trees + flowers on grass that isn't next to anything important
 fill(0, 0, MAP_W - 1, 0, "T"); fill(0, MAP_H - 1, MAP_W - 1, MAP_H - 1, "T");
 fill(0, 0, 0, MAP_H - 1, "T"); fill(MAP_W - 1, 0, MAP_W - 1, MAP_H - 1, "T");
-fill(1, 7, 30, 8, "p");      // top street
-fill(5, 14, 30, 15, "p");    // bottom street
-fill(5, 7, 6, 15, "p");      // left road
-fill(29, 7, 30, 15, "p");    // right road
-for (let x = 1; x < MAP_W - 1; x += 2) if (grid[1][x] === "g") grid[1][x] = "T";
-for (const gx of [12, 18]) { fill(gx, 2, gx, 6, "T"); fill(gx, 9, gx, 13, "T"); }
-STORES.forEach(s => fill(s.x, s.y, s.x + 4, s.y + 4, "B"));
-fill(JEEP_SPOT.x, JEEP_SPOT.y, JEEP_SPOT.x + 3, JEEP_SPOT.y + 1, "J");
-[[2, 10], [3, 12], [1, 14], [4, 15], [2, 16], [8, 16], [11, 16], [15, 16], [20, 16], [23, 16], [27, 16], [3, 3], [2, 2], [28, 12], [27, 10]]
-  .forEach(([x, y]) => { if (grid[y][x] === "g") grid[y][x] = "f"; });
-[[1, 11], [3, 9], [2, 13], [4, 12], [28, 4], [29, 2], [28, 11], [27, 13]]
-  .forEach(([x, y]) => { if (grid[y][x] === "g") grid[y][x] = "T"; });
-const walkable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H && "gpf".includes(grid[y][x]);
+const rand = (x, y, k) => { const v = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453; return v - Math.floor(v); };
+const clearAround = (x, y) => {
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+    const t = (grid[y + j] || [])[x + i];
+    if (t && t !== "." && t !== "T" && t !== "f") return false;
+  }
+  return true;
+};
+for (let y = 1; y < MAP_H - 1; y++) for (let x = 1; x < MAP_W - 1; x++) {
+  if (grid[y][x] !== "." || !clearAround(x, y)) continue;
+  if (rand(x, y, 1) < 0.22) grid[y][x] = "T";
+  else if (rand(x, y, 2) < 0.16) grid[y][x] = "f";
+}
+const walkable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H && ".psf".includes(grid[y][x]);
 
-/* ---------- drawing the static town once ---------- */
-const INK_C = "#5b4636";
+/* ---------- drawing the town once ---------- */
 function drawIcon(c, name, cx, cy, maxW, maxH) {
   const cv = pixelCanvas(SPRITES[name]);
-  const s = Math.max(1, Math.floor(Math.min(maxW / cv.width, maxH / cv.height)));
-  const sc = Math.min(maxW / cv.width, maxH / cv.height, s);
+  const sc = Math.min(maxW / cv.width, maxH / cv.height, Math.max(1, Math.floor(Math.min(maxW / cv.width, maxH / cv.height))));
   c.drawImage(cv, Math.round(cx - cv.width * sc / 2), Math.round(cy - cv.height * sc / 2), Math.round(cv.width * sc), Math.round(cv.height * sc));
 }
 function drawStore(c, s) {
   const X = s.x * TILE, Y = s.y * TILE;
   if (s.shed) {
-    c.fillStyle = "#ecd9b5"; c.fillRect(X, Y + 30, 80, 50);                    // floor
-    c.fillStyle = INK_C; c.fillRect(X + 8, Y + 30, 5, 48); c.fillRect(X + 67, Y + 30, 5, 48);   // posts
-    c.fillStyle = "#9b7350"; c.fillRect(X + 16, Y + 56, 48, 6);                 // bench
+    c.fillStyle = "#ecd9b5"; c.fillRect(X, Y + 30, 80, 50);
+    c.fillStyle = INK_C; c.fillRect(X + 8, Y + 30, 5, 48); c.fillRect(X + 67, Y + 30, 5, 48);
+    c.fillStyle = "#9b7350"; c.fillRect(X + 16, Y + 56, 48, 6);
     c.fillStyle = INK_C; c.fillRect(X + 18, Y + 62, 3, 10); c.fillRect(X + 59, Y + 62, 3, 10);
     c.fillStyle = INK_C; c.fillRect(X, Y + 14, 80, 18);
     for (let r = 0; r < 14; r++) { c.fillStyle = Math.floor(r / 3) % 2 ? s.roof[1] : s.roof[0]; c.fillRect(X + 2, Y + 16 + r, 76, 1); }
-    c.fillStyle = "#fffaf2"; c.fillRect(X + 28, Y + 2, 24, 16); c.strokeStyle = INK_C; c.strokeRect(X + 28.5, Y + 2.5, 23, 15);
+    c.fillStyle = INK_C; c.fillRect(X + 27, Y + 1, 26, 18);
+    c.fillStyle = "#fffaf2"; c.fillRect(X + 28, Y + 2, 24, 16);
     drawIcon(c, s.icon, X + 40, Y + 10, 20, 13);
     return;
   }
-  // roof with shingle stripes
   c.fillStyle = INK_C; c.fillRect(X, Y + 4, 80, 28);
   for (let r = 0; r < 26; r++) { c.fillStyle = Math.floor(r / 4) % 2 ? s.roof[1] : s.roof[0]; c.fillRect(X + 1, Y + 5 + r, 78, 1); }
-  // walls
   c.fillStyle = INK_C; c.fillRect(X + 3, Y + 31, 74, 49);
   c.fillStyle = s.wall; c.fillRect(X + 4, Y + 32, 72, 48);
-  // striped awning with a scalloped edge
   for (let i = 0; i < 9; i++) {
     c.fillStyle = s.awning[i % 2]; c.fillRect(X + 4 + i * 8, Y + 32, 8, 7);
     c.fillRect(X + 6 + i * 8, Y + 39, 4, 2);
   }
   c.fillStyle = INK_C; c.fillRect(X + 4, Y + 31, 72, 1);
-  // windows
   for (const wx of [X + 10, X + 52]) {
     c.fillStyle = INK_C; c.fillRect(wx - 1, Y + 45, 20, 16);
     c.fillStyle = "#bcd6e6"; c.fillRect(wx, Y + 46, 18, 14);
     c.fillStyle = "#fffaf2"; c.fillRect(wx + 2, Y + 48, 3, 3);
     c.fillStyle = INK_C; c.fillRect(wx + 8, Y + 46, 1, 14);
   }
-  // door
   c.fillStyle = INK_C; c.fillRect(X + 30, Y + 51, 20, 29);
-  c.fillStyle = s.arcade ? "#2f2547" : "#9b7350"; c.fillRect(X + 31, Y + 52, 18, 28);
-  c.fillStyle = "#f6d26b"; c.fillRect(X + 45, Y + 66, 2, 2);
-  // sign with the stop's item
+  if (s.booth) {          // photo booth: a pink curtain instead of a door
+    c.fillStyle = "#ee8fa8"; c.fillRect(X + 31, Y + 52, 18, 28);
+    c.fillStyle = "#d9738f"; for (let i = 0; i < 4; i++) c.fillRect(X + 33 + i * 4, Y + 52, 1, 28);
+  } else {
+    c.fillStyle = s.arcade ? "#2f2547" : "#9b7350"; c.fillRect(X + 31, Y + 52, 18, 28);
+    c.fillStyle = "#f6d26b"; c.fillRect(X + 45, Y + 66, 2, 2);
+  }
   c.fillStyle = INK_C; c.fillRect(X + 24, Y + 6, 32, 22);
   c.fillStyle = "#fffaf2"; c.fillRect(X + 25, Y + 7, 30, 20);
-  drawIcon(c, s.icon, X + 40, Y + 17, 26, 17);
+  if (s.booth) {          // a little pixel camera on the sign
+    c.fillStyle = INK_C; c.fillRect(X + 30, Y + 11, 20, 13); c.fillRect(X + 34, Y + 9, 6, 2);
+    c.fillStyle = "#f3c6cf"; c.fillRect(X + 31, Y + 12, 18, 11);
+    c.fillStyle = INK_C; c.fillRect(X + 36, Y + 13, 8, 8);
+    c.fillStyle = "#a9c4d6"; c.fillRect(X + 37, Y + 14, 6, 6);
+    c.fillStyle = "#fffaf2"; c.fillRect(X + 38, Y + 15, 2, 2);
+  } else drawIcon(c, s.icon, X + 40, Y + 17, 26, 17);
 }
 function drawTree(c, x, y) {
   c.fillStyle = "#7a5a3c"; c.fillRect(x + 6, y + 11, 4, 5);
@@ -1579,6 +1648,10 @@ function drawTown() {
       c.fillStyle = "#ecd9b5"; c.fillRect(X, Y, TILE, TILE);
       c.fillStyle = "#dcc69d"; c.fillRect(X + ((x * 7 + y * 3) % 12), Y + ((x * 5 + y * 11) % 13), 2, 2);
     }
+    if (t === "s" || (t === "X" && x >= 17 && x <= 28 && y >= 12 && y <= 19)) {
+      c.fillStyle = "#e9e1d6"; c.fillRect(X, Y, TILE, TILE);
+      c.fillStyle = "#d6cbbd"; c.fillRect(X, Y + 15, TILE, 1); c.fillRect(X + ((y % 2) ? 7 : 15), Y, 1, TILE);
+    }
     if (t === "f") {
       c.fillStyle = (x + y) % 2 ? "#f6b8c8" : "#f6d26b";
       c.fillRect(X + 4, Y + 5, 3, 3); c.fillRect(X + 10, Y + 10, 3, 3);
@@ -1586,31 +1659,59 @@ function drawTown() {
     }
     if (t === "T") drawTree(c, X, Y);
   }
-  STORES.forEach(s => drawStore(c, s));
-  // the parked jeepney
+  // a round pond, drawn in 2px blocks so it stays pixelly
+  const pcx = (POND.x0 + POND.x1 + 1) / 2 * TILE, pcy = (POND.y0 + POND.y1 + 1) / 2 * TILE;
+  const prx = (POND.x1 - POND.x0 + 1) / 2 * TILE - 2, pry = (POND.y1 - POND.y0 + 1) / 2 * TILE - 2;
+  for (let py = pcy - pry - 4; py <= pcy + pry + 4; py += 2) for (let px = pcx - prx - 4; px <= pcx + prx + 4; px += 2) {
+    const d = ((px - pcx) / prx) ** 2 + ((py - pcy) / pry) ** 2;
+    if (d <= 1) c.fillStyle = d > 0.86 ? "#6ea6c4" : "#8fc3df";
+    else if (d <= 1.12) c.fillStyle = "#a99a7e";
+    else continue;
+    c.fillRect(px, py, 2, 2);
+  }
+  c.fillStyle = "#b9dcef";
+  [[-60, -20], [10, -26], [40, 8], [-30, 16], [70, -6]].forEach(([dx, dy]) => c.fillRect(pcx + dx, pcy + dy, 10, 2));
+  // lily pads
+  [[-80, 6], [56, 22]].forEach(([dx, dy]) => { c.fillStyle = "#6fa865"; c.fillRect(pcx + dx, pcy + dy, 10, 6); c.fillStyle = "#f6b8c8"; c.fillRect(pcx + dx + 3, pcy + dy + 1, 3, 3); });
+  // fountain base
+  const FX = FOUNTAIN.x0 * TILE, FY = FOUNTAIN.y0 * TILE;
+  c.fillStyle = INK_C; c.fillRect(FX + 2, FY + 6, 60, 54);
+  c.fillStyle = "#cfc6bb"; c.fillRect(FX + 4, FY + 8, 56, 50);
+  c.fillStyle = "#8fc3df"; c.fillRect(FX + 9, FY + 13, 46, 40);
+  c.fillStyle = INK_C; c.fillRect(FX + 26, FY + 22, 12, 22);
+  c.fillStyle = "#cfc6bb"; c.fillRect(FX + 27, FY + 23, 10, 20);
+  // bench
+  c.fillStyle = INK_C; c.fillRect(18 * TILE + 1, 13 * TILE + 4, 30, 9);
+  c.fillStyle = "#9b7350"; c.fillRect(18 * TILE + 2, 13 * TILE + 5, 28, 3); c.fillRect(18 * TILE + 2, 13 * TILE + 9, 28, 3);
+  c.fillStyle = INK_C; c.fillRect(18 * TILE + 4, 13 * TILE + 13, 2, 3); c.fillRect(18 * TILE + 26, 13 * TILE + 13, 2, 3);
+  // signpost
+  c.fillStyle = INK_C; c.fillRect(11 * TILE + 7, 30 * TILE + 8, 2, 8); c.fillRect(11 * TILE + 1, 30 * TILE + 1, 14, 9);
+  c.fillStyle = "#e3c79c"; c.fillRect(11 * TILE + 2, 30 * TILE + 2, 12, 7);
+  c.fillStyle = INK_C; c.fillRect(11 * TILE + 4, 30 * TILE + 4, 8, 1); c.fillRect(11 * TILE + 4, 30 * TILE + 6, 6, 1);
+  [...STORES, BOOTH].forEach(s => drawStore(c, s));
   c.drawImage(pixelCanvas(SPRITES.jeep), JEEP_SPOT.x * TILE + 1, JEEP_SPOT.y * TILE + 2);
 }
 
-/* ---------- characters ---------- */
-const hero = { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "down", frame: 0, moving: null };
+/* ---------- characters, particles, dialog ---------- */
+const hero = { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "up", frame: 0, moving: null };
 const buddy = { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", frame: 0, moving: null };
 const held = new Set();
-let townLoop = null, townStarted = false;
+let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0, jamielHop = 0, dialog = null;
 
 function resetTown() {
-  Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "down", moving: null });
+  Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "up", moving: null });
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
-  held.clear();
+  THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
+  flowersPicked = 0; particles = []; held.clear(); closeDialog();
 }
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 function tryStep(now) {
-  if (hero.moving) return;
+  if (hero.moving || dialog) return;
   const dir = ["up", "down", "left", "right"].find(d => held.has(d));
   if (!dir) return;
   hero.dir = dir;
   const [dx, dy] = DIRS[dir], nx = hero.x + dx, ny = hero.y + dy;
   if (!walkable(nx, ny)) return;
-  // rhey steps into the tile cliz is leaving
   const bdx = hero.x - buddy.x, bdy = hero.y - buddy.y;
   if (bdx || bdy) {
     buddy.dir = bdx > 0 ? "right" : bdx < 0 ? "left" : bdy > 0 ? "down" : "up";
@@ -1627,97 +1728,199 @@ function advance(ch, now) {
   ch.fy = ch.moving.from[1] + (ch.moving.to[1] - ch.moving.from[1]) * p;
   if (p >= 1) ch.moving = null;
 }
+function burst(kind, px, py, n) {
+  for (let i = 0; i < n; i++) particles.push({
+    kind, x: px + (Math.random() - 0.5) * 12, y: py, vx: (Math.random() - 0.5) * 30,
+    vy: kind === "drop" ? -60 - Math.random() * 40 : -25 - Math.random() * 25, life: 1, t: performance.now(),
+  });
+}
 
-// what cliz is standing in front of: a store door (the street tile below it) or the jeep
+function say(lines, after) {
+  dialog = { lines, i: 0, chars: 0, after };
+  $("#dialog").hidden = false;
+  held.clear();
+}
+function closeDialog() { if (dialog && dialog.after) dialog.after(); dialog = null; $("#dialog").hidden = true; }
+function advanceDialog() {
+  const line = dialog.lines[dialog.i];
+  if (dialog.chars < line.length) { dialog.chars = line.length; return; }
+  dialog.i++; dialog.chars = 0;
+  if (dialog.i >= dialog.lines.length) closeDialog();
+  else blip(880, 0.03);
+}
+
+// what cliz can open right now: a door (standing below it), the jeep, or a thing she's facing
 function nearby() {
   const i = STORES.findIndex(s => hero.y === s.y + 5 && hero.x >= s.x + 1 && hero.x <= s.x + 3);
   if (i >= 0) return { kind: "store", i };
+  if (hero.y === BOOTH.y + 5 && hero.x >= BOOTH.x + 1 && hero.x <= BOOTH.x + 3) return { kind: "booth" };
   if (hero.y === JEEP_SPOT.y + 2 && hero.x >= JEEP_SPOT.x && hero.x <= JEEP_SPOT.x + 3) return { kind: "jeep" };
-  return null;
+  const [dx, dy] = DIRS[hero.dir], fx = hero.x + dx, fy = hero.y + dy;
+  const thing = THINGS.find(t => !t.picked && t.tiles.some(([x, y]) => x === fx && y === fy));
+  return thing ? { kind: "thing", thing } : null;
 }
 const nextStop = () => SCENES.findIndex((_, i) => !done.has(i));
 
 function interact() {
+  if (dialog) { advanceDialog(); return; }
   const n = nearby();
   if (!n || hero.moving) return;
+  const hx = (hero.x + 0.5) * TILE, hy = hero.y * TILE;
   if (n.kind === "store") {
     melody([523, 659, 784]);
     current = n.i;
     show("journey"); renderScene();
-  } else if (done.size === SCENES.length) {
-    jeepSound(); melody([523, 659, 784, 1046]);
-    setTimeout(() => show("ending"), 600);
+  } else if (n.kind === "booth") {
+    melody([784, 988]);
+    show("boothPage");
+  } else if (n.kind === "jeep") {
+    if (done.size === SCENES.length) {
+      jeepSound(); melody([523, 659, 784, 1046]);
+      say(["beep beep! time to go home ♡"], () => show("ending"));
+    } else say([`the jeep home. not yet!`, `visit all the places first (${done.size}/${SCENES.length}) ♡`]);
   } else {
-    blip(220, 0.12);
-    $("#mapPrompt").textContent = `not yet! visit all the places first (${done.size}/${SCENES.length}) ♡`;
+    const t = n.thing;
+    if (t.id === "fountain") {
+      blip(1318, 0.06); setTimeout(() => blip(1568, 0.08), 90);
+      burst("spark", 22.5 * TILE, 14.6 * TILE, 14);
+      say(["you tossed a coin into the fountain...", "*plink*", "wish: more dates like this one ♡"]);
+    } else if (t.id === "bench") {
+      hero.dir = "down"; buddy.dir = "down";
+      burst("heart", hx, hy, 8); melody([659, 784, 988]);
+      say(["you sat on the bench together.", "it's quiet. just the two of you ♡"]);
+    } else if (t.id === "sign") {
+      blip(660, 0.05);
+      say(["WELCOME TO OUR TOWN", "population: 2 cats (and jamiel)"]);
+    } else if (t.id === "jamiel") {
+      grunt(); jamielHop = performance.now();
+      const lines = [["jamiel: hmph."], ["jamiel: ...what."], ["jamiel: go away, i'm busy.", "(he is not busy)"], ["jamiel: ...", "jamiel: fine. have fun you two ♡"]];
+      t.talks = (t.talks || 0) + 1;
+      say(lines[Math.min(t.talks, lines.length) - 1]);
+    } else if (t.id === "pond") {
+      const [fx, fy] = t.tiles[Math.floor(t.tiles.length / 2)];
+      fish = { x: (fx + 0.5) * TILE, y: (fy + 0.5) * TILE, t0: performance.now() };
+      setTimeout(() => { burst("drop", fish.x + 18, fish.y, 10); blip(330, 0.08); }, 650);
+      say(["a little fish jumped out of the pond!", "...and splashed right back in."]);
+    } else if (t.id === "flower") {
+      t.picked = true; flowersPicked++;
+      t.tiles.forEach(([x, y]) => grid[y][x] = ".");
+      burst("heart", hx, hy, 5); melody([784, 988, 1175]);
+      const total = THINGS.filter(o => o.id === "flower").length;
+      say(flowersPicked < total ? [`you picked a flower for cliz ♡ (${flowersPicked}/${total})`]
+                                : [`you picked a flower for cliz ♡ (${total}/${total})`, "that's a whole bouquet now ♡"]);
+    }
   }
 }
 
-function renderPrompt() {
+function renderHud() {
   const n = nearby(), el = $("#mapPrompt");
-  if (n && n.kind === "store") {
-    el.innerHTML = `<b>${esc(STORES[n.i].name)}</b>${done.has(n.i) ? " ♡ visited" : ""} · press <kbd>E</kbd> to go inside`;
-  } else if (n && n.kind === "jeep") {
-    if (done.size === SCENES.length) el.innerHTML = `<b>the jeep home</b> · press <kbd>E</kbd> to ride ♡`;
-    else if (!el.textContent.startsWith("not yet")) el.innerHTML = `<b>the jeep</b> · come back when you've seen everything (${done.size}/${SCENES.length})`;
-  } else {
-    el.innerHTML = done.size === SCENES.length
-      ? "everything visited ♡ walk back to the jeep to ride home"
-      : "walk with the arrow keys or WASD · follow the pink arrow ♡";
+  let html;
+  if (dialog) html = "";
+  else if (n && n.kind === "store") html = `<b>${esc(STORES[n.i].name)}</b>${done.has(n.i) ? " ♡" : ""} · <kbd>E</kbd> go inside`;
+  else if (n && n.kind === "booth") html = `<b>the photo booth</b> · <kbd>E</kbd> go inside`;
+  else if (n && n.kind === "jeep") html = `<b>the jeep</b> · <kbd>E</kbd> ${done.size === SCENES.length ? "ride home ♡" : "look"}`;
+  else if (n && n.kind === "thing") html = `<b>${esc(n.thing.name)}</b> · <kbd>E</kbd> ${n.thing.verb}`;
+  else html = done.size === SCENES.length ? "everything visited ♡ walk back to the jeep" : "arrow keys / WASD to walk · follow the pink arrow ♡";
+  if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; el.hidden = !html; }
+  const k = `our town · ${done.size}/${SCENES.length} places`;
+  if ($("#mapKicker").textContent !== k) $("#mapKicker").textContent = k;
+  if (dialog) {
+    const line = dialog.lines[dialog.i];
+    dialog.chars = Math.min(line.length, dialog.chars + 0.8);
+    $("#dialogText").textContent = line.slice(0, Math.floor(dialog.chars));
   }
-  $("#mapKicker").textContent = `our town · ${done.size} of ${SCENES.length} places`;
 }
+
+function sizeCanvas() {
+  const cv = $("#mapCanvas"), scale = innerWidth >= 1000 ? 3 : 2;
+  cv.width = Math.ceil(innerWidth / scale); cv.height = Math.ceil(innerHeight / scale);
+}
+window.addEventListener("resize", () => { if (!$("#map").hidden) sizeCanvas(); });
 
 function drawFrame(now) {
-  const cv = $("#mapCanvas"), c = cv.getContext("2d");
+  const cv = $("#mapCanvas"), c = cv.getContext("2d"), VW = cv.width, VH = cv.height;
   c.imageSmoothingEnabled = false;
-  // camera follows cliz
-  const camX = Math.max(0, Math.min(MAP_W * TILE - VIEW_W * TILE, Math.round((hero.fx + 0.5) * TILE - VIEW_W * TILE / 2)));
-  const camY = Math.max(0, Math.min(MAP_H * TILE - VIEW_H * TILE, Math.round((hero.fy + 0.5) * TILE - VIEW_H * TILE / 2)));
-  c.drawImage(townCanvas, camX, camY, VIEW_W * TILE, VIEW_H * TILE, 0, 0, VIEW_W * TILE, VIEW_H * TILE);
+  const MW = MAP_W * TILE, MH = MAP_H * TILE;
+  const camX = MW <= VW ? -(VW - MW) / 2 : Math.max(0, Math.min(MW - VW, Math.round((hero.fx + 0.5) * TILE - VW / 2)));
+  const camY = MH <= VH ? -(VH - MH) / 2 : Math.max(0, Math.min(MH - VH, Math.round((hero.fy + 0.5) * TILE - VH / 2)));
+  c.fillStyle = "#4f7d4a"; c.fillRect(0, 0, VW, VH);
+  c.drawImage(townCanvas, -camX, -camY);
+  const sx = x => Math.round(x - camX), sy = y => Math.round(y - camY);
 
-  // live bits: rain over the waiting shed, blinking arcade neon, hearts on visited roofs
-  const shed = STORES[3], rx = shed.x * TILE - camX, ry = shed.y * TILE - camY;
-  c.fillStyle = "#fffaf2"; c.fillRect(rx + 14, ry - 14, 52, 12); c.fillRect(rx + 22, ry - 20, 30, 8);
+  // rain cloud over the waiting shed
+  const shed = STORES[3];
+  c.fillStyle = "#fffaf2"; c.fillRect(sx(shed.x * TILE + 14), sy(shed.y * TILE - 14), 52, 12); c.fillRect(sx(shed.x * TILE + 22), sy(shed.y * TILE - 20), 30, 8);
   c.fillStyle = "#a9c4d6";
-  for (let i = 0; i < 10; i++) {
-    const dx = (i * 23) % 56, dy = ((now / 6) + i * 37) % 30;
-    c.fillRect(rx + 12 + dx, ry - 2 + dy, 1, 4);
-  }
+  for (let i = 0; i < 10; i++) c.fillRect(sx(shed.x * TILE + 12 + (i * 23) % 56), sy(shed.y * TILE - 2 + ((now / 6) + i * 37) % 30), 1, 4);
+  // blinking arcade neon
   const arc = STORES[5];
-  if (Math.floor(now / 450) % 2) {
-    c.strokeStyle = "#ee8fa8"; c.lineWidth = 2;
-    c.strokeRect(arc.x * TILE - camX + 3, arc.y * TILE - camY + 31, 74, 49);
-  }
-  STORES.forEach((s, i) => {
-    if (!done.has(i)) return;
-    const hx = s.x * TILE - camX + 66, hy = s.y * TILE - camY + 6;
-    c.drawImage(pixelCanvas(SPRITES.heart), hx, hy, 10, 10);
+  if (Math.floor(now / 450) % 2) { c.strokeStyle = "#ee8fa8"; c.lineWidth = 2; c.strokeRect(sx(arc.x * TILE + 3), sy(arc.y * TILE + 31), 74, 49); }
+  // fountain water
+  const FX = FOUNTAIN.x0 * TILE, FY = FOUNTAIN.y0 * TILE, wob = Math.floor(now / 200) % 2;
+  c.fillStyle = "#b9dcef"; c.fillRect(sx(FX + 30), sy(FY + 6 - wob), 4, 16); c.fillRect(sx(FX + 24 + wob * 2), sy(FY + 8), 2, 6); c.fillRect(sx(FX + 38 - wob * 2), sy(FY + 8), 2, 6);
+  // hearts on visited roofs
+  STORES.forEach((s, i) => { if (done.has(i)) c.drawImage(heartImg, sx(s.x * TILE + 64), sy(s.y * TILE + 8), 12, 12); });
+  // flowers you can pick
+  THINGS.forEach(t => {
+    if (t.id !== "flower" || t.picked) return;
+    const [x, y] = t.tiles[0], X = sx(x * TILE), Y = sy(y * TILE), b = Math.floor(now / 500) % 2;
+    c.fillStyle = "#4f7d4a"; c.fillRect(X + 7, Y + 7, 2, 8);
+    c.fillStyle = "#ee8fa8"; c.fillRect(X + 4, Y + 2 - b, 8, 6); c.fillRect(X + 6, Y + 0 - b, 4, 10);
+    c.fillStyle = "#f6d26b"; c.fillRect(X + 7, Y + 4 - b, 2, 2);
   });
-
-  // bouncing arrow over the next place (or the jeep once everything is done)
+  // jamiel, sitting grumpily
+  const jh = now - jamielHop < 300 ? -3 : 0;
+  c.drawImage(jamielImg, sx(26 * TILE - 1), sy(21 * TILE - 2 + jh), 18, 19);
+  // a jumping fish
+  if (fish) {
+    const p = (now - fish.t0) / 700;
+    if (p > 1) fish = null;
+    else {
+      const X = sx(fish.x - 6 + p * 18), Y = sy(fish.y - Math.sin(p * Math.PI) * 18);
+      c.fillStyle = "#ef8e4f"; c.fillRect(X, Y, 8, 4); c.fillRect(X - 3, Y - 1, 3, 6);
+      c.fillStyle = INK_C; c.fillRect(X + 6, Y + 1, 1, 1);
+    }
+  }
+  // bouncing arrow over the next place (or the jeep at the end)
   const nxt = nextStop();
-  const target = nxt >= 0 ? { x: STORES[nxt].x * TILE + 40, y: STORES[nxt].y * TILE + 44 }
-                          : { x: JEEP_SPOT.x * TILE + 32, y: JEEP_SPOT.y * TILE - 4 };
-  const bob = Math.floor(now / 250) % 2 ? 0 : 2;
-  const ax = target.x - camX, ay = target.y - camY + bob - (nxt >= 0 ? 0 : 0);
-  c.fillStyle = INK_C; c.fillRect(ax - 5, ay - 8, 11, 4); c.fillRect(ax - 3, ay - 4, 7, 2); c.fillRect(ax - 1, ay - 2, 3, 2);
-  c.fillStyle = "#ee8fa8"; c.fillRect(ax - 4, ay - 7, 9, 2); c.fillRect(ax - 2, ay - 5, 5, 2); c.fillRect(ax, ay - 3, 1, 1);
-
-  // cats, drawn back-to-front
+  const tgt = nxt >= 0 ? { x: STORES[nxt].x * TILE + 40, y: STORES[nxt].y * TILE + 2 } : { x: JEEP_SPOT.x * TILE + 32, y: JEEP_SPOT.y * TILE - 2 };
+  const ax = sx(tgt.x), ay = sy(tgt.y) + (Math.floor(now / 250) % 2 ? 0 : 3);
+  if (ax < 0 || ay < 0 || ax > VW || ay > VH) {
+    // the next place is off-screen: point at it from the edge of the screen
+    const cx = VW / 2, cy = VH / 2, ang = Math.atan2(ay - cy, ax - cx);
+    const ex = Math.max(16, Math.min(VW - 16, cx + Math.cos(ang) * VW)), ey = Math.max(44, Math.min(VH - 40, cy + Math.sin(ang) * VH));
+    const pulse = Math.floor(now / 250) % 2 ? 0 : 2;
+    c.save(); c.translate(Math.round(ex - Math.cos(ang) * pulse), Math.round(ey - Math.sin(ang) * pulse)); c.rotate(ang);
+    c.fillStyle = INK_C; c.beginPath(); c.moveTo(11, 0); c.lineTo(-7, -9); c.lineTo(-7, 9); c.closePath(); c.fill();
+    c.fillStyle = "#ee8fa8"; c.beginPath(); c.moveTo(8, 0); c.lineTo(-5, -6); c.lineTo(-5, 6); c.closePath(); c.fill();
+    c.restore();
+  }
+  c.fillStyle = INK_C; c.fillRect(ax - 7, ay - 12, 15, 6); c.fillRect(ax - 5, ay - 6, 11, 3); c.fillRect(ax - 3, ay - 3, 7, 2); c.fillRect(ax - 1, ay - 1, 3, 2);
+  c.fillStyle = "#ee8fa8"; c.fillRect(ax - 6, ay - 11, 13, 4); c.fillRect(ax - 4, ay - 7, 9, 2); c.fillRect(ax - 2, ay - 5, 5, 2); c.fillRect(ax, ay - 3, 1, 2);
+  // cats, back to front
   [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
     const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
     const img = catSprites[who][dir][ch.moving ? ch.frame : 0];
-    const px = Math.round(ch.fx * TILE - camX + 1), py = Math.round(ch.fy * TILE - camY + 1);
+    const px = sx(ch.fx * TILE + 1), py = sy(ch.fy * TILE + 1);
     c.save();
     if (ch.dir === "left") { c.translate(px + 14, py); c.scale(-1, 1); c.drawImage(img, 0, 0); }
     else c.drawImage(img, px, py);
     c.restore();
   });
-
+  // particles: hearts, sparkles, water drops
+  particles = particles.filter(p => {
+    const age = (now - p.t) / 1000; if (age > 1.1) return false;
+    const X = sx(p.x + p.vx * age), Y = sy(p.y + p.vy * age + (p.kind === "drop" ? 140 * age * age : 0));
+    c.globalAlpha = Math.max(0, 1 - age);
+    if (p.kind === "heart") c.drawImage(heartImg, X, Y, 7, 7);
+    else if (p.kind === "spark") { c.fillStyle = age * 10 % 2 < 1 ? "#fffaf2" : "#f6d26b"; c.fillRect(X, Y, 2, 2); }
+    else { c.fillStyle = "#b9dcef"; c.fillRect(X, Y, 2, 2); }
+    c.globalAlpha = 1;
+    return true;
+  });
   // "E" bubble when something can be opened
-  if (nearby() && !hero.moving) {
-    const bx = Math.round(hero.fx * TILE - camX + 3), by = Math.round(hero.fy * TILE - camY - 12);
+  if (nearby() && !hero.moving && !dialog) {
+    const bx = sx(hero.fx * TILE + 3), by = sy(hero.fy * TILE - 12);
     c.fillStyle = INK_C; c.fillRect(bx - 1, by - 1, 12, 11);
     c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
     c.fillStyle = "#ee8fa8"; c.fillRect(bx + 3, by + 2, 1, 5); c.fillRect(bx + 3, by + 2, 4, 1); c.fillRect(bx + 3, by + 4, 3, 1); c.fillRect(bx + 3, by + 6, 4, 1);
@@ -1728,11 +1931,12 @@ function tick(now) {
   tryStep(now);
   advance(hero, now); advance(buddy, now);
   drawFrame(now);
-  renderPrompt();
+  renderHud();
   townLoop = requestAnimationFrame(tick);
 }
 function startTown() {
-  if (!townStarted) { drawTown(); townStarted = true; }
+  if (!townDrawn) { drawTown(); townDrawn = true; }
+  sizeCanvas();
   cancelAnimationFrame(townLoop);
   townLoop = requestAnimationFrame(tick);
 }
@@ -1742,17 +1946,17 @@ const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: 
 document.addEventListener("keydown", e => {
   if ($("#map").hidden) return;
   if (KEYS[e.key]) { held.add(KEYS[e.key]); e.preventDefault(); }
-  if (e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ") { e.preventDefault(); interact(); }
+  if (e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!e.repeat) interact(); }
 });
 document.addEventListener("keyup", e => { if (KEYS[e.key]) held.delete(KEYS[e.key]); });
 window.addEventListener("blur", () => held.clear());
-// on-screen buttons for touch screens
 document.querySelectorAll("[data-pad]").forEach(b => {
   const d = b.dataset.pad;
   b.addEventListener("pointerdown", e => { e.preventDefault(); held.add(d); });
   ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, () => held.delete(d)));
 });
 $("#padE").onclick = interact;
+$("#dialog").onclick = () => { if (dialog) advanceDialog(); };
 
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
@@ -1765,14 +1969,20 @@ $("#startBtn").onclick = () => {
   started = true;
   startMusic();
   melody([523, 659, 784]);
-  show("jeepScreen");
+  // the start box poofs away, then the jeep rolls up
+  $(".hero").classList.add("poof");
+  setTimeout(() => {
+    $(".hero").classList.remove("poof");
+    show("jeepScreen");
+    rollIn();
+  }, 450);
 };
 
-// the jeepney ride: horn, engine, smoke puffs, then off to the first stop
+// the jeepney: rolls up, waits for a tap, then honks and drives off into town
 $("#riderCliz").innerHTML = sprite("clizHead", 40);
 $("#riderRhey").innerHTML = sprite("rheyHead", 40);
-$("#jeep").insertAdjacentHTML("afterbegin", sprite("jeep", 340));
-let riding = false;
+$("#jeep").insertAdjacentHTML("afterbegin", sprite("jeep", 560));
+let jeepReady = false, jeepTimers = [];
 function jeepSound() {
   if (!sfxOn) return;
   const ctx = audio(); if (!ctx) return;
@@ -1797,28 +2007,40 @@ function puff() {
   p.style.top = (j.top - r.top + j.height * 0.68) + "px";
   $("#road").appendChild(p); setTimeout(() => p.remove(), 950);
 }
-function resetJeep() {
-  riding = false;
-  $("#jeep").classList.remove("go", "rev"); $("#jeep").classList.add("idle");
-  $("#road").classList.remove("moving");
-  $("#jeepHint").textContent = "tap the jeep to ride";
+const later = (fn, ms) => jeepTimers.push(setTimeout(fn, ms));
+function rollIn() {
+  jeepTimers.forEach(clearTimeout); jeepTimers = [];
+  jeepReady = false;
+  const jeep = $("#jeep");
+  jeep.className = "jeep";
+  $("#jeepBubble").hidden = true;
+  void jeep.offsetWidth;
+  jeep.classList.add("arrive");
+  $("#road").classList.add("moving");
+  later(() => {
+    $("#road").classList.remove("moving");
+    jeep.className = "jeep idle";
+    $("#jeepBubble").hidden = false;
+    jeepReady = true;
+    blip(988, 0.06);
+  }, 2250);
 }
 $("#jeep").onclick = () => {
-  if (riding) return;
-  riding = true;
+  if (!jeepReady) return;
+  jeepReady = false;
   const jeep = $("#jeep");
+  $("#jeepBubble").hidden = true;
   jeepSound();
-  $("#jeepHint").textContent = "beep beep! here we go ♡";
-  jeep.classList.remove("idle"); jeep.classList.add("rev");
+  jeep.className = "jeep rev";
   const smoke = setInterval(puff, 110);
-  setTimeout(() => { jeep.classList.remove("rev"); jeep.classList.add("go"); $("#road").classList.add("moving"); }, 700);
-  setTimeout(() => {
+  later(() => { jeep.className = "jeep go"; $("#road").classList.add("moving"); }, 700);
+  later(() => {
     clearInterval(smoke);
+    $("#road").classList.remove("moving");
     show("map");
-    resetJeep();
-  }, 2600);
+  }, 2700);
 };
-$("#jeepBack").onclick = () => show("start");
+$("#jeepBack").onclick = () => { jeepTimers.forEach(clearTimeout); show("start"); };
 $("#musicBtn").onclick = () => {
   musicOn = !musicOn;
   $("#musicBtn").setAttribute("aria-pressed", musicOn);
