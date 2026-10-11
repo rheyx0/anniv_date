@@ -1623,9 +1623,16 @@ const CAT_FRAMES = {
     "..OFFFFFFFFFO.", "...OFFOOOFFO..", "...OFO...OFO..", "...OO....OO...",
   ], null],
 };
-CAT_FRAMES.down[1] = [...CAT_FRAMES.down[0].slice(0, 12), "...OFFO.OFFO..", "...OOO..OOO..."];
-CAT_FRAMES.up[1]   = [...CAT_FRAMES.up[0].slice(0, 12),   "...OFFO.OFFO..", "...OOO..OOO..."];
-CAT_FRAMES.side[1] = [...CAT_FRAMES.side[0].slice(0, 12), "....OFO.OFO...", "....OO..OO...."];
+// [idle, left step, right step]: one foot lifts at a time, so the body never shifts sideways
+for (const dir of ["down", "up"]) {
+  const top = CAT_FRAMES[dir][0].slice(0, 12);
+  CAT_FRAMES[dir][1] = [...top, "..OOO...OFFO..", ".........OOO.."];
+  CAT_FRAMES[dir][2] = [...top, "..OFFO...OOO..", "..OOO........."];
+}
+CAT_FRAMES.side[1] = [...CAT_FRAMES.side[0].slice(0, 12), "..OFO....OFO..", "..OO......OO.."];
+CAT_FRAMES.side[2] = [...CAT_FRAMES.side[0].slice(0, 12), "....OFO.OFO...", "....OO..OO...."];
+// sitting: same face, round haunches instead of legs
+CAT_FRAMES.sit = [[...CAT_FRAMES.down[0].slice(0, 12), "OFFFFFFFFFFFFO", ".OOOOOOOOOOOO."]];
 const CAT_COLOURS = {
   cliz: { O: "x", F: "T", M: "A", B: "a", E: "j", P: "p", bow: true },
   rhey: { O: "z", F: "K", M: "L", B: "w", E: "e", P: "p" },
@@ -1831,6 +1838,7 @@ let arrival = null, arriveByJeep = false, cutscene = null, jamielGone = false;
 const jeepImg = pixelCanvas(SPRITES.jeep);
 
 function resetTown() {
+  hero.sitting = buddy.sitting = false; hero.glide = buddy.glide = null;
   Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "right", moving: null });
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
@@ -1841,6 +1849,7 @@ function resetTown() {
 }
 // put the cats just outside a door (used when leaving a store)
 function standAt(x, y) {
+  hero.sitting = buddy.sitting = false; hero.glide = buddy.glide = null;
   Object.assign(hero, { x, y, fx: x, fy: y, dir: "down", moving: null });
   const bx = walkable(x - 1, y) ? x - 1 : x + 1;
   Object.assign(buddy, { x: bx, y, fx: bx, fy: y, dir: bx < x ? "right" : "left", moving: null });
@@ -1862,6 +1871,17 @@ function moveCats(now) {
   const dx = free ? (has("right") ? 1 : 0) - (has("left") ? 1 : 0) : 0;
   const dy = free ? (has("down") ? 1 : 0) - (has("up") ? 1 : 0) : 0;
   const face = order[order.length - 1] || tapped;
+  if (hero.sitting) {
+    if (free && (dx || dy) && !hero.glide) {
+      hero.sitting = buddy.sitting = false;
+      glideTo(hero, 18, 14, "down", 240); glideTo(buddy, 19, 14, "down", 280);
+    }
+    tapped = null;
+    glideStep(hero, now); glideStep(buddy, now);
+    hero.x = Math.floor(hero.fx + 0.5); hero.y = Math.floor(hero.fy + 0.7);
+    return;
+  }
+  if (hero.glide || buddy.glide) { tapped = null; glideStep(hero, now); glideStep(buddy, now); return; }
   if (free && face) hero.dir = face;
   tapped = null;
   const ox = hero.fx, oy = hero.fy;
@@ -1889,20 +1909,53 @@ function moveCats(now) {
     trail.push([hero.fx, hero.fy]); if (trail.length > 90) trail.shift();
   }
   hero.x = Math.floor(hero.fx + 0.5); hero.y = Math.floor(hero.fy + 0.7);
-  // rhey walks along cliz's trail, a little under one tile behind
-  let dist = 0, tx = buddy.fx, ty = buddy.fy;
-  for (let i = trail.length - 1; i > 0; i--) {
-    dist += Math.hypot(trail[i][0] - trail[i - 1][0], trail[i][1] - trail[i - 1][1]);
-    if (dist >= 0.85) { tx = trail[i - 1][0]; ty = trail[i - 1][1]; break; }
+  // gliding into place (side by side, or onto the bench) overrides normal following
+  if (glideStep(hero, now) | glideStep(buddy, now)) {
+    hero.x = Math.floor(hero.fx + 0.5); hero.y = Math.floor(hero.fy + 0.7);
+    buddy.x = Math.floor(buddy.fx + 0.5); buddy.y = Math.floor(buddy.fy + 0.7);
+    return;
   }
-  const bdx = tx - buddy.fx, bdy = ty - buddy.fy;
-  buddy.moving = Math.hypot(bdx, bdy) > 0.0001 || null;
+  // rhey walks along cliz's trail, a little under one tile behind (interpolated, so it's smooth)
+  let p = null, acc = 0;
+  for (let i = trail.length - 1; i > 0; i--) {
+    const [x1, y1] = trail[i], [x0, y0] = trail[i - 1], seg = Math.hypot(x1 - x0, y1 - y0);
+    if (seg && acc + seg >= 0.85) { const t = (0.85 - acc) / seg; p = [x1 + (x0 - x1) * t, y1 + (y0 - y1) * t]; break; }
+    acc += seg;
+  }
+  // rhey only follows while cliz is actually walking, so side-by-side spots stay put
+  const bdx = p && moved ? p[0] - buddy.fx : 0, bdy = p && moved ? p[1] - buddy.fy : 0;
+  buddy.moving = Math.hypot(bdx, bdy) > 0.002 || null;
   if (buddy.moving) {
     buddy.dir = Math.abs(bdx) > Math.abs(bdy) ? (bdx > 0 ? "right" : "left") : (bdy > 0 ? "down" : "up");
-    buddy.fx = tx; buddy.fy = ty;
+    buddy.fx = p[0]; buddy.fy = p[1];
     buddy.walkT = (buddy.walkT || 0) + dt; buddy.frame = Math.floor(buddy.walkT / 0.13) % 2;
   }
   buddy.x = Math.floor(buddy.fx + 0.5); buddy.y = Math.floor(buddy.fy + 0.7);
+}
+// a short hop/slide into a spot; returns true while it's still happening
+function glideTo(ch, x, y, dir, ms = 240) {
+  ch.glide = { from: [ch.fx, ch.fy], to: [x, y], t0: performance.now(), ms, dir };
+}
+function glideStep(ch, now) {
+  const g = ch.glide;
+  if (!g) return false;
+  const p = Math.min((now - g.t0) / g.ms, 1), e = 1 - (1 - p) * (1 - p);
+  ch.fx = g.from[0] + (g.to[0] - g.from[0]) * e;
+  ch.fy = g.from[1] + (g.to[1] - g.from[1]) * e - Math.sin(p * Math.PI) * 0.25;   // a tiny hop
+  ch.moving = p < 1 || null; ch.frame = Math.floor(p * 4) % 2;
+  if (p >= 1) {
+    ch.fx = g.to[0]; ch.fy = g.to[1]; ch.dir = g.dir || ch.dir; ch.glide = null; ch.moving = null;
+    trail.length = 0; trail.push([buddy.fx, buddy.fy], [hero.fx, hero.fy]);   // rhey picks up the path from here
+  }
+  return true;
+}
+// line up side by side, both facing what cliz is looking at
+function sideBySide() {
+  const hx = Math.round(hero.fx), hy = Math.round(hero.fy), dir = hero.dir;
+  const options = dir === "up" || dir === "down" ? [[-1, 0], [1, 0]] : [[0, 1], [0, -1]];
+  const spot = options.find(([ox, oy]) => fits(hx + ox, hy + oy));
+  glideTo(hero, hx, hy, dir, 160);
+  if (spot) glideTo(buddy, hx + spot[0], hy + spot[1], dir);
 }
 
 /* ---------- jamiel's cutscene: he heads into unli wings first ---------- */
@@ -2035,13 +2088,16 @@ function interact() {
     } else say([`the jeep home. not yet!`, `visit all the places first (${done.size}/${SCENES.length}) ♡`]);
   } else {
     const t = n.thing;
+    if (t.id !== "bench") sideBySide();
     if (t.id === "fountain") {
       blip(1318, 0.06); setTimeout(() => blip(1568, 0.08), 90);
       burst("spark", 22.5 * TILE, 14.6 * TILE, 14);
       say(["you tossed a coin into the fountain...", "*plink*", "wish: more dates like this one ♡"]);
     } else if (t.id === "bench") {
-      hero.dir = "down"; buddy.dir = "down";
-      burst("heart", hx, hy, 8); melody([659, 784, 988]);
+      glideTo(hero, 18, 12.75, "down", 320); glideTo(buddy, 19, 12.75, "down", 360);
+      hero.sitting = buddy.sitting = true;
+      setTimeout(() => burst("heart", 19 * TILE, 12.6 * TILE, 10), 380);
+      melody([659, 784, 988]);
       say(["you sat on the bench together.", "it's quiet. just the two of you ♡"]);
     } else if (t.id === "sign") {
       blip(660, 0.05);
@@ -2095,8 +2151,8 @@ function drawFrame(now) {
   const ARRIVE_MS = 2600, jeepParkX = JEEP_SPOT.x * TILE + 1;
   const ap = arrival ? Math.min((now - arrival.t0) / ARRIVE_MS, 1) : 1;
   const jeepX = arrival ? -90 + (jeepParkX + 90) * (1 - Math.pow(1 - ap, 3)) : jeepParkX;
-  const focusX = cutscene ? cutscene.cx : arrival ? jeepX + 32 : (hero.fx + 0.5) * TILE;
-  const focusY = cutscene ? cutscene.cy : arrival ? JEEP_SPOT.y * TILE + 16 : (hero.fy + 0.5) * TILE;
+  const focusX = cutscene ? Math.round(cutscene.cx) : arrival ? Math.round(jeepX + 32) : Math.round(hero.fx * TILE) + 8;
+  const focusY = cutscene ? Math.round(cutscene.cy) : arrival ? JEEP_SPOT.y * TILE + 16 : Math.round(hero.fy * TILE) + 8;
   const camX = MW <= VW ? -(VW - MW) / 2 : Math.max(0, Math.min(MW - VW, Math.round(focusX - VW / 2)));
   const camY = MH <= VH ? -(VH - MH) / 2 : Math.max(0, Math.min(MH - VH, Math.round(focusY - VH / 2)));
   c.fillStyle = "#4f7d4a"; c.fillRect(0, 0, VW, VH);
@@ -2170,8 +2226,9 @@ function drawFrame(now) {
   // cats, back to front (hidden until they hop out of the jeep)
   if (!arrival) [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
     const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
-    const img = catSprites[who][dir][ch.moving ? ch.frame : 0];
-    const px = sx(ch.fx * TILE + 1), py = sy(ch.fy * TILE + 1);
+    const img = ch.sitting ? catSprites[who].sit[0] : catSprites[who][dir][ch.moving ? 1 + ch.frame : 0];
+    // round the world position first so the cat and camera move in lockstep (no 1px twitch)
+    const px = sx(Math.round(ch.fx * TILE) + 1), py = sy(Math.round(ch.fy * TILE) + 1 + (ch.sitting ? 2 : 0));
     c.save();
     if (ch.dir === "left") { c.translate(px + 14, py); c.scale(-1, 1); c.drawImage(img, 0, 0); }
     else c.drawImage(img, px, py);
@@ -2191,7 +2248,7 @@ function drawFrame(now) {
   });
   // "E" bubble when something can be opened
   if (!arrival && !cutscene && nearby() && !dialog) {
-    const bx = sx(hero.fx * TILE + 3), by = sy(hero.fy * TILE - 12);
+    const bx = sx(Math.round(hero.fx * TILE) + 3), by = sy(Math.round(hero.fy * TILE) - 12);
     c.fillStyle = INK_C; c.fillRect(bx - 1, by - 1, 12, 11);
     c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
     c.fillStyle = "#ee8fa8"; c.fillRect(bx + 3, by + 2, 1, 5); c.fillRect(bx + 3, by + 2, 4, 1); c.fillRect(bx + 3, by + 4, 3, 1); c.fillRect(bx + 3, by + 6, 4, 1);
@@ -2658,6 +2715,12 @@ function boothNear() {
 function boothInteract() {
   if (dialog) { advanceDialog(); return; }
   const n = boothNear();
+  if (n) {
+    const b = boothCats, side = b.x > 280 ? -1 : b.x < 40 ? 1 : (n === "props" ? -1 : 1);
+    b.dir = n === "props" ? "right" : n === "booth" ? "left" : "up";
+    b.bx = b.x + side * 26; b.by = b.y; b.bdir = b.dir; b.bmoving = false;
+    b.trail = [[b.bx, b.by], [b.x, b.y]];
+  }
   if (n === "booth") {
     melody([784, 988]);
     $("#boothBox").hidden = false; $("#boothBox").scrollTop = 0;
@@ -2688,10 +2751,11 @@ function boothUpdate(now) {
     b.moving = true; b.walkT += dt; b.frame = Math.floor(b.walkT / 0.13) % 2;
     b.trail.push([b.x, b.y]); if (b.trail.length > 90) b.trail.shift();
   } else b.moving = false;
-  let dist = 0, tx = b.bx, ty = b.by;
+  let tx = b.bx, ty = b.by, acc = 0;
   for (let i = b.trail.length - 1; i > 0; i--) {
-    dist += Math.hypot(b.trail[i][0] - b.trail[i - 1][0], b.trail[i][1] - b.trail[i - 1][1]);
-    if (dist >= 24) { tx = b.trail[i - 1][0]; ty = b.trail[i - 1][1]; break; }
+    const [x1, y1] = b.trail[i], [x0, y0] = b.trail[i - 1], seg = Math.hypot(x1 - x0, y1 - y0);
+    if (seg && acc + seg >= 24) { const t = (24 - acc) / seg; tx = x1 + (x0 - x1) * t; ty = y1 + (y0 - y1) * t; break; }
+    acc += seg;
   }
   const mdx = tx - b.bx, mdy = ty - b.by;
   b.bmoving = Math.hypot(mdx, mdy) > 0.01;
@@ -2709,7 +2773,7 @@ function drawBoothCats(c, now) {
   const props = [[null, null], ["glasses", "crown"], ["bow", "glasses"]][b.props];
   const draw = (who, x, y, dir, moving, frame, prop) => {
     const d = dir === "left" || dir === "right" ? "side" : dir;
-    const img = catSprites[who][d][moving ? frame : 0];
+    const img = catSprites[who][d][moving ? 1 + frame : 0];
     const X = Math.round(x - W / 2), Y = Math.round(y - W);
     c.save();
     if (dir === "left") { c.translate(X + W, Y); c.scale(-1, 1); c.drawImage(img, 0, 0, W, W); }
