@@ -83,6 +83,12 @@
   /* no outlines or highlight boxes when tapping things */
   *:focus, *:focus-visible { outline: none; }
   button::-moz-focus-inner { border: 0; }
+  /* no blue selection when tapping fast through dialog, activities and the game screens */
+  * { -webkit-tap-highlight-color: transparent; }
+  body.fullscreen, body.fullscreen *, #dialog, #dialog *, button, canvas, .pet, .toy {
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  body.fullscreen ::selection, #dialog ::selection { background: transparent; }
 
   .toolbar { position: fixed; top: 10px; right: 10px; z-index: 20; display: flex; }
   .toolbar .pxbtn { padding: 5px 10px; font-size: 14px; margin: 4px 6px; }
