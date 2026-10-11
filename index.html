@@ -515,6 +515,7 @@
     <button class="back pxbtn stage-back" id="roomBack">← outside</button>
     <p class="hud-pill hud-kicker room-title" id="roomTitle"></p>
     <div class="room-stage" id="roomStage"></div>
+    <p class="hud-pill hud-prompt" id="roomPrompt" hidden></p>
     <div class="photo-box booth-box" id="boothBox" hidden></div>
     <div class="photo-box" id="photoBox" hidden>
       <div class="px card scene photo-card" data-ears>
@@ -1400,8 +1401,8 @@ $("#toBooth").onclick = () => {
   show("recapPage");
   if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
 };
-$("#boothBack").onclick = () => { standAt(BOOTH.x + 2, BOOTH.y + 5); show("map"); };
-$("#toRecap").onclick = () => { standAt(BOOTH.x + 2, BOOTH.y + 5); show("map"); };
+$("#boothBack").onclick = () => { stopCamera(); renderStrip(); $("#boothBox").hidden = true; };
+$("#toRecap").onclick = () => exitTo(BOOTH);
 $("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
   current = 0; done.clear(); resetTown();
@@ -1826,14 +1827,16 @@ const order = [];        // directions being held, most recent last
 let tapped = null;       // a quick tap still counts as one step
 const clearHeld = () => { order.length = 0; tapped = null; };
 let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0, jamielHop = 0;
-let arrival = null, arriveByJeep = false;
+let arrival = null, arriveByJeep = false, cutscene = null, jamielGone = false;
 const jeepImg = pixelCanvas(SPRITES.jeep);
 
 function resetTown() {
   Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "right", moving: null });
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
-  flowersPicked = 0; particles = []; clearHeld();
+  flowersPicked = 0; particles = []; clearHeld(); trail.length = 0;
+  jamielGone = false; cutscene = null; grid[21][26] = "X";
+  THINGS.forEach(t => { if (t.id === "jamiel") t.picked = false; });
   if (dialog) { dialog.after = null; closeDialog(); }
 }
 // put the cats just outside a door (used when leaving a store)
@@ -1841,34 +1844,125 @@ function standAt(x, y) {
   Object.assign(hero, { x, y, fx: x, fy: y, dir: "down", moving: null });
   const bx = walkable(x - 1, y) ? x - 1 : x + 1;
   Object.assign(buddy, { x: bx, y, fx: bx, fy: y, dir: bx < x ? "right" : "left", moving: null });
-  clearHeld();
+  clearHeld(); trail.length = 0;
 }
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-function tryStep(now) {
-  if (hero.moving || dialog || arrival) return;
-  const dir = order[order.length - 1] || tapped;
-  if (!dir) return;
+const SPEED = 6.2;           // tiles per second
+const trail = [];            // where cliz has walked, so rhey can follow her path
+let lastT = 0;
+// a cat's feet: a small box near the bottom of its tile has to fit on walkable ground
+const fits = (fx, fy) => {
+  const x0 = Math.floor(fx + 0.2), x1 = Math.floor(fx + 0.8), y0 = Math.floor(fy + 0.45), y1 = Math.floor(fy + 0.95);
+  return walkable(x0, y0) && walkable(x1, y0) && walkable(x0, y1) && walkable(x1, y1);
+};
+function moveCats(now) {
+  const dt = Math.min((now - (lastT || now)) / 1000, 0.05); lastT = now;
+  const free = !dialog && !arrival && !cutscene;
+  const has = d => order.includes(d) || tapped === d;
+  const dx = free ? (has("right") ? 1 : 0) - (has("left") ? 1 : 0) : 0;
+  const dy = free ? (has("down") ? 1 : 0) - (has("up") ? 1 : 0) : 0;
+  const face = order[order.length - 1] || tapped;
+  if (free && face) hero.dir = face;
   tapped = null;
-  hero.dir = dir;
-  const [dx, dy] = DIRS[dir], nx = hero.x + dx, ny = hero.y + dy;
-  if (!walkable(nx, ny)) return;
-  // carry on from where the last step ended so holding a key walks smoothly
-  const t0 = hero.lastEnd && now - hero.lastEnd < 80 ? hero.lastEnd : now;
-  const bdx = hero.x - buddy.x, bdy = hero.y - buddy.y;
-  if (bdx || bdy) {
-    buddy.dir = bdx > 0 ? "right" : bdx < 0 ? "left" : bdy > 0 ? "down" : "up";
-    buddy.moving = { from: [buddy.x, buddy.y], to: [hero.x, hero.y], t0 };
-    buddy.x = hero.x; buddy.y = hero.y; buddy.frame ^= 1;
+  const ox = hero.fx, oy = hero.fy;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy), step = SPEED * dt, mx = dx / len * step, my = dy / len * step;
+    if (mx) {
+      if (fits(hero.fx + mx, hero.fy)) hero.fx += mx;
+      else if (!my) {   // slide around corners instead of snagging on them
+        const ry = Math.round(hero.fy);
+        if (Math.abs(ry - hero.fy) < 0.5 && fits(hero.fx + mx, ry)) hero.fy += Math.sign(ry - hero.fy) * Math.min(step, Math.abs(ry - hero.fy));
+      }
+    }
+    if (my) {
+      if (fits(hero.fx, hero.fy + my)) hero.fy += my;
+      else if (!mx) {
+        const rx = Math.round(hero.fx);
+        if (Math.abs(rx - hero.fx) < 0.5 && fits(rx, hero.fy + my)) hero.fx += Math.sign(rx - hero.fx) * Math.min(step, Math.abs(rx - hero.fx));
+      }
+    }
   }
-  hero.moving = { from: [hero.x, hero.y], to: [nx, ny], t0 };
-  hero.x = nx; hero.y = ny; hero.frame ^= 1;
+  const moved = Math.hypot(hero.fx - ox, hero.fy - oy) > 0.0001;
+  hero.moving = moved || null;
+  if (moved) {
+    hero.walkT = (hero.walkT || 0) + dt; hero.frame = Math.floor(hero.walkT / 0.13) % 2;
+    trail.push([hero.fx, hero.fy]); if (trail.length > 90) trail.shift();
+  }
+  hero.x = Math.floor(hero.fx + 0.5); hero.y = Math.floor(hero.fy + 0.7);
+  // rhey walks along cliz's trail, a little under one tile behind
+  let dist = 0, tx = buddy.fx, ty = buddy.fy;
+  for (let i = trail.length - 1; i > 0; i--) {
+    dist += Math.hypot(trail[i][0] - trail[i - 1][0], trail[i][1] - trail[i - 1][1]);
+    if (dist >= 0.85) { tx = trail[i - 1][0]; ty = trail[i - 1][1]; break; }
+  }
+  const bdx = tx - buddy.fx, bdy = ty - buddy.fy;
+  buddy.moving = Math.hypot(bdx, bdy) > 0.0001 || null;
+  if (buddy.moving) {
+    buddy.dir = Math.abs(bdx) > Math.abs(bdy) ? (bdx > 0 ? "right" : "left") : (bdy > 0 ? "down" : "up");
+    buddy.fx = tx; buddy.fy = ty;
+    buddy.walkT = (buddy.walkT || 0) + dt; buddy.frame = Math.floor(buddy.walkT / 0.13) % 2;
+  }
+  buddy.x = Math.floor(buddy.fx + 0.5); buddy.y = Math.floor(buddy.fy + 0.7);
 }
-function advance(ch, now) {
-  if (!ch.moving) { ch.fx = ch.x; ch.fy = ch.y; return; }
-  const p = Math.min((now - ch.moving.t0) / STEP_MS, 1);
-  ch.fx = ch.moving.from[0] + (ch.moving.to[0] - ch.moving.from[0]) * p;
-  ch.fy = ch.moving.from[1] + (ch.moving.to[1] - ch.moving.from[1]) * p;
-  if (p >= 1) { ch.lastEnd = ch.moving.t0 + STEP_MS; ch.moving = null; }
+
+/* ---------- jamiel's cutscene: he heads into unli wings first ---------- */
+function pathTo(sx, sy, tx, ty) {
+  const key = (x, y) => x + "," + y, prev = new Map([[key(sx, sy), null]]), q = [[sx, sy]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    if (x === tx && y === ty) break;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (!prev.has(k) && walkable(nx, ny)) { prev.set(k, [x, y]); q.push([nx, ny]); }
+    }
+  }
+  if (!prev.has(key(tx, ty))) return null;
+  const path = []; let cur = [tx, ty];
+  while (cur) { path.unshift(cur); cur = prev.get(key(cur[0], cur[1])); }
+  return path;
+}
+function startJamielCutscene() {
+  const w = STORES[7], goal = [w.x + 3, w.y + 5];
+  const path = pathTo(26, 22, goal[0], goal[1]) || [[26, 22], goal];
+  cutscene = {
+    phase: "pan", t0: performance.now(), last: performance.now(),
+    path: [[26, 21], ...path, [w.x + 2, w.y + 4]], seg: 0, segT: 0, jx: 26, jy: 21, alpha: 1,
+    cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE,
+  };
+  clearHeld();
+}
+function updateCutscene(now) {
+  const cs = cutscene;
+  if (!cs) return;
+  const dt = Math.min((now - cs.last) / 1000, 0.05); cs.last = now;
+  const target = cs.phase === "back" ? [(hero.fx + 0.5) * TILE, (hero.fy + 0.5) * TILE] : [(cs.jx + 0.5) * TILE, (cs.jy + 0.5) * TILE];
+  cs.cx += (target[0] - cs.cx) * Math.min(1, dt * 3.5);
+  cs.cy += (target[1] - cs.cy) * Math.min(1, dt * 3.5);
+  if (cs.phase === "pan" && now - cs.t0 > 1100 && !cs.talked) {
+    cs.talked = true; grunt(); jamielHop = now;
+    say(["wait... is that jamiel?", "jamiel: hmph. i'm hungry too.", "jamiel: i'm going in first."], () => { cs.phase = "walk"; cs.last = performance.now(); });
+  }
+  if (cs.phase === "walk") {
+    cs.segT += dt * 4.5;
+    while (cs.segT >= 1 && cs.seg < cs.path.length - 1) { cs.segT -= 1; cs.seg++; }
+    if (cs.seg >= cs.path.length - 1) { cs.phase = "in"; cs.t0 = now; blip(523, 0.1); setTimeout(() => blip(392, 0.12), 120); }
+    else {
+      const [ax, ay] = cs.path[cs.seg], [bx, by] = cs.path[cs.seg + 1];
+      cs.jx = ax + (bx - ax) * cs.segT; cs.jy = ay + (by - ay) * cs.segT;
+    }
+  }
+  if (cs.phase === "in") {
+    cs.alpha = Math.max(0, 1 - (now - cs.t0) / 500);
+    if (now - cs.t0 > 700) {
+      cs.phase = "back"; cs.t0 = now; jamielGone = true; grid[21][26] = ".";
+      THINGS.forEach(t => { if (t.id === "jamiel") t.picked = true; });
+    }
+  }
+  if (cs.phase === "back" && now - cs.t0 > 1000) {
+    cutscene = null;
+    melody([523, 659, 784]);
+    enterStore(7);
+  }
 }
 function burst(kind, px, py, n) {
   for (let i = 0; i < n; i++) particles.push({
@@ -1925,9 +2019,10 @@ const nextStop = () => SCENES.findIndex((_, i) => !done.has(i));
 function interact() {
   if (dialog) { advanceDialog(); return; }
   const n = nearby();
-  if (!n || hero.moving || arrival) return;
+  if (!n || arrival || cutscene) return;
   const hx = (hero.x + 0.5) * TILE, hy = hero.y * TILE;
   if (n.kind === "store") {
+    if (n.i === 7 && !jamielGone) { startJamielCutscene(); return; }
     melody([523, 659, 784]);
     enterStore(n.i);
   } else if (n.kind === "booth") {
@@ -1975,7 +2070,7 @@ function interact() {
 function renderHud() {
   const n = nearby(), el = $("#mapPrompt");
   let html;
-  if (dialog) html = "";
+  if (dialog || cutscene || arrival) html = "";
   else if (n && n.kind === "store") html = `<b>${esc(STORES[n.i].name)}</b>${done.has(n.i) ? " ♡" : ""} · <kbd>E</kbd> go inside`;
   else if (n && n.kind === "booth") html = `<b>the photo booth</b> · <kbd>E</kbd> go inside`;
   else if (n && n.kind === "jeep") html = `<b>the jeep</b> · <kbd>E</kbd> ${done.size === SCENES.length ? "ride home ♡" : "look"}`;
@@ -2000,7 +2095,8 @@ function drawFrame(now) {
   const ARRIVE_MS = 2600, jeepParkX = JEEP_SPOT.x * TILE + 1;
   const ap = arrival ? Math.min((now - arrival.t0) / ARRIVE_MS, 1) : 1;
   const jeepX = arrival ? -90 + (jeepParkX + 90) * (1 - Math.pow(1 - ap, 3)) : jeepParkX;
-  const focusX = arrival ? jeepX + 32 : (hero.fx + 0.5) * TILE, focusY = arrival ? JEEP_SPOT.y * TILE + 16 : (hero.fy + 0.5) * TILE;
+  const focusX = cutscene ? cutscene.cx : arrival ? jeepX + 32 : (hero.fx + 0.5) * TILE;
+  const focusY = cutscene ? cutscene.cy : arrival ? JEEP_SPOT.y * TILE + 16 : (hero.fy + 0.5) * TILE;
   const camX = MW <= VW ? -(VW - MW) / 2 : Math.max(0, Math.min(MW - VW, Math.round(focusX - VW / 2)));
   const camY = MH <= VH ? -(VH - MH) / 2 : Math.max(0, Math.min(MH - VH, Math.round(focusY - VH / 2)));
   c.fillStyle = "#4f7d4a"; c.fillRect(0, 0, VW, VH);
@@ -2030,7 +2126,12 @@ function drawFrame(now) {
   });
   // jamiel, sitting grumpily
   const jh = now - jamielHop < 300 ? -3 : 0;
-  c.drawImage(jamielImg, sx(26 * TILE - 1), sy(21 * TILE - 2 + jh), 18, 19);
+  if (cutscene && cutscene.phase !== "pan") {
+    const bob = Math.floor(now / 120) % 2 ? -1 : 0;
+    c.globalAlpha = cutscene.alpha;
+    c.drawImage(jamielImg, sx(cutscene.jx * TILE - 1), sy(cutscene.jy * TILE - 2 + bob), 18, 19);
+    c.globalAlpha = 1;
+  } else if (!jamielGone) c.drawImage(jamielImg, sx(26 * TILE - 1), sy(21 * TILE - 2 + jh), 18, 19);
   // a jumping fish
   if (fish) {
     const p = (now - fish.t0) / 700;
@@ -2089,7 +2190,7 @@ function drawFrame(now) {
     return true;
   });
   // "E" bubble when something can be opened
-  if (!arrival && nearby() && !hero.moving && !dialog) {
+  if (!arrival && !cutscene && nearby() && !dialog) {
     const bx = sx(hero.fx * TILE + 3), by = sy(hero.fy * TILE - 12);
     c.fillStyle = INK_C; c.fillRect(bx - 1, by - 1, 12, 11);
     c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
@@ -2098,9 +2199,8 @@ function drawFrame(now) {
 }
 
 function tick(now) {
-  advance(hero, now); advance(buddy, now);
-  tryStep(now);                                // start the next step the same frame the last one ends
-  advance(hero, now); advance(buddy, now);
+  moveCats(now);
+  updateCutscene(now);
   drawFrame(now);
   renderHud();
   townLoop = requestAnimationFrame(tick);
@@ -2108,6 +2208,7 @@ function tick(now) {
 function startTown() {
   if (!townDrawn) { drawTown(); townDrawn = true; }
   sizeCanvas();
+  lastT = 0;
   if (arriveByJeep) {
     arriveByJeep = false;
     resetTown();
@@ -2123,6 +2224,12 @@ const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: 
 document.addEventListener("keydown", e => {
   const act = e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ";
   if ($("#map").hidden) {
+    if (!$("#interior").hidden && roomId === "booth" && $("#boothBox").hidden) {
+      const d = KEYS[e.key];
+      if (d) { e.preventDefault(); if (!e.repeat) { const k = order.indexOf(d); if (k >= 0) order.splice(k, 1); order.push(d); tapped = d; } }
+      if (act) { e.preventDefault(); if (!e.repeat) boothInteract(); }
+      return;
+    }
     // the text box inside stores also moves on with E / enter / space
     if (dialog && act && !e.repeat) { e.preventDefault(); advanceDialog(); }
     return;
@@ -2526,29 +2633,121 @@ ROOMS.booth = (c, now) => {
   base(120, "#ee8fa8");
   checker(123, "#fde6ec", "#f9d3dd");
 };
+const boothCats = { x: 160, y: 162, dir: "up", frame: 0, walkT: 0, moving: false, trail: [], props: 0, bx: 140, by: 162, bdir: "up", bframe: 0, bmoving: false };
+let boothLast = 0;
 function enterBooth() {
   roomId = "booth";
   $("#roomTitle").textContent = "the photo booth";
   $("#roomStage").innerHTML = "";
   $("#photoBox").hidden = true;
   $("#boothBox").appendChild($("#booth"));
-  $("#boothBox").hidden = false;
-  $("#boothBox").scrollTop = 0;
+  $("#boothBox").hidden = true;
+  Object.assign(boothCats, { x: 160, y: 162, dir: "up", moving: false, trail: [], bx: 140, by: 162, bdir: "up", bmoving: false });
+  boothLast = 0; clearHeld();
   show("interior");
-  say(["say cheese! ♡", "4 pictures, one strip. turn on the camera to start."]);
+  say(["say cheese! ♡", "walk around, try on some props, then step into the booth (press E there)."]);
+}
+// what cliz is standing next to inside the booth room
+function boothNear() {
+  const { x, y } = boothCats;
+  if (x < 104) return "booth";
+  if (x > 214) return "props";
+  if (y < 140 && x > 108 && x < 206) return "photos";
+  return null;
+}
+function boothInteract() {
+  if (dialog) { advanceDialog(); return; }
+  const n = boothNear();
+  if (n === "booth") {
+    melody([784, 988]);
+    $("#boothBox").hidden = false; $("#boothBox").scrollTop = 0;
+  } else if (n === "props") {
+    boothCats.props = (boothCats.props + 1) % 3;
+    melody([659, 784, 988]);
+    say([["you put all the props back on the table."],
+         ["you put on the heart glasses ♡", "rhey got the crown. obviously."],
+         ["now a pink bow for cliz ♡", "...and rhey stole the heart glasses."]][boothCats.props]);
+  } else if (n === "photos") {
+    blip(660, 0.05);
+    say(["little photo strips from other couples...", "ours is gonna be the cutest one ♡"]);
+  }
+}
+function boothUpdate(now) {
+  const dt = Math.min((now - (boothLast || now)) / 1000, 0.05); boothLast = now;
+  const b = boothCats, free = !dialog && $("#boothBox").hidden;
+  const has = d => order.includes(d) || tapped === d;
+  const dx = free ? (has("right") ? 1 : 0) - (has("left") ? 1 : 0) : 0;
+  const dy = free ? (has("down") ? 1 : 0) - (has("up") ? 1 : 0) : 0;
+  const face = order[order.length - 1] || tapped;
+  if (free && face) b.dir = face;
+  tapped = null;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy), sp = 95 * dt;
+    b.x = Math.max(16, Math.min(304, b.x + dx / len * sp));
+    b.y = Math.max(130, Math.min(172, b.y + dy / len * sp));
+    b.moving = true; b.walkT += dt; b.frame = Math.floor(b.walkT / 0.13) % 2;
+    b.trail.push([b.x, b.y]); if (b.trail.length > 90) b.trail.shift();
+  } else b.moving = false;
+  let dist = 0, tx = b.bx, ty = b.by;
+  for (let i = b.trail.length - 1; i > 0; i--) {
+    dist += Math.hypot(b.trail[i][0] - b.trail[i - 1][0], b.trail[i][1] - b.trail[i - 1][1]);
+    if (dist >= 24) { tx = b.trail[i - 1][0]; ty = b.trail[i - 1][1]; break; }
+  }
+  const mdx = tx - b.bx, mdy = ty - b.by;
+  b.bmoving = Math.hypot(mdx, mdy) > 0.01;
+  if (b.bmoving) { b.bdir = Math.abs(mdx) > Math.abs(mdy) ? (mdx > 0 ? "right" : "left") : (mdy > 0 ? "down" : "up"); b.bx = tx; b.by = ty; b.bframe = b.frame; }
+  const n = boothNear(), el = $("#roomPrompt");
+  const html = dialog || !$("#boothBox").hidden ? ""
+    : n === "booth" ? "<b>the photo booth</b> · <kbd>E</kbd> step inside"
+    : n === "props" ? "<b>the props table</b> · <kbd>E</kbd> try something on"
+    : n === "photos" ? "<b>photo strips</b> · <kbd>E</kbd> look"
+    : "arrow keys / WASD to walk around ♡";
+  if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; el.hidden = !html; }
+}
+function drawBoothCats(c, now) {
+  const b = boothCats, S = 2, W = 14 * S;
+  const props = [[null, null], ["glasses", "crown"], ["bow", "glasses"]][b.props];
+  const draw = (who, x, y, dir, moving, frame, prop) => {
+    const d = dir === "left" || dir === "right" ? "side" : dir;
+    const img = catSprites[who][d][moving ? frame : 0];
+    const X = Math.round(x - W / 2), Y = Math.round(y - W);
+    c.save();
+    if (dir === "left") { c.translate(X + W, Y); c.scale(-1, 1); c.drawImage(img, 0, 0, W, W); }
+    else c.drawImage(img, X, Y, W, W);
+    c.restore();
+    if (prop === "glasses" && dir === "down") {
+      c.fillStyle = "#e05a5a"; c.fillRect(X + 2 * S, Y + 4 * S, 4 * S, 3 * S); c.fillRect(X + 8 * S, Y + 4 * S, 4 * S, 3 * S);
+      c.fillStyle = "#5b4636"; c.fillRect(X + 6 * S, Y + 5 * S, 2 * S, S);
+    }
+    if (prop === "crown") {
+      c.fillStyle = "#f6d26b"; c.fillRect(X + 4 * S, Y - S, 6 * S, 2 * S);
+      c.fillRect(X + 4 * S, Y - 3 * S, S, 2 * S); c.fillRect(X + 6.5 * S, Y - 3 * S, S, 2 * S); c.fillRect(X + 9 * S, Y - 3 * S, S, 2 * S);
+    }
+    if (prop === "bow") { c.fillStyle = "#ee8fa8"; c.fillRect(X, Y - S, 3 * S, 3 * S); c.fillRect(X + 4 * S, Y - S, 3 * S, 3 * S); c.fillStyle = "#d9738f"; c.fillRect(X + 3 * S, Y, S, S); }
+  };
+  [["rhey", b.bx, b.by, b.bdir, b.bmoving, b.bframe, props[1]], ["cliz", b.x, b.y, b.dir, b.moving, b.frame, props[0]]]
+    .sort((p, q) => p[2] - q[2]).forEach(a => draw(...a));
+  if (boothNear() && !dialog && $("#boothBox").hidden) {
+    const bx = Math.round(b.x - 5), by = Math.round(b.y - W - 16);
+    c.fillStyle = "#5b4636"; c.fillRect(bx - 1, by - 1, 12, 11);
+    c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
+    c.fillStyle = "#ee8fa8"; c.fillRect(bx + 3, by + 2, 1, 5); c.fillRect(bx + 3, by + 2, 4, 1); c.fillRect(bx + 3, by + 4, 3, 1); c.fillRect(bx + 3, by + 6, 4, 1);
+  }
 }
 
 function drawRoom(now) {
   const cv = $("#roomCanvas"), c = cv.getContext("2d");
   c.imageSmoothingEnabled = false;
   ROOMS[roomId](c, now);
+  if (roomId === "booth") drawBoothCats(c, now);
 }
-function roomTick(now) { drawRoom(now); roomLoop = requestAnimationFrame(roomTick); }
+function roomTick(now) { if (roomId === "booth") boothUpdate(now); drawRoom(now); roomLoop = requestAnimationFrame(roomTick); }
 function startRoom() { cancelAnimationFrame(roomLoop); roomLoop = requestAnimationFrame(roomTick); }
 function stopRoom() { cancelAnimationFrame(roomLoop); roomLoop = null; }
 
 function enterStore(i) {
   current = i; roomId = i;
+  $("#roomPrompt").hidden = true;
   $("#boothBox").hidden = true;
   const s = SCENES[i];
   $("#roomTitle").textContent = STORES[i].name;
