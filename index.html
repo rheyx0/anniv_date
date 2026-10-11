@@ -133,19 +133,19 @@
       70vw -6px 0 #fff, calc(70vw + 20px) -18px 0 #fff;
   }
   .jeep-stage::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 15vh; height: 8px;
+    content: ""; position: absolute; left: 0; right: -68px; bottom: 15vh; height: 8px; will-change: transform;
     background: repeating-linear-gradient(90deg, #f6d26b 0 34px, transparent 34px 68px);
   }
   .jeep-stage.moving::after { animation: dash .3s linear infinite; }
   .stage-back { position: fixed; top: 14px; left: 14px; z-index: 8; background: var(--card) !important; color: var(--ink) !important; padding: 8px 12px !important; }
   .jeep {
     position: absolute; left: 50%; bottom: 18vh; width: min(560px, 86vw); padding: 0; border: 0; background: none;
-    transform: translateX(-160vw);
+    transform: translateX(-160vw); will-change: transform; backface-visibility: hidden;
   }
-  .jeep > svg { display: block; width: 100%; height: auto; }
+  .jeep > img, .rider img { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
   .jeep.arrive { animation: rollin 2.2s cubic-bezier(.2, .7, .3, 1) forwards; }
   .jeep.idle { transform: translateX(-50%); }
-  .jeep.idle > svg { animation: hop .6s steps(2) infinite; }
+  .jeep.idle > img { animation: hop .6s steps(2) infinite; }
   .jeep.rev { transform: translateX(-50%); animation: rev .1s steps(2) infinite; }
   .jeep.go { animation: drive 1.9s cubic-bezier(.55, 0, .9, .45) forwards; }
   .jeep-sign {
@@ -154,7 +154,6 @@
     font: clamp(8px, 2.6vw, 15px) "Press Start 2P", monospace; color: #fffaf2; letter-spacing: .04em; white-space: nowrap;
   }
   .rider { position: absolute; bottom: 53.6%; width: 9.7%; pointer-events: none; }
-  .rider svg { display: block; width: 100%; height: auto; }
   .puff { position: absolute; width: 14px; height: 14px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
   .jeep-bubble {
     position: absolute; left: 50%; bottom: calc(18vh + min(560px, 86vw) * 0.45 + 22px); z-index: 3;
@@ -169,7 +168,7 @@
   }
   @keyframes rollin { from { transform: translateX(-160vw); } to { transform: translateX(-50%); } }
   @keyframes drive { from { transform: translateX(-50%); } to { transform: translateX(120vw); } }
-  @keyframes dash { to { background-position: -68px 0; } }
+  @keyframes dash { to { transform: translateX(-68px); } }
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
   @keyframes puff { to { transform: translate(-50px, -34px) scale(2.4); opacity: 0; } }
   @keyframes bubble { 50% { transform: translate(-50%, -6px); } }
@@ -185,7 +184,6 @@
     font-size: 15px; line-height: 1; padding: 4px 8px; background: var(--card); color: var(--ink); box-shadow: 0 0 0 3px var(--ink);
   }
   .bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -4px; border: 4px solid transparent; border-top-color: var(--ink); }
-  body.fullscreen .jamiel { display: none; }
   .hud-pill {
     position: absolute; z-index: 6; background: var(--card); color: var(--muted); font-size: 15px; padding: 8px 14px; margin: 0;
     box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .2);
@@ -440,11 +438,6 @@
   .floaters, .rain { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .floaters span { position: absolute; bottom: -40px; opacity: .45; animation: floatUp linear infinite; }
   .rain i { position: absolute; top: -20px; width: 4px; height: 14px; background: #a9c4d6; opacity: .8; animation: fall linear infinite; }
-  .jamiel {
-    position: fixed; left: 10px; bottom: 8px; z-index: 15; background: none; border: 0; padding: 0;
-    filter: drop-shadow(3px 4px 0 rgba(91, 70, 54, .2));
-  }
-  .jamiel svg { animation: grumble 3s steps(2) infinite; }
   .pop {
     position: fixed; z-index: 30; pointer-events: none; font: 600 22px "Pixelify Sans", monospace; color: var(--pink-d);
     text-shadow: 2px 2px 0 var(--card); transform: translate(-50%, -50%); animation: pop 0.9s ease-out forwards; white-space: nowrap;
@@ -457,7 +450,6 @@
 
   @keyframes hop { 50% { transform: translateY(-4px); } }
   @keyframes idle { 50% { transform: translateY(-6px); } }
-  @keyframes grumble { 50% { transform: scale(1.03, .97); } }
   @keyframes bounce { 40% { transform: translateY(-18px) scale(1.05); } 70% { transform: translateY(0) scale(1.08, .92); } }
   @keyframes squish { 30% { transform: scale(1.35, .62); } 60% { transform: scale(.88, 1.15); } 80% { transform: scale(1.06, .95); } }
   @keyframes wiggle { 25% { transform: rotate(-10deg); } 50% { transform: rotate(9deg); } 75% { transform: rotate(-5deg); } }
@@ -480,7 +472,6 @@
   <button class="pxbtn" id="musicBtn" aria-pressed="true">♪ music</button>
   <button class="pxbtn" id="sfxBtn" aria-pressed="true">sfx</button>
 </div>
-<button class="jamiel" id="jamiel" aria-label="jamiel the grumpy cat"></button>
 
 <main>
   <section id="start" class="screen">
@@ -3267,9 +3258,11 @@ $("#startBtn").onclick = () => {
 };
 
 // the jeepney: rolls up, waits for a tap, then honks and drives off into town
-$("#riderCliz").innerHTML = sprite("clizHead", 40);
-$("#riderRhey").innerHTML = sprite("rheyHead", 40);
-$("#jeep").insertAdjacentHTML("afterbegin", sprite("jeep", 560));
+// drawn once as small pixel images (a big svg of rects is slow to move every frame)
+const spriteImg = name => `<img src="${pixelCanvas(SPRITES[name]).toDataURL()}" alt="" draggable="false">`;
+$("#riderCliz").innerHTML = spriteImg("clizHead");
+$("#riderRhey").innerHTML = spriteImg("rheyHead");
+$("#jeep").insertAdjacentHTML("afterbegin", spriteImg("jeep"));
 let jeepReady = false, jeepTimers = [];
 function jeepSound() {
   if (!sfxOn) return;
@@ -3338,18 +3331,6 @@ $("#musicBtn").onclick = () => {
 $("#sfxBtn").onclick = () => {
   sfxOn = !sfxOn;
   $("#sfxBtn").setAttribute("aria-pressed", sfxOn);
-};
-
-// jamiel, the grumpy cat in the corner
-const jamiel = $("#jamiel");
-const grumbles = ["hmph.", "...", "what.", "leave me alone", "fine. ♡"];
-let grumbleIdx = 0;
-jamiel.innerHTML = pet("jamiel", "jamiel", 88);
-jamiel.onclick = e => {
-  const [x, y] = eventPoint(e, jamiel);
-  popText(grumbles[grumbleIdx++ % grumbles.length], x + 30, y);
-  replay(jamiel.querySelector(".pet"));
-  grunt();
 };
 
 const floaters = $("#floaters");
