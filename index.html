@@ -151,6 +151,25 @@
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
   @keyframes puff { to { transform: translate(-40px, -26px) scale(2.4); opacity: 0; } }
 
+  /* the town map */
+  .map-card { padding: 26px 16px 22px; }
+  .map-wrap { position: relative; margin: 12px auto 0; max-width: 660px; box-shadow: 0 0 0 4px var(--ink), 4px 10px 0 4px rgba(91, 70, 54, .15); }
+  .map-wrap canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .map-prompt { min-height: 3em; margin: 14px auto 0; max-width: 40ch; font-size: 15px; color: var(--muted); }
+  .map-prompt b { color: var(--ink); font-weight: 600; }
+  kbd {
+    display: inline-block; font: 11px "Press Start 2P", monospace; color: var(--ink); background: var(--pink);
+    padding: 3px 5px 2px; box-shadow: 0 0 0 2px var(--ink); margin: 0 2px;
+  }
+  .pad { display: flex; align-items: center; justify-content: center; gap: 34px; margin-top: 12px; touch-action: none; user-select: none; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(3, 48px); gap: 4px; }
+  .dpad .pxbtn, .abtn { margin: 0; padding: 0; font-size: 18px; touch-action: none; }
+  .dpad [data-pad="up"] { grid-area: 1 / 2; } .dpad [data-pad="left"] { grid-area: 2 / 1; }
+  .dpad [data-pad="right"] { grid-area: 2 / 3; } .dpad [data-pad="down"] { grid-area: 3 / 2; }
+  .abtn { width: 64px; height: 64px; border-radius: 0; font: 18px "Press Start 2P", monospace; }
+  @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
+  .trail-wrap { display: none !important; }
+
   /* paw-print trail */
   .trail-wrap { position: relative; margin: 0 4px 8px; padding-top: 40px; }
   .trail { list-style: none; display: flex; justify-content: space-between; margin: 0; padding: 0; position: relative; }
@@ -363,6 +382,23 @@
         </button>
       </div>
       <p class="hint" id="jeepHint">tap the jeep to ride</p>
+    </div>
+  </section>
+
+  <section id="map" class="screen" hidden>
+    <div class="px card scene map-card" data-ears>
+      <p class="kicker" id="mapKicker">our town</p>
+      <div class="map-wrap"><canvas id="mapCanvas" width="240" height="176" aria-label="a little pixel town to walk around"></canvas></div>
+      <p class="map-prompt" id="mapPrompt"></p>
+      <div class="pad">
+        <div class="dpad">
+          <button class="pxbtn" data-pad="up" aria-label="walk up">▲</button>
+          <button class="pxbtn" data-pad="left" aria-label="walk left">◀</button>
+          <button class="pxbtn" data-pad="right" aria-label="walk right">▶</button>
+          <button class="pxbtn" data-pad="down" aria-label="walk down">▼</button>
+        </div>
+        <button class="pxbtn abtn" id="padE" aria-label="go inside">E</button>
+      </div>
     </div>
   </section>
 
@@ -972,6 +1008,7 @@ function setRain(on) {
 }
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
+  if (typeof startTown === "function") { if (id === "map") startTown(); else stopTown(); }
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1034,7 +1071,7 @@ function renderScene() {
     ${play}
     <p class="hint" id="hint">${s.game ? `tap on the court where you want to throw. make ${s.goal} baskets to win a prize!` : `tap to ${esc(s.action)}`} <span class="count"></span></p>
     <div class="photos" id="photos" hidden></div>
-    <div class="nav" id="nav" hidden><button class="pxbtn" id="next">${last ? "one last thing ♡" : "next stop →"}</button></div>`;
+    <div class="nav" id="nav" hidden><button class="pxbtn" id="next">${outsideLabel()}</button></div>`;
   $("#back").onclick = goBack;
   $("#next").onclick = goNext;
   if (s.game) setupGame(s); else setupToy(s);
@@ -1160,23 +1197,17 @@ function revealPhotos(s, quiet) {
   wireLightbox(box);
   box.hidden = false;
   $("#nav").hidden = false;
+  $("#next").textContent = outsideLabel();
   if (!quiet) {
     melody([659, 784, 988]);
     setTimeout(() => box.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
   }
 }
 
-function goNext() {
-  current++;
-  if (current < SCENES.length) { renderTrail(); renderScene(); window.scrollTo({ top: 0, behavior: "smooth" }); }
-  else { melody([523, 659, 784]); show("ending"); }
-}
-function goBack() {
-  if (current === 0) { show("jeepScreen"); return; }
-  current--;
-  renderTrail(); renderScene();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
+// every stop returns to the town; the jeep takes them home once all 8 are done
+const outsideLabel = () => done.size === SCENES.length ? "all done! back outside ♡" : "back outside →";
+function goNext() { show("map"); }
+function goBack() { show("map"); }
 
 function openLightbox(src, cap) {
   $("#lbImg").src = src; $("#lbImg").alt = cap; $("#lbCap").textContent = cap;
@@ -1205,11 +1236,7 @@ document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   heartBurst(); melody([523, 659, 784, 1046, 1318]);
   $("#again").hidden = true; $("#final").hidden = false;
 });
-$("#endBack").onclick = () => {
-  stopCamera(); renderStrip();
-  current = SCENES.length - 1;
-  show("journey"); renderTrail(); renderScene();
-};
+$("#endBack").onclick = () => { stopCamera(); renderStrip(); show("map"); };
 $("#toBooth").onclick = () => show("boothPage");
 $("#boothBack").onclick = () => show("ending");
 $("#toRecap").onclick = () => {
@@ -1218,7 +1245,7 @@ $("#toRecap").onclick = () => {
 };
 $("#recapBack").onclick = () => show("boothPage");
 $("#restart").onclick = () => {
-  current = 0; done.clear();
+  current = 0; done.clear(); resetTown();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
   ["#letter", "#letterNav", "#again", "#final"].forEach(id => $(id).hidden = true);
   resetBooth();
@@ -1394,6 +1421,339 @@ $("#bwBtn").onclick = () => {
 $("#stripFoot").innerHTML = `${sprite("cliz", 40)}<span>${BOOTH_CAPTION.map(esc).join("<br>")}</span>${sprite("rhey", 40)}`;
 renderStrip();
 
+/* ======================= the town (pokemon-style walking map) ======================= */
+// cliz walks around with the arrow keys / WASD, rhey follows one step behind,
+// and each store's door opens that stop of the date
+const TILE = 16, MAP_W = 32, MAP_H = 18, VIEW_W = 15, VIEW_H = 11;
+const STEP_MS = 170;
+
+// one store per stop, in the same order as SCENES; doors are on the bottom-middle tile
+const STORES = [
+  { x: 7,  y: 2, name: "the squishy store",   icon: "banana",   roof: ["#f6d26b", "#e0ae3c"], wall: "#fffaf2", awning: ["#f6d26b", "#fffaf2"] },
+  { x: 13, y: 2, name: "bags & makeup",       icon: "lipstick", roof: ["#f6b8c8", "#ee8fa8"], wall: "#fffaf2", awning: ["#ee8fa8", "#fffaf2"] },
+  { x: 19, y: 2, name: "the crochet shop",    icon: "octopus",  roof: ["#c7a2e6", "#a985cc"], wall: "#fffaf2", awning: ["#c7a2e6", "#fffaf2"] },
+  { x: 24, y: 2, name: "the waiting shed",    icon: "umbrella", roof: ["#a9b8c9", "#8798ab"], shed: true },
+  { x: 24, y: 9, name: "the anime toy store", icon: "luffy",    roof: ["#e05a5a", "#b94444"], wall: "#fff3d6", awning: ["#e05a5a", "#f6d26b"] },
+  { x: 19, y: 9, name: "the arcade",          icon: "ball",     roof: ["#3a2d58", "#2f2547"], wall: "#4a3a6e", awning: ["#ee8fa8", "#7b9be0"], arcade: true },
+  { x: 13, y: 9, name: "the bag shop",        icon: "bag",      roof: ["#c9a274", "#9b7350"], wall: "#fffaf2", awning: ["#9b7350", "#fffaf2"] },
+  { x: 7,  y: 9, name: "unli wings",          icon: "wing",     roof: ["#f2b46b", "#c9773c"], wall: "#fffaf2", awning: ["#c9773c", "#fffaf2"] },
+];
+const JEEP_SPOT = { x: 1, y: 5 };          // parked jeep covers 4x2 tiles
+const SPAWN = { x: 4, y: 7 };
+
+// walking cats: one template, recoloured per cat. O outline, F fur, M patch, B belly, E eye, P pink, Y bow
+const CAT_FRAMES = {
+  down: [[
+    "..O........O..", ".OPO......OPO.", ".OFFOOOOOOFFO.", "OFMMFFFFFFFFFO", "OFFFFFFFFFFFFO",
+    "OFFEOFFFFEOFFO", "OFFFBBPPBBFFFO", ".OFFBBBBBBFFO.", "..OOFFFFFFOO..", ".OFFFBBBBFFFO.",
+    ".OFMFBBBBFMFO.", ".OFFFBBBBFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
+  ], null],
+  up: [[
+    "..O........O..", ".OFO......OFO.", ".OFFOOOOOOFFO.", "OFMMFFFFFFFFFO", "OFFFFFFFFFFFFO",
+    "OFFFFFFFFFFFFO", "OFFFFMMFFFFFFO", ".OFFFFFFFFFFO.", "..OOFFFFFFOOO.", ".OFFFFFFFFFFO.",
+    ".OFMFFFFFFFFO.", ".OFFFFFFFFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
+  ], null],
+  side: [[
+    "........O..O..", ".......OPOOPO.", "......OFFFFFFO", "......OFFFFEFO", "......OFFFBBPO",
+    "......OFFBBBO.", "OFO.OOOOFFOO..", ".OFOFFFFFFFFO.", "..OFFMFFFFBBO.", "..OFFFFFFFBBO.",
+    "..OFFFFFFFFFO.", "...OFFOOOFFO..", "...OFO...OFO..", "...OO....OO...",
+  ], null],
+};
+// second walking frame: just the legs change
+CAT_FRAMES.down[1] = [...CAT_FRAMES.down[0].slice(0, 12), "...OFFO.OFFO..", "...OOO..OOO..."];
+CAT_FRAMES.up[1]   = [...CAT_FRAMES.up[0].slice(0, 12),   "...OFFO.OFFO..", "...OOO..OOO..."];
+CAT_FRAMES.side[1] = [...CAT_FRAMES.side[0].slice(0, 12), "....OFO.OFO...", "....OO..OO...."];
+const CAT_COLOURS = {
+  cliz: { O: "x", F: "T", M: "A", B: "a", E: "j", P: "p", bow: true },
+  rhey: { O: "z", F: "K", M: "L", B: "w", E: "e", P: "p" },
+};
+
+function pixelCanvas(rows, recolour = c => c) {
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const x = cv.getContext("2d");
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const key = recolour(ch);
+    if (PALETTE[key]) { x.fillStyle = PALETTE[key]; x.fillRect(i, j, 1, 1); }
+  }));
+  return cv;
+}
+const catSprites = {};
+for (const [cat, col] of Object.entries(CAT_COLOURS)) {
+  catSprites[cat] = {};
+  for (const [dir, frames] of Object.entries(CAT_FRAMES)) {
+    catSprites[cat][dir] = frames.map(rows => {
+      const cv = pixelCanvas(rows, ch => col[ch] || ch);
+      if (col.bow) {   // cliz's little yellow clip
+        const x = cv.getContext("2d"); x.fillStyle = PALETTE.y;
+        if (dir === "side") { x.fillRect(7, 0, 2, 1); x.fillRect(7, 1, 1, 1); }
+        else { x.fillRect(0, 1, 2, 1); x.fillRect(1, 0, 1, 1); }
+      }
+      return cv;
+    });
+  }
+}
+
+/* ---------- the map ---------- */
+// g grass, p path, T tree (blocks), B building (blocks), J jeep (blocks), f flowers
+const grid = Array.from({ length: MAP_H }, () => Array(MAP_W).fill("g"));
+const fill = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) grid[y][x] = c; };
+fill(0, 0, MAP_W - 1, 0, "T"); fill(0, MAP_H - 1, MAP_W - 1, MAP_H - 1, "T");
+fill(0, 0, 0, MAP_H - 1, "T"); fill(MAP_W - 1, 0, MAP_W - 1, MAP_H - 1, "T");
+fill(1, 7, 30, 8, "p");      // top street
+fill(5, 14, 30, 15, "p");    // bottom street
+fill(5, 7, 6, 15, "p");      // left road
+fill(29, 7, 30, 15, "p");    // right road
+for (let x = 1; x < MAP_W - 1; x += 2) if (grid[1][x] === "g") grid[1][x] = "T";
+for (const gx of [12, 18]) { fill(gx, 2, gx, 6, "T"); fill(gx, 9, gx, 13, "T"); }
+STORES.forEach(s => fill(s.x, s.y, s.x + 4, s.y + 4, "B"));
+fill(JEEP_SPOT.x, JEEP_SPOT.y, JEEP_SPOT.x + 3, JEEP_SPOT.y + 1, "J");
+[[2, 10], [3, 12], [1, 14], [4, 15], [2, 16], [8, 16], [11, 16], [15, 16], [20, 16], [23, 16], [27, 16], [3, 3], [2, 2], [28, 12], [27, 10]]
+  .forEach(([x, y]) => { if (grid[y][x] === "g") grid[y][x] = "f"; });
+[[1, 11], [3, 9], [2, 13], [4, 12], [28, 4], [29, 2], [28, 11], [27, 13]]
+  .forEach(([x, y]) => { if (grid[y][x] === "g") grid[y][x] = "T"; });
+const walkable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H && "gpf".includes(grid[y][x]);
+
+/* ---------- drawing the static town once ---------- */
+const INK_C = "#5b4636";
+function drawIcon(c, name, cx, cy, maxW, maxH) {
+  const cv = pixelCanvas(SPRITES[name]);
+  const s = Math.max(1, Math.floor(Math.min(maxW / cv.width, maxH / cv.height)));
+  const sc = Math.min(maxW / cv.width, maxH / cv.height, s);
+  c.drawImage(cv, Math.round(cx - cv.width * sc / 2), Math.round(cy - cv.height * sc / 2), Math.round(cv.width * sc), Math.round(cv.height * sc));
+}
+function drawStore(c, s) {
+  const X = s.x * TILE, Y = s.y * TILE;
+  if (s.shed) {
+    c.fillStyle = "#ecd9b5"; c.fillRect(X, Y + 30, 80, 50);                    // floor
+    c.fillStyle = INK_C; c.fillRect(X + 8, Y + 30, 5, 48); c.fillRect(X + 67, Y + 30, 5, 48);   // posts
+    c.fillStyle = "#9b7350"; c.fillRect(X + 16, Y + 56, 48, 6);                 // bench
+    c.fillStyle = INK_C; c.fillRect(X + 18, Y + 62, 3, 10); c.fillRect(X + 59, Y + 62, 3, 10);
+    c.fillStyle = INK_C; c.fillRect(X, Y + 14, 80, 18);
+    for (let r = 0; r < 14; r++) { c.fillStyle = Math.floor(r / 3) % 2 ? s.roof[1] : s.roof[0]; c.fillRect(X + 2, Y + 16 + r, 76, 1); }
+    c.fillStyle = "#fffaf2"; c.fillRect(X + 28, Y + 2, 24, 16); c.strokeStyle = INK_C; c.strokeRect(X + 28.5, Y + 2.5, 23, 15);
+    drawIcon(c, s.icon, X + 40, Y + 10, 20, 13);
+    return;
+  }
+  // roof with shingle stripes
+  c.fillStyle = INK_C; c.fillRect(X, Y + 4, 80, 28);
+  for (let r = 0; r < 26; r++) { c.fillStyle = Math.floor(r / 4) % 2 ? s.roof[1] : s.roof[0]; c.fillRect(X + 1, Y + 5 + r, 78, 1); }
+  // walls
+  c.fillStyle = INK_C; c.fillRect(X + 3, Y + 31, 74, 49);
+  c.fillStyle = s.wall; c.fillRect(X + 4, Y + 32, 72, 48);
+  // striped awning with a scalloped edge
+  for (let i = 0; i < 9; i++) {
+    c.fillStyle = s.awning[i % 2]; c.fillRect(X + 4 + i * 8, Y + 32, 8, 7);
+    c.fillRect(X + 6 + i * 8, Y + 39, 4, 2);
+  }
+  c.fillStyle = INK_C; c.fillRect(X + 4, Y + 31, 72, 1);
+  // windows
+  for (const wx of [X + 10, X + 52]) {
+    c.fillStyle = INK_C; c.fillRect(wx - 1, Y + 45, 20, 16);
+    c.fillStyle = "#bcd6e6"; c.fillRect(wx, Y + 46, 18, 14);
+    c.fillStyle = "#fffaf2"; c.fillRect(wx + 2, Y + 48, 3, 3);
+    c.fillStyle = INK_C; c.fillRect(wx + 8, Y + 46, 1, 14);
+  }
+  // door
+  c.fillStyle = INK_C; c.fillRect(X + 30, Y + 51, 20, 29);
+  c.fillStyle = s.arcade ? "#2f2547" : "#9b7350"; c.fillRect(X + 31, Y + 52, 18, 28);
+  c.fillStyle = "#f6d26b"; c.fillRect(X + 45, Y + 66, 2, 2);
+  // sign with the stop's item
+  c.fillStyle = INK_C; c.fillRect(X + 24, Y + 6, 32, 22);
+  c.fillStyle = "#fffaf2"; c.fillRect(X + 25, Y + 7, 30, 20);
+  drawIcon(c, s.icon, X + 40, Y + 17, 26, 17);
+}
+function drawTree(c, x, y) {
+  c.fillStyle = "#7a5a3c"; c.fillRect(x + 6, y + 11, 4, 5);
+  c.fillStyle = "#4f7d4a"; c.fillRect(x + 2, y + 2, 12, 10); c.fillRect(x + 1, y + 4, 14, 6); c.fillRect(x + 4, y + 1, 8, 12);
+  c.fillStyle = "#6fa865"; c.fillRect(x + 4, y + 3, 4, 3); c.fillRect(x + 3, y + 5, 2, 2);
+}
+const townCanvas = document.createElement("canvas");
+townCanvas.width = MAP_W * TILE; townCanvas.height = MAP_H * TILE;
+function drawTown() {
+  const c = townCanvas.getContext("2d");
+  for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
+    const X = x * TILE, Y = y * TILE, t = grid[y][x];
+    c.fillStyle = (x + y) % 2 ? "#c3e3ae" : "#b9dca2"; c.fillRect(X, Y, TILE, TILE);
+    if (t === "p") {
+      c.fillStyle = "#ecd9b5"; c.fillRect(X, Y, TILE, TILE);
+      c.fillStyle = "#dcc69d"; c.fillRect(X + ((x * 7 + y * 3) % 12), Y + ((x * 5 + y * 11) % 13), 2, 2);
+    }
+    if (t === "f") {
+      c.fillStyle = (x + y) % 2 ? "#f6b8c8" : "#f6d26b";
+      c.fillRect(X + 4, Y + 5, 3, 3); c.fillRect(X + 10, Y + 10, 3, 3);
+      c.fillStyle = "#fffaf2"; c.fillRect(X + 5, Y + 6, 1, 1); c.fillRect(X + 11, Y + 11, 1, 1);
+    }
+    if (t === "T") drawTree(c, X, Y);
+  }
+  STORES.forEach(s => drawStore(c, s));
+  // the parked jeepney
+  c.drawImage(pixelCanvas(SPRITES.jeep), JEEP_SPOT.x * TILE + 1, JEEP_SPOT.y * TILE + 2);
+}
+
+/* ---------- characters ---------- */
+const hero = { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "down", frame: 0, moving: null };
+const buddy = { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", frame: 0, moving: null };
+const held = new Set();
+let townLoop = null, townStarted = false;
+
+function resetTown() {
+  Object.assign(hero, { x: SPAWN.x, y: SPAWN.y, fx: SPAWN.x, fy: SPAWN.y, dir: "down", moving: null });
+  Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
+  held.clear();
+}
+const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+function tryStep(now) {
+  if (hero.moving) return;
+  const dir = ["up", "down", "left", "right"].find(d => held.has(d));
+  if (!dir) return;
+  hero.dir = dir;
+  const [dx, dy] = DIRS[dir], nx = hero.x + dx, ny = hero.y + dy;
+  if (!walkable(nx, ny)) return;
+  // rhey steps into the tile cliz is leaving
+  const bdx = hero.x - buddy.x, bdy = hero.y - buddy.y;
+  if (bdx || bdy) {
+    buddy.dir = bdx > 0 ? "right" : bdx < 0 ? "left" : bdy > 0 ? "down" : "up";
+    buddy.moving = { from: [buddy.x, buddy.y], to: [hero.x, hero.y], t0: now };
+    buddy.x = hero.x; buddy.y = hero.y; buddy.frame ^= 1;
+  }
+  hero.moving = { from: [hero.x, hero.y], to: [nx, ny], t0: now };
+  hero.x = nx; hero.y = ny; hero.frame ^= 1;
+}
+function advance(ch, now) {
+  if (!ch.moving) { ch.fx = ch.x; ch.fy = ch.y; return; }
+  const p = Math.min((now - ch.moving.t0) / STEP_MS, 1);
+  ch.fx = ch.moving.from[0] + (ch.moving.to[0] - ch.moving.from[0]) * p;
+  ch.fy = ch.moving.from[1] + (ch.moving.to[1] - ch.moving.from[1]) * p;
+  if (p >= 1) ch.moving = null;
+}
+
+// what cliz is standing in front of: a store door (the street tile below it) or the jeep
+function nearby() {
+  const i = STORES.findIndex(s => hero.y === s.y + 5 && hero.x >= s.x + 1 && hero.x <= s.x + 3);
+  if (i >= 0) return { kind: "store", i };
+  if (hero.y === JEEP_SPOT.y + 2 && hero.x >= JEEP_SPOT.x && hero.x <= JEEP_SPOT.x + 3) return { kind: "jeep" };
+  return null;
+}
+const nextStop = () => SCENES.findIndex((_, i) => !done.has(i));
+
+function interact() {
+  const n = nearby();
+  if (!n || hero.moving) return;
+  if (n.kind === "store") {
+    melody([523, 659, 784]);
+    current = n.i;
+    show("journey"); renderScene();
+  } else if (done.size === SCENES.length) {
+    jeepSound(); melody([523, 659, 784, 1046]);
+    setTimeout(() => show("ending"), 600);
+  } else {
+    blip(220, 0.12);
+    $("#mapPrompt").textContent = `not yet! visit all the places first (${done.size}/${SCENES.length}) ♡`;
+  }
+}
+
+function renderPrompt() {
+  const n = nearby(), el = $("#mapPrompt");
+  if (n && n.kind === "store") {
+    el.innerHTML = `<b>${esc(STORES[n.i].name)}</b>${done.has(n.i) ? " ♡ visited" : ""} · press <kbd>E</kbd> to go inside`;
+  } else if (n && n.kind === "jeep") {
+    if (done.size === SCENES.length) el.innerHTML = `<b>the jeep home</b> · press <kbd>E</kbd> to ride ♡`;
+    else if (!el.textContent.startsWith("not yet")) el.innerHTML = `<b>the jeep</b> · come back when you've seen everything (${done.size}/${SCENES.length})`;
+  } else {
+    el.innerHTML = done.size === SCENES.length
+      ? "everything visited ♡ walk back to the jeep to ride home"
+      : "walk with the arrow keys or WASD · follow the pink arrow ♡";
+  }
+  $("#mapKicker").textContent = `our town · ${done.size} of ${SCENES.length} places`;
+}
+
+function drawFrame(now) {
+  const cv = $("#mapCanvas"), c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  // camera follows cliz
+  const camX = Math.max(0, Math.min(MAP_W * TILE - VIEW_W * TILE, Math.round((hero.fx + 0.5) * TILE - VIEW_W * TILE / 2)));
+  const camY = Math.max(0, Math.min(MAP_H * TILE - VIEW_H * TILE, Math.round((hero.fy + 0.5) * TILE - VIEW_H * TILE / 2)));
+  c.drawImage(townCanvas, camX, camY, VIEW_W * TILE, VIEW_H * TILE, 0, 0, VIEW_W * TILE, VIEW_H * TILE);
+
+  // live bits: rain over the waiting shed, blinking arcade neon, hearts on visited roofs
+  const shed = STORES[3], rx = shed.x * TILE - camX, ry = shed.y * TILE - camY;
+  c.fillStyle = "#fffaf2"; c.fillRect(rx + 14, ry - 14, 52, 12); c.fillRect(rx + 22, ry - 20, 30, 8);
+  c.fillStyle = "#a9c4d6";
+  for (let i = 0; i < 10; i++) {
+    const dx = (i * 23) % 56, dy = ((now / 6) + i * 37) % 30;
+    c.fillRect(rx + 12 + dx, ry - 2 + dy, 1, 4);
+  }
+  const arc = STORES[5];
+  if (Math.floor(now / 450) % 2) {
+    c.strokeStyle = "#ee8fa8"; c.lineWidth = 2;
+    c.strokeRect(arc.x * TILE - camX + 3, arc.y * TILE - camY + 31, 74, 49);
+  }
+  STORES.forEach((s, i) => {
+    if (!done.has(i)) return;
+    const hx = s.x * TILE - camX + 66, hy = s.y * TILE - camY + 6;
+    c.drawImage(pixelCanvas(SPRITES.heart), hx, hy, 10, 10);
+  });
+
+  // bouncing arrow over the next place (or the jeep once everything is done)
+  const nxt = nextStop();
+  const target = nxt >= 0 ? { x: STORES[nxt].x * TILE + 40, y: STORES[nxt].y * TILE + 44 }
+                          : { x: JEEP_SPOT.x * TILE + 32, y: JEEP_SPOT.y * TILE - 4 };
+  const bob = Math.floor(now / 250) % 2 ? 0 : 2;
+  const ax = target.x - camX, ay = target.y - camY + bob - (nxt >= 0 ? 0 : 0);
+  c.fillStyle = INK_C; c.fillRect(ax - 5, ay - 8, 11, 4); c.fillRect(ax - 3, ay - 4, 7, 2); c.fillRect(ax - 1, ay - 2, 3, 2);
+  c.fillStyle = "#ee8fa8"; c.fillRect(ax - 4, ay - 7, 9, 2); c.fillRect(ax - 2, ay - 5, 5, 2); c.fillRect(ax, ay - 3, 1, 1);
+
+  // cats, drawn back-to-front
+  [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
+    const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
+    const img = catSprites[who][dir][ch.moving ? ch.frame : 0];
+    const px = Math.round(ch.fx * TILE - camX + 1), py = Math.round(ch.fy * TILE - camY + 1);
+    c.save();
+    if (ch.dir === "left") { c.translate(px + 14, py); c.scale(-1, 1); c.drawImage(img, 0, 0); }
+    else c.drawImage(img, px, py);
+    c.restore();
+  });
+
+  // "E" bubble when something can be opened
+  if (nearby() && !hero.moving) {
+    const bx = Math.round(hero.fx * TILE - camX + 3), by = Math.round(hero.fy * TILE - camY - 12);
+    c.fillStyle = INK_C; c.fillRect(bx - 1, by - 1, 12, 11);
+    c.fillStyle = "#fffaf2"; c.fillRect(bx, by, 10, 9);
+    c.fillStyle = "#ee8fa8"; c.fillRect(bx + 3, by + 2, 1, 5); c.fillRect(bx + 3, by + 2, 4, 1); c.fillRect(bx + 3, by + 4, 3, 1); c.fillRect(bx + 3, by + 6, 4, 1);
+  }
+}
+
+function tick(now) {
+  tryStep(now);
+  advance(hero, now); advance(buddy, now);
+  drawFrame(now);
+  renderPrompt();
+  townLoop = requestAnimationFrame(tick);
+}
+function startTown() {
+  if (!townStarted) { drawTown(); townStarted = true; }
+  cancelAnimationFrame(townLoop);
+  townLoop = requestAnimationFrame(tick);
+}
+function stopTown() { cancelAnimationFrame(townLoop); townLoop = null; held.clear(); }
+
+const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right", W: "up", S: "down", A: "left", D: "right" };
+document.addEventListener("keydown", e => {
+  if ($("#map").hidden) return;
+  if (KEYS[e.key]) { held.add(KEYS[e.key]); e.preventDefault(); }
+  if (e.key === "e" || e.key === "E" || e.key === "Enter" || e.key === " ") { e.preventDefault(); interact(); }
+});
+document.addEventListener("keyup", e => { if (KEYS[e.key]) held.delete(KEYS[e.key]); });
+window.addEventListener("blur", () => held.clear());
+// on-screen buttons for touch screens
+document.querySelectorAll("[data-pad]").forEach(b => {
+  const d = b.dataset.pad;
+  b.addEventListener("pointerdown", e => { e.preventDefault(); held.add(d); });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, () => held.delete(d)));
+});
+$("#padE").onclick = interact;
+
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
 document.querySelectorAll("[data-ears]").forEach(c => c.insertAdjacentHTML("afterbegin", EARS));
@@ -1454,7 +1814,7 @@ $("#jeep").onclick = () => {
   setTimeout(() => { jeep.classList.remove("rev"); jeep.classList.add("go"); $("#road").classList.add("moving"); }, 700);
   setTimeout(() => {
     clearInterval(smoke);
-    current = 0; renderTrail(); renderScene(); show("journey");
+    show("map");
     resetJeep();
   }, 2600);
 };
