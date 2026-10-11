@@ -1926,11 +1926,20 @@ function moveCats(now) {
   const bdx = p && moved ? p[0] - buddy.fx : 0, bdy = p && moved ? p[1] - buddy.fy : 0;
   buddy.moving = Math.hypot(bdx, bdy) > 0.002 || null;
   if (buddy.moving) {
-    buddy.dir = Math.abs(bdx) > Math.abs(bdy) ? (bdx > 0 ? "right" : "left") : (bdy > 0 ? "down" : "up");
+    buddy.dir = steadyDir(buddy.dir, bdx, bdy, hero.dir);
     buddy.fx = p[0]; buddy.fy = p[1];
     buddy.walkT = (buddy.walkT || 0) + dt; buddy.frame = Math.floor(buddy.walkT / 0.13) % 2;
   }
   buddy.x = Math.floor(buddy.fx + 0.5); buddy.y = Math.floor(buddy.fy + 0.7);
+}
+// which way to face while following: on diagonals keep the current facing instead of flipping every frame
+function steadyDir(cur, dx, dy, lead) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  const h = dx > 0 ? "right" : "left", v = dy > 0 ? "down" : "up";
+  if (ax > ay * 1.6) return h;
+  if (ay > ax * 1.6) return v;
+  if (cur === h || cur === v) return cur;
+  return lead === h || lead === v ? lead : h;
 }
 // a short hop/slide into a spot; returns true while it's still happening
 function glideTo(ch, x, y, dir, ms = 240) {
@@ -2763,7 +2772,7 @@ function boothUpdate(now) {
   }
   const mdx = tx - b.bx, mdy = ty - b.by;
   b.bmoving = Math.hypot(mdx, mdy) > 0.01;
-  if (b.bmoving) { b.bdir = Math.abs(mdx) > Math.abs(mdy) ? (mdx > 0 ? "right" : "left") : (mdy > 0 ? "down" : "up"); b.bx = tx; b.by = ty; b.bframe = b.frame; }
+  if (b.bmoving) { b.bdir = steadyDir(b.bdir, mdx, mdy, b.dir); b.bx = tx; b.by = ty; b.bframe = b.frame; }
   const n = boothNear(), el = $("#roomPrompt");
   const html = dialog || !$("#boothBox").hidden ? ""
     : n === "booth" ? "<b>the photo booth</b> · <kbd>E</kbd> step inside"
