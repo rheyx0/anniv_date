@@ -174,6 +174,11 @@
   #map { position: fixed; inset: 0; z-index: 5; background: #4f7d4a; }
   #map canvas { position: absolute; inset: 0; width: 100vw; height: 100vh; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
   body.fullscreen { overflow: hidden; }
+  .bubble {
+    position: absolute; z-index: 6; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+    font-size: 15px; line-height: 1; padding: 4px 8px; background: var(--card); color: var(--ink); box-shadow: 0 0 0 3px var(--ink);
+  }
+  .bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -4px; border: 4px solid transparent; border-top-color: var(--ink); }
   body.fullscreen .jamiel { display: none; }
   .hud-pill {
     position: absolute; z-index: 6; background: var(--card); color: var(--muted); font-size: 15px; padding: 8px 14px; margin: 0;
@@ -712,52 +717,6 @@ const PALETTE = {
   J: "#d13b3b", S: "#c9cdd4", D: "#55525a", W: "#bcd6e6",                           // the jeepney                                                       // jamiel: grumpy grey cat
 };
 const SPRITES = {
-  rhey: [
-    "...zz..........zz...",
-    "...zKz........zKz...",
-    "..zKpKz......zKpKz..",
-    "..zKppKzzzzzzKppKz..",
-    "..zKKKKKKKKKKKKKKz..",
-    "..zKKLKKKKKKKKKKKz..",
-    "..zKKKKKKKKKKKKKKz..",
-    "..zKKeezKKKKeezKKz..",
-    "..zKKezzKKKKezzKKz..",
-    "..zKrKKwwppwwKKrKz..",
-    "..zKKKwwzwwzwwKKKz..",
-    "...zKKwwwzzwwwKKz...",
-    "....zzKwwwwwwKzz....",
-    "....zKKwwwwwwKKz....",
-    "...zKKKwwwwwwKKKz...",
-    "...zKLKKwwwwKKKKz...",
-    "...zKKKzKwwKzKKKz...",
-    "zz.zKKKzKKKKzKKKz...",
-    "zKzzKKKzKKKKzKKKz...",
-    "zKKzKwwzKKKKzwwKz...",
-    ".zzzzzzzzzzzzzzz....",
-  ],
-  cliz: [
-    "...xx..........xx...",
-    ".yyxAx........xTx...",
-    "yYxApAx......xTpTx..",
-    ".yxAppAxxxxxxTppTx..",
-    "..xAAAATTTTTTTTaTx..",
-    "..xAAmATTTTTaaTTTx..",
-    "..xAAAATTTTTTTmTTx..",
-    "..xAAjjxTTTTjjxTTx..",
-    "..xAAjxxTTTTjxxTTx..",
-    "..xArAAaappaaTTrTx..",
-    "..xAAAaaxaaxaaTTTx..",
-    "...xAAaaaxxaaaTTx...",
-    "....xxAaaaaaaTxx....",
-    "....xTAaaaaaaATx....",
-    "...xTTAAaaaaTTmTx...",
-    "...xTmAAaaaaTATTx...",
-    "...xTTAxTaaTxTATx...",
-    "xx.xATTxTTAAxTTTx...",
-    "xAxxTTAxAATTxTmTx...",
-    "xTAxTaaxTTAAxaaTx...",
-    ".xxxxxxxxxxxxxxx....",
-  ],
   jamiel: [
     "......uuuuuuuu......",
     "uu..uuGGGGgGGGuu..uu",
@@ -975,6 +934,28 @@ SPRITES.jeep = [
   ".........zzzzz...............................zzzzz............",
   ".............................................................."
 ];
+// rhey and cliz share jamiel's shape (flat head, ears out to the sides), just with a friendly face, a smile and their own colours.
+// O outline, F fur, M markings, B belly, E eye, P pink, C cheek; a colour can depend on the column (cliz is two-tone)
+function catPortrait(col) {
+  const shape = SPRITES.jamiel.map(r => r.replace(/[uGgwp]/g, ch => ({ u: "O", G: "F", g: "M", w: "B", p: "P" })[ch]));
+  shape.splice(6, 6,
+    "..OFFFFFFFFFFFFFFO..",
+    "..OFFEEOFFFFEEOFFO..",
+    "..OFFEOOFFFFEOOFFO..",
+    "..OFCFFBBPPBBFFCFO..",
+    "..OFFFBBOBBOBBFFFO..",
+    "...OFFBBBOOBBBFFO...");
+  return shape.map(row => [...row].map((ch, x) => {
+    const c = col[ch];
+    return typeof c === "function" ? c(x) : c || ch;
+  }).join(""));
+}
+SPRITES.rhey = catPortrait({ O: "z", F: "K", M: "L", B: "w", E: "e", P: "p", C: "r" });
+SPRITES.cliz = catPortrait({ O: "x", F: x => x < 10 ? "A" : "T", M: x => x < 10 ? "m" : "A", B: "a", E: "j", P: "p", C: "r" });
+// cliz's little yellow clip on her left ear
+SPRITES.cliz[0] = "..yy" + SPRITES.cliz[0].slice(4);
+SPRITES.cliz[1] = SPRITES.cliz[1].slice(0, 2) + "yY" + SPRITES.cliz[1].slice(4);
+
 // cat heads peeking out of the jeep windows
 SPRITES.clizHead = SPRITES.cliz.slice(0, 13);
 SPRITES.rheyHead = SPRITES.rhey.slice(0, 13);
@@ -1605,37 +1586,102 @@ const SPAWN = { x: 5, y: 9 };
 const POND = { x0: 18, y0: 3, x1: 27, y1: 7 };
 const FOUNTAIN = { x0: 21, y0: 14, x1: 24, y1: 17 };
 
-// walking cats: one template, recoloured per cat. O outline, F fur, M patch, B belly, E eye, P pink
-const CAT_FRAMES = {
-  down: [[
-    "..O........O..", ".OPO......OPO.", ".OFFOOOOOOFFO.", "OFMMFFFFFFFFFO", "OFFFFFFFFFFFFO",
-    "OFFEOFFFFEOFFO", "OFFFBBPPBBFFFO", ".OFFBBBBBBFFO.", "..OOFFFFFFOO..", ".OFFFBBBBFFFO.",
-    ".OFMFBBBBFMFO.", ".OFFFBBBBFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
-  ], null],
-  up: [[
-    "..O........O..", ".OFO......OFO.", ".OFFOOOOOOFFO.", "OFMMFFFFFFFFFO", "OFFFFFFFFFFFFO",
-    "OFFFFFFFFFFFFO", "OFFFFMMFFFFFFO", ".OFFFFFFFFFFO.", "..OOFFFFFFOOO.", ".OFFFFFFFFFFO.",
-    ".OFMFFFFFFFFO.", ".OFFFFFFFFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
-  ], null],
-  side: [[
-    "........O..O..", ".......OPOOPO.", "......OFFFFFFO", "......OFFFFEFO", "......OFFFBBPO",
-    "......OFFBBBO.", "OFO.OOOOFFOO..", ".OFOFFFFFFFFO.", "..OFFMFFFFBBO.", "..OFFFFFFFBBO.",
-    "..OFFFFFFFFFO.", "...OFFOOOFFO..", "...OFO...OFO..", "...OO....OO...",
-  ], null],
+// walking cats: one template in jamiel's shape (flat head, ears out to the sides), recoloured per cat.
+// O outline, F fur, M markings, B belly, E eye, P pink, C cheek. the face (rows 5-6) changes per cat.
+const FACES = {
+  happy:  [".OFFFFFFFFFFO.", ".OFEOFFFFEOFO."],
+  grumpy: [".OOOFFFFFFOOO.", ".OFOOOFFOOOFO."],
+  chill:  [".OFFFFFFFFFFO.", ".OFOOFFFFOOFO."],
+  derpy:  [".OFFFFFFFFFFO.", ".OFEOFFFFOEFO."],
 };
-// [idle, left step, right step]: one foot lifts at a time, so the body never shifts sideways
-for (const dir of ["down", "up"]) {
-  const top = CAT_FRAMES[dir][0].slice(0, 12);
-  CAT_FRAMES[dir][1] = [...top, "..OOO...OFFO..", ".........OOO.."];
-  CAT_FRAMES[dir][2] = [...top, "..OFFO...OOO..", "..OOO........."];
+const SIDE_EYES = { happy: "......OFFFFEFO", grumpy: "......OFFFOOFO", chill: "......OFFFOOFO", derpy: "......OFFFFEFO" };
+function catFrames(face) {
+  const down = [
+    "....OOOOOO....", "OO.OFFMFFFO.OO", "OPOFFFMFFFFOPO", ".OPFFFFFFFFPO.", ".OFFMFFFFMFFO.", ...FACES[face],
+    ".OCFFBPPBFFCO.", "..OOFBBBBFOO..", ".OFFFBBBBFFFO.", ".OFMFBBBBFMFO.", ".OFFFBBBBFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
+  ];
+  const up = [
+    "....OOOOOO....", "OO.OFFMFFFO.OO", "OFOFFFMFFFFOFO", ".OFFFFFFFFFFO.", ".OFFMFFFFMFFO.", ".OFFFFFFFFFFO.",
+    ".OFFFFMMFFFFO.", ".OFFFFFFFFFFO.", "..OOFFFFFFOOO.", ".OFFFFFFFFFFO.", ".OFMFFFFFFFFO.", ".OFFFFFFFFFFO.", "..OFFO..OFFO..", "..OOO....OOO..",
+  ];
+  const side = [
+    "....OO.OOOOO..", "....OPOOFFMFO.", ".....OFFFFMFFO", SIDE_EYES[face], "......OFFFBBPO",
+    "......OFFBBBO.", "OFO.OOOOFFOO..", ".OFOFFFFFFFFO.", "..OFFMFFFFBBO.", "..OFFFFFFFBBO.", "..OFFFFFFFFFO.", "...OFFOOOFFO..", "...OFO...OFO..", "...OO....OO...",
+  ];
+  // [idle, left step, right step]: one foot lifts at a time, so the body never shifts sideways
+  const steps = (idle, a, b) => [idle, [...idle.slice(0, 12), ...a], [...idle.slice(0, 12), ...b]];
+  return {
+    down: steps(down, ["..OOO...OFFO..", ".........OOO.."], ["..OFFO...OOO..", "..OOO........."]),
+    up: steps(up, ["..OOO...OFFO..", ".........OOO.."], ["..OFFO...OOO..", "..OOO........."]),
+    side: steps(side, ["..OFO....OFO..", "..OO......OO.."], ["....OFO.OFO...", "....OO..OO...."]),
+    // sitting: same face, round haunches instead of legs
+    sit: [[...down.slice(0, 12), "OFFFFFFFFFFFFO", ".OOOOOOOOOOOO."]],
+  };
 }
-CAT_FRAMES.side[1] = [...CAT_FRAMES.side[0].slice(0, 12), "..OFO....OFO..", "..OO......OO.."];
-CAT_FRAMES.side[2] = [...CAT_FRAMES.side[0].slice(0, 12), "....OFO.OFO...", "....OO..OO...."];
-// sitting: same face, round haunches instead of legs
-CAT_FRAMES.sit = [[...CAT_FRAMES.down[0].slice(0, 12), "OFFFFFFFFFFFFO", ".OOOOOOOOOOOO."]];
-const CAT_COLOURS = {
-  cliz: { O: "x", F: "T", M: "A", B: "a", E: "j", P: "p", bow: true },
-  rhey: { O: "z", F: "K", M: "L", B: "w", E: "e", P: "p" },
+// little extras painted on top: (dot, view, rows) where view is down / up / side / sit
+const EXTRAS = {
+  clip(dot, view) {        // cliz's yellow clip
+    if (view === "side") { dot(3, 0, PALETTE.y); dot(3, 1, PALETTE.Y); }
+    else { dot(1, 0, PALETTE.y); dot(2, 0, PALETTE.y); dot(2, 1, PALETTE.Y); }
+  },
+  teeth(dot, view) {       // grace's bunny teeth
+    const W = "#ffffff", O = "#6b3a1f";
+    if (view === "down" || view === "sit") {
+      [[5, 8], [8, 8], [5, 9], [8, 9], [6, 10], [7, 10]].forEach(([x, y]) => dot(x, y, O));
+      [[6, 8], [7, 8], [6, 9], [7, 9]].forEach(([x, y]) => dot(x, y, W));
+    } else if (view === "side") { dot(12, 5, W); dot(12, 6, W); dot(13, 5, O); dot(13, 6, O); dot(12, 7, O); }
+  },
+  glasses(dot, view) {     // dan's nerd glasses
+    const G = "#3a2e2a";
+    if (view === "down" || view === "sit") {
+      for (const x0 of [2, 8]) {
+        for (let x = x0; x < x0 + 4; x++) { dot(x, 5, G); dot(x, 7, G); }
+        dot(x0, 6, G); dot(x0 + 3, 6, G);
+      }
+      dot(6, 6, G); dot(7, 6, G);
+    } else if (view === "side") {
+      [[10, 2], [11, 2], [12, 2], [10, 4], [11, 4], [12, 4], [10, 3], [12, 3], [9, 3], [8, 3], [7, 3]].forEach(([x, y]) => dot(x, y, G));
+    }
+  },
+  headset(dot, view) {     // leo's gamer headset
+    const H = "#7b6bd6", D = "#4b3fa0";
+    if (view === "side") {
+      for (let x = 6; x <= 12; x++) dot(x, 0, D);
+      [[7, 3], [8, 3], [7, 4], [8, 4]].forEach(([x, y]) => dot(x, y, H));
+      dot(9, 3, D); dot(9, 4, D);
+    } else {
+      for (let x = 3; x <= 10; x++) dot(x, 0, D);
+      dot(1, 3, D); dot(12, 3, D);
+      [[0, 4], [1, 4], [0, 5], [1, 5], [12, 4], [13, 4], [12, 5], [13, 5]].forEach(([x, y]) => dot(x, y, H));
+    }
+  },
+  drool(dot, view) {       // achilles, mouth always a little open
+    const D = "#7cc0e8";
+    if (view === "down" || view === "sit") { dot(8, 8, D); dot(8, 9, D); }
+    else if (view === "side") dot(12, 6, D);
+  },
+  shoes(dot, view, rows) { // chris's lightning mcqueen shoes: red, with a yellow bolt
+    if (view === "sit") return;
+    for (const y of [12, 13]) [...rows[y]].forEach((ch, x) => { if (ch === "F") dot(x, y, "#e03a3a"); });
+    [...rows[12]].forEach((ch, x) => { if (ch === "F" && rows[12][x - 1] === "F") dot(x, 12, "#f6d26b"); });
+    [...rows[13]].forEach((ch, x) => { if (ch === "O") dot(x, 13, "#8a1c1c"); });
+  },
+};
+// colours per cat. a colour can be a function of (x, y), for two-tone and calico coats
+const CAT_LOOKS = {
+  cliz:     { face: "happy",  O: PALETTE.x, F: x => x < 7 ? PALETTE.A : PALETTE.T, M: x => x < 7 ? PALETTE.m : PALETTE.A, B: PALETTE.a, E: PALETTE.j, extras: ["clip"] },
+  rhey:     { face: "happy",  O: PALETTE.z, F: PALETTE.K, M: PALETTE.L, B: PALETTE.w, E: PALETTE.e },
+  jamiel:   { face: "grumpy", O: "#4a4646", F: "#b3aca8", M: "#8c8480", B: "#fffaf2", C: "#b3aca8" },
+  grace:    { face: "happy",  O: "#6b3a1f", F: "#f2a65a", M: "#fffaf2", B: "#fffaf2", E: "#6b8f3a", extras: ["teeth"] },
+  sky:      { face: "derpy",  O: "#6b3a1f", F: "#ef9a4a", M: "#c96f2a", B: "#f7c995", E: "#5a4a2a" },
+  erin:     { face: "grumpy", O: "#3d474d", F: "#a3b1b8", M: "#5f6f78", B: "#dfe6e8", C: "#a3b1b8" },
+  chris:    { face: "chill",  O: "#2a2420",
+              F: (x, y) => y <= 4 && x <= 6 ? "#ef9a4a" : y <= 5 && x >= 8 ? "#2b2e3d" : y >= 9 && x >= 9 ? "#ef9a4a" : "#fffaf2",
+              M: x => x < 7 ? "#2b2e3d" : "#ef9a4a", B: "#fffaf2", extras: ["shoes"] },
+  leo:      { face: "happy",  O: "#5b4636", F: "#d9c3a5", M: "#b39a7a", B: "#fffaf2", E: "#4f7d4a", extras: ["headset"] },
+  achilles: { face: "derpy",  O: "#3a3a48", F: "#fffaf2", M: "#2b2e3d", B: "#fffaf2", E: "#5a7fa8", extras: ["drool"] },
+  brylle:   { face: "happy",  O: "#3b2418", F: "#8a5a3c", M: "#6b4329", B: "#e3c3a0", E: "#f3d36a" },
+  dan:      { face: "happy",  O: "#5b4636", F: "#efe2c8", M: "#c4a882", B: "#fffaf2", E: "#d8ecf6", extras: ["glasses"] },
 };
 
 function pixelCanvas(rows, recolour = c => c) {
@@ -1648,23 +1694,25 @@ function pixelCanvas(rows, recolour = c => c) {
   }));
   return cv;
 }
+function paintCat(rows, look, view) {
+  const cv = document.createElement("canvas"); cv.width = 14; cv.height = rows.length;
+  const x = cv.getContext("2d");
+  const col = { P: PALETTE.p, C: PALETTE.r, ...look };
+  const dot = (i, j, c) => { x.fillStyle = c; x.fillRect(i, j, 1, 1); };
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const c = typeof col[ch] === "function" ? col[ch](i, j) : col[ch];
+    if (ch !== "." && c) dot(i, j, c);
+  }));
+  (look.extras || []).forEach(name => EXTRAS[name](dot, view, rows));
+  return cv;
+}
 const catSprites = {};
-for (const [cat, col] of Object.entries(CAT_COLOURS)) {
+for (const [cat, look] of Object.entries(CAT_LOOKS)) {
+  const frames = catFrames(look.face);
   catSprites[cat] = {};
-  for (const [dir, frames] of Object.entries(CAT_FRAMES)) {
-    catSprites[cat][dir] = frames.map(rows => {
-      const cv = pixelCanvas(rows, ch => col[ch] || ch);
-      if (col.bow) {   // cliz's little yellow clip
-        const x = cv.getContext("2d"); x.fillStyle = PALETTE.y;
-        if (dir === "side") { x.fillRect(7, 0, 2, 1); x.fillRect(7, 1, 1, 1); }
-        else { x.fillRect(0, 1, 2, 1); x.fillRect(1, 0, 1, 1); }
-      }
-      return cv;
-    });
-  }
+  for (const [view, list] of Object.entries(frames)) catSprites[cat][view] = list.map(rows => paintCat(rows, look, view));
 }
 const heartImg = pixelCanvas(SPRITES.heart);
-const jamielImg = pixelCanvas(SPRITES.jamiel);
 
 /* ---------- the map grid ---------- */
 // . grass  p path  s plaza stone  ~ water  T tree  B building  J jeep  X thing  f flowers (decor)
@@ -1686,14 +1734,13 @@ const THINGS = [
   { id: "fountain", name: "the fountain", tiles: [], verb: "make a wish" },
   { id: "bench", name: "a little bench", tiles: [[18, 13], [19, 13]], verb: "sit together" },
   { id: "sign", name: "a signpost", tiles: [[11, 30]], verb: "read" },
-  { id: "jamiel", name: "jamiel", tiles: [[26, 21]], verb: "talk" },
   { id: "pond", name: "the pond", tiles: [], verb: "look" },
   { id: "flower", name: "a pretty flower", tiles: [[11, 13]], verb: "pick it", picked: false },
   { id: "flower", name: "a pretty flower", tiles: [[36, 13]], verb: "pick it", picked: false },
   { id: "flower", name: "a pretty flower", tiles: [[20, 25]], verb: "pick it", picked: false },
 ];
 for (let y = FOUNTAIN.y0; y <= FOUNTAIN.y1; y++) for (let x = FOUNTAIN.x0; x <= FOUNTAIN.x1; x++) THINGS[0].tiles.push([x, y]);
-for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if (grid[y][x] === "~") THINGS[4].tiles.push([x, y]);
+for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if (grid[y][x] === "~") THINGS.find(t => t.id === "pond").tiles.push([x, y]);
 THINGS.forEach(t => t.tiles.forEach(([x, y]) => { if (grid[y][x] !== "~") grid[y][x] = "X"; }));
 
 // border of trees, then scatter trees + flowers on grass that isn't next to anything important
@@ -1833,8 +1880,8 @@ const buddy = { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "
 const order = [];        // directions being held, most recent last
 let tapped = null;       // a quick tap still counts as one step
 const clearHeld = () => { order.length = 0; tapped = null; };
-let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0, jamielHop = 0;
-let arrival = null, arriveByJeep = false, cutscene = null, jamielGone = false;
+let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0;
+let arrival = null, arriveByJeep = false, cutscene = null;
 const jeepImg = pixelCanvas(SPRITES.jeep);
 
 function resetTown() {
@@ -1843,8 +1890,7 @@ function resetTown() {
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
   flowersPicked = 0; particles = []; clearHeld(); trail.length = 0;
-  jamielGone = false; cutscene = null; grid[21][26] = "X";
-  THINGS.forEach(t => { if (t.id === "jamiel") t.picked = false; });
+  cutscene = null; jamielAte = false; boothVisits = 0; talkingTo = null; resetFriends();
   if (dialog) { dialog.after = null; closeDialog(); }
 }
 // put the cats just outside a door (used when leaving a store)
@@ -1967,7 +2013,7 @@ function sideBySide() {
   if (spot) glideTo(buddy, hx + spot[0], hy + spot[1], dir);
 }
 
-/* ---------- jamiel's cutscene: he heads into unli wings first ---------- */
+/* ---------- paths ---------- */
 function pathTo(sx, sy, tx, ty) {
   const key = (x, y) => x + "," + y, prev = new Map([[key(sx, sy), null]]), q = [[sx, sy]];
   while (q.length) {
@@ -1983,49 +2029,328 @@ function pathTo(sx, sy, tx, ty) {
   while (cur) { path.unshift(cur); cur = prev.get(key(cur[0], cur[1])); }
   return path;
 }
+// the closest walkable tile to (x, y), for spawn spots that might have landed on a tree
+function nearestWalkable(x, y) {
+  for (let r = 0; r < 12; r++) for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+    if (Math.max(Math.abs(i), Math.abs(j)) === r && walkable(x + i, y + j)) return [x + i, y + j];
+  }
+  return [x, y];
+}
+
+/* ---------- the friends around town ---------- */
+// wander: strolls around home · run: zooms all over town · dance: dances on the spot · follow: sticks with a buddy
+const LEO_FACTS = [
+  "octopuses have three hearts.", "a group of cats is called a clowder.", "honey never spoils. ever.",
+  "bananas are berries, but strawberries aren't.", "wombat poop is cube-shaped.", "cats sleep around 15 hours a day.",
+  "sea otters hold hands when they sleep.", "a day on venus is longer than a year on venus.",
+  "the eiffel tower gets about 15 cm taller in summer.", "cows have best friends.",
+  "the first video game was made in 1958.", "a shrimp's heart is in its head.",
+];
+const FRIENDS = [
+  { id: "grace", mode: "wander", at: [12, 24], r: 12, speed: 3.4, voice: "squeak",
+    pop: ["AAAA!", "eeeEEE!", "AAAAAAA", "hehehe"],
+    talk: [["grace: AAAAAAA!!", "grace: eeeEEEEE ♡"], ["grace: AAA? AAAAA!", "(nobody knows what she means. she's very happy though)"],
+           ["grace: *bunny teeth noises*"], ["grace: AAAAAAAAAAAAAAAAAAA"]] },
+  { id: "chris", follow: "grace", voice: "cool", pop: ["ka-chow.", "*finger guns*", "cool."],
+    talk: [["chris: ka-chow.", "(he pointed at his shoes)"], ["chris: lightning mcqueen shoes.", "chris: they light up. i am speed."],
+           ["chris: *finger guns*"], ["chris: grace and i are on a walk.", "grace: AAAA!"]] },
+  { id: "sky", mode: "run", at: [22, 10], r: 40, speed: 8.5, voice: "goofy",
+    pop: ["HOY CLIZZZ", "WEEEEE", "HOY!!", "CLIZZZZ"],
+    talk: [["sky: HOY CLIZZZ!!!", "(he did not stop running)"], ["sky: CLIZ CLIZ CLIZ LOOK", "sky: ...i forgot what i was gonna say"],
+           ["sky: HOY CLIZZZ RACE ME", "sky: I WIN!! (there was no race)"], ["sky: i've been running since 6am", "sky: HOY CLIZZZ"]] },
+  { id: "leo", mode: "wander", at: [33, 13], r: 6, speed: 2.6, voice: "gamer", pop: ["fun fact!", "gg", "brb", "1 more game"],
+    talk: () => ["leo: fun fact!", "leo: " + LEO_FACTS[(FRIEND.leo.talks++) % LEO_FACTS.length]] },
+  { id: "erin", follow: "leo", voice: "hiss", pop: ["hsss", "HSSSS", "hss."],
+    talk: [["erin: hssssss."], ["erin: HSSSSSS!!", "(she's not mad. she's just like that)"], ["erin: ...hss.", "leo: she likes you, i think."], ["erin: hsss hss HSSS."]] },
+  { id: "achilles", mode: "wander", at: [22, 9], r: 3, speed: 1.5, voice: "derp", pop: ["*drool*", "huh?", "really??", "*drool*"],
+    talk: [["achilles: *drool*", "achilles: oh hi!"], ["achilles: sky said the pond gives free fish if you stare at it.", "achilles: i've been staring for 3 hours."],
+           ["achilles: wait, the word 'gullible' isn't in the dictionary??", "achilles: no way!!"],
+           ["achilles: jamiel told me he's actually super nice.", "achilles: ...i believe him."]] },
+  { id: "brylle", mode: "dance", at: [26, 13], voice: "dance", pop: ["*dances*", "♪ ♪", "*dances*"],
+    talk: [["brylle: *dances*"], ["brylle: *dances harder*"], ["brylle: *dances with you*", "(you danced a little too ♡)"], ["brylle: *does the worm*"]] },
+  { id: "jamiel", mode: "wander", at: [26, 21], r: 4, speed: 2.1, voice: "grunt", pop: ["hmph.", "...", "tsk."],
+    talk: [["jamiel: hmph."], ["jamiel: ...what."], ["jamiel: go away, i'm busy.", "(he is not busy)"],
+           ["jamiel: dan won't stop talking about math.", "dan: it's statistics, actually."], ["jamiel: ...", "jamiel: fine. have fun you two ♡"]] },
+  { id: "dan", follow: "jamiel", voice: "nerd", pop: ["*adjusts glasses*", "actually...", "hmm.", "π"],
+    talk: [["dan: *pushes up glasses*", "dan: actually, cats have 32 muscles in each ear."], ["dan: i counted. this town is 44 by 36 tiles."],
+           ["dan: jamiel and i are studying.", "jamiel: we are NOT studying."], ["dan: statistically, you two are the cutest cats here."]] },
+];
+const FRIEND = {};
+FRIENDS.forEach(f => { FRIEND[f.id] = f; f.name = f.id; });
+FRIENDS.forEach(f => { if (f.follow) f.leader = FRIEND[f.follow]; });
+
+function placeFriend(f, x, y, dir = "down") {
+  Object.assign(f, { fx: x, fy: y, dir, path: null, script: null, moving: null, frame: 0, alpha: 1, trail: [], waitUntil: 0 });
+}
+function resetFriends() {
+  const now = performance.now();
+  FRIENDS.forEach(f => {
+    f.hidden = false; f.talks = 0; f.bubble = null; f.nextPop = now + 2500 + Math.random() * 6000;
+    if (f.leader) return;
+    const [x, y] = nearestWalkable(...f.at);
+    f.home = [x, y];
+    placeFriend(f, x, y);
+  });
+  FRIENDS.forEach(f => {
+    if (!f.leader) return;
+    const L = f.leader, [x, y] = walkable(L.fx - 1, L.fy) ? [L.fx - 1, L.fy] : nearestWalkable(L.fx + 1, L.fy);
+    placeFriend(f, x, y, "right");
+    L.trail = [[f.fx, f.fy], [L.fx, L.fy]];
+  });
+}
+
+// walk along a list of tiles at `speed` tiles a second; returns true once it gets there
+function walkPath(f, dt, now) {
+  const p = f.path || f.script;
+  p.segT += dt * p.speed;
+  while (p.segT >= 1 && p.seg < p.tiles.length - 1) { p.segT -= 1; p.seg++; }
+  const ox = f.fx, oy = f.fy;
+  if (p.seg >= p.tiles.length - 1) [f.fx, f.fy] = p.tiles[p.tiles.length - 1];
+  else {
+    const [ax, ay] = p.tiles[p.seg], [bx, by] = p.tiles[p.seg + 1];
+    f.fx = ax + (bx - ax) * p.segT; f.fy = ay + (by - ay) * p.segT;
+    if (p.fade && p.seg === p.tiles.length - 2) f.alpha = 1 - p.segT;
+  }
+  const dx = f.fx - ox, dy = f.fy - oy;
+  if (dx || dy) {
+    f.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+    f.moving = true; f.walkT = (f.walkT || 0) + dt; f.frame = Math.floor(f.walkT / (p.speed > 6 ? 0.08 : 0.13)) % 2;
+    f.stillSince = now;
+    f.trail.push([f.fx, f.fy]); if (f.trail.length > 60) f.trail.shift();
+  }
+  return p.seg >= p.tiles.length - 1;
+}
+function goTo(f, tx, ty, speed) {
+  const tiles = pathTo(Math.round(f.fx), Math.round(f.fy), tx, ty);
+  if (!tiles || tiles.length < 2) return false;
+  tiles[0] = [f.fx, f.fy];
+  f.path = { tiles, seg: 0, segT: 0, speed };
+  return true;
+}
+// a cutscene walk: ignores walls for the last step (into a doorway), can fade out at the end
+function script(f, tiles, speed, opts = {}) {
+  f.path = null;
+  f.script = { tiles: [[f.fx, f.fy], ...tiles], seg: 0, segT: 0, speed, ...opts };
+}
+function scriptPath(f, tx, ty, extra = [], speed, opts) {
+  const tiles = pathTo(Math.round(f.fx), Math.round(f.fy), tx, ty) || [[tx, ty]];
+  const all = [...tiles.slice(1), ...extra];
+  script(f, all.length ? all : [[tx, ty]], speed || Math.max(5, all.length / 2.6), opts);
+}
+
+let talkingTo = null, friendsLast = 0;
+function updateFriends(now) {
+  const dt = Math.min((now - (friendsLast || now)) / 1000, 0.05); friendsLast = now;
+  FRIENDS.forEach(f => {
+    if (f.hidden) return;
+    f.moving = null;
+    if (f.script) {
+      if (walkPath(f, dt, now)) { const s = f.script; f.script = null; f.moving = null; if (s.done) s.done(f); }
+      return;
+    }
+    // everyone stays put while a cutscene plays or while you're chatting with them (or their buddy)
+    const chatting = dialog && talkingTo && (talkingTo === f || talkingTo === f.leader || talkingTo.leader === f);
+    if (cutscene || arrival || chatting) return;
+    if (f.leader) return followLeader(f, now, dt);
+    if (f.mode === "dance") {
+      if (f.path) { if (walkPath(f, dt, now)) f.path = null; }
+      else if (Math.hypot(f.fx - f.home[0], f.fy - f.home[1]) > 0.1) goTo(f, f.home[0], f.home[1], 3);
+      else if (!dialog && Math.random() < dt / 0.6) particles.push({ kind: "note", x: f.fx * TILE + 8 + (Math.random() - 0.5) * 10, y: f.fy * TILE, vx: (Math.random() - 0.5) * 16, vy: -22, t: now });
+      return;
+    }
+    if (f.path) {
+      if (walkPath(f, dt, now)) { f.path = null; f.waitUntil = now + (f.mode === "run" ? 200 + Math.random() * 500 : 1200 + Math.random() * 2800); }
+      if (f.mode === "run" && Math.random() < dt / 0.12) particles.push({ kind: "dust", x: f.fx * TILE + 7, y: f.fy * TILE + 14, vx: 0, vy: -6, t: now });
+    } else if (now > f.waitUntil) {
+      for (let k = 0; k < 12; k++) {
+        const tx = Math.round(f.home[0] + (Math.random() * 2 - 1) * f.r), ty = Math.round(f.home[1] + (Math.random() * 2 - 1) * f.r);
+        if (walkable(tx, ty) && goTo(f, tx, ty, f.speed)) break;
+      }
+      if (!f.path) f.waitUntil = now + 800;
+    }
+    if (f.id === "achilles" && Math.random() < dt / 1.1) {
+      const side = f.dir === "left" ? 2 : f.dir === "right" ? 13 : 9;
+      particles.push({ kind: "drool", x: f.fx * TILE + side, y: f.fy * TILE + 10, vx: 0, vy: 8, t: now });
+    }
+  });
+  // little speech bubbles now and then
+  if (!dialog && !cutscene) FRIENDS.forEach(f => {
+    if (f.hidden || now < f.nextPop) return;
+    if (FRIENDS.some(g => g !== f && g.bubble && Math.hypot(g.fx - f.fx, g.fy - f.fy) < 3)) { f.nextPop = now + 2500; return; }
+    f.bubble = { text: f.pop[Math.floor(Math.random() * f.pop.length)], until: now + 1900 };
+    f.nextPop = now + 6000 + Math.random() * 9000;
+  });
+}
+// a buddy walks along their leader's trail just behind them, and catches up by pathfinding if they get split up
+function followLeader(f, now, dt) {
+  const L = f.leader;
+  if (L.hidden || L.script) return;
+  if (f.path) {
+    if (walkPath(f, dt, now) || Math.hypot(L.fx - f.fx, L.fy - f.fy) < 1.2) { f.path = null; L.trail = [[f.fx, f.fy], [L.fx, L.fy]]; }
+    return;
+  }
+  if (Math.hypot(L.fx - f.fx, L.fy - f.fy) > 2.2) { goTo(f, Math.round(L.fx), Math.round(L.fy), 5); return; }
+  if (!L.moving) return;
+  let p = null, acc = 0;
+  for (let i = L.trail.length - 1; i > 0; i--) {
+    const [x1, y1] = L.trail[i], [x0, y0] = L.trail[i - 1], seg = Math.hypot(x1 - x0, y1 - y0);
+    if (seg && acc + seg >= 0.9) { const t = (0.9 - acc) / seg; p = [x1 + (x0 - x1) * t, y1 + (y0 - y1) * t]; break; }
+    acc += seg;
+  }
+  if (!p) return;
+  const dx = p[0] - f.fx, dy = p[1] - f.fy;
+  if (Math.hypot(dx, dy) < 0.002) return;
+  f.dir = steadyDir(f.dir, dx, dy, L.dir);
+  f.fx = p[0]; f.fy = p[1]; f.moving = true; f.stillSince = now;
+  f.walkT = (f.walkT || 0) + dt; f.frame = Math.floor(f.walkT / 0.13) % 2;
+}
+
+/* ---------- voices ---------- */
+function hiss() {
+  if (!sfxOn) return;
+  const ctx = audio(); if (!ctx) return;
+  const len = 0.45, buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * len), ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), t = ctx.currentTime;
+  s.buffer = buf; fl.type = "highpass"; fl.frequency.value = 2800;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.1, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  s.connect(fl).connect(g).connect(ctx.destination); s.start(t); s.stop(t + len);
+}
+const quick = (notes, gap = 60, dur = 0.06) => notes.forEach((f, i) => setTimeout(() => blip(f, dur), i * gap));
+const VOICES = {
+  squeak: () => quick([1046, 1318, 1568, 1760, 1568], 55),
+  goofy: () => quick([392, 784, 392, 988, 523], 70, 0.07),
+  hiss,
+  cool: () => quick([330, 494], 120, 0.12),
+  gamer: () => quick([659, 784, 1046, 1318], 50, 0.05),
+  derp: () => quick([300, 280, 260], 140, 0.12),
+  dance: () => quick([523, 659, 784, 659, 523, 659, 784, 1046], 90, 0.07),
+  grunt: () => grunt(),
+  nerd: () => quick([880, 988, 880], 80, 0.05),
+};
+function friendNear() {
+  let best = null, bd = 1.35;
+  FRIENDS.forEach(f => {
+    if (f.hidden || f.script) return;
+    const d = Math.hypot(f.fx - hero.fx, f.fy - hero.fy);
+    if (d < bd) { bd = d; best = f; }
+  });
+  return best;
+}
+function talkTo(f) {
+  talkingTo = f; f.hop = performance.now(); f.bubble = null; f.path = null;
+  const dx = hero.fx - f.fx, dy = hero.fy - f.fy;
+  f.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+  hero.dir = { left: "right", right: "left", up: "down", down: "up" }[f.dir];
+  VOICES[f.voice]();
+  if (f.id === "brylle") for (let i = 0; i < 6; i++) particles.push({ kind: "note", x: f.fx * TILE + 8, y: f.fy * TILE, vx: (Math.random() - 0.5) * 40, vy: -20 - Math.random() * 20, t: performance.now() });
+  say(typeof f.talk === "function" ? f.talk() : f.talk[(f.talks++) % f.talk.length]);
+}
+
+/* ---------- jamiel's cutscene: he heads into unli wings first ---------- */
+let jamielAte = false;
 function startJamielCutscene() {
-  const w = STORES[7], goal = [w.x + 3, w.y + 5];
-  const path = pathTo(26, 22, goal[0], goal[1]) || [[26, 22], goal];
-  cutscene = {
-    phase: "pan", t0: performance.now(), last: performance.now(),
-    path: [[26, 21], ...path, [w.x + 2, w.y + 4]], seg: 0, segT: 0, jx: 26, jy: 21, alpha: 1,
-    cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE,
-  };
+  const now = performance.now(), j = FRIEND.jamiel;
+  j.path = null;
+  cutscene = { kind: "jamiel", phase: "pan", t0: now, last: now, cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE };
   clearHeld();
 }
+// everyone heads for the photo booth before you go in
+let boothVisits = 0;
+function boothSpots() {
+  const taken = new Set([hero.x + "," + hero.y, buddy.x + "," + buddy.y]), door = [BOOTH.x + 2, BOOTH.y + 5], spots = [];
+  for (let y = door[1]; y <= door[1] + 2; y++) for (let x = door[0] - 6; x <= door[0] + 6; x++) {
+    if (walkable(x, y) && !taken.has(x + "," + y)) spots.push([x, y]);
+  }
+  return spots.sort((a, b) => Math.hypot(a[0] - door[0], a[1] - door[1]) - Math.hypot(b[0] - door[0], b[1] - door[1]));
+}
+function startBoothCutscene() {
+  const now = performance.now(), spots = boothSpots();
+  FRIENDS.forEach((f, i) => {
+    f.hidden = false; f.alpha = 1; f.bubble = null;
+    const [x, y] = spots[i] || spots[spots.length - 1];
+    scriptPath(f, x, y, [], null, { done: g => { g.dir = "up"; } });
+  });
+  cutscene = { kind: "booth", phase: "gather", t0: now, last: now, cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE };
+  hero.dir = buddy.dir = "up";
+  clearHeld();
+}
+// back outside: the gang spills out of the booth (or jamiel out of unli wings) around you
+function friendsOutside(place) {
+  if (place === BOOTH) {
+    const spots = boothSpots();
+    FRIENDS.forEach((f, i) => { placeFriend(f, ...(spots[i] || spots[0]), "down"); f.hidden = false; });
+    FRIENDS.forEach(f => { if (f.leader) f.leader.trail = [[f.fx, f.fy], [f.leader.fx, f.leader.fy]]; });
+  } else if (place === STORES[7] && FRIEND.jamiel.hidden) {
+    const j = FRIEND.jamiel, [x, y] = nearestWalkable(place.x + 4, place.y + 5);
+    placeFriend(j, x === hero.x || x === buddy.x ? x + 1 : x, y, "down");
+    j.hidden = false; j.trail = [[FRIEND.dan.fx, FRIEND.dan.fy], [j.fx, j.fy]];
+  }
+}
+const BOOTH_LINES = [
+  "everyone heard about the photo booth! ♡",
+  "grace: AAAAAAAAA!!",
+  "sky: HOY CLIZZZ!! PICTURE PICTURE!!",
+  "erin: hssss. (she came anyway)",
+  "leo: fun fact: the first photo booth opened in 1925.",
+  "chris: ka-chow. squeeze in.",
+  "achilles: wait, is it free?? *drool*",
+  "brylle: *dances*",
+  "dan: *pushes up glasses* optimal formation: everyone in front.",
+  "jamiel: hmph. ...fine. ONE picture.",
+];
 function updateCutscene(now) {
   const cs = cutscene;
   if (!cs) return;
   const dt = Math.min((now - cs.last) / 1000, 0.05); cs.last = now;
-  const target = cs.phase === "back" ? [(hero.fx + 0.5) * TILE, (hero.fy + 0.5) * TILE] : [(cs.jx + 0.5) * TILE, (cs.jy + 0.5) * TILE];
+  let target = [(hero.fx + 0.5) * TILE, (hero.fy + 0.5) * TILE];
+  if (cs.kind === "jamiel" && cs.phase !== "back") target = [(FRIEND.jamiel.fx + 0.5) * TILE, (FRIEND.jamiel.fy + 0.5) * TILE];
+  if (cs.kind === "booth") target = [(BOOTH.x + 2.5) * TILE, (BOOTH.y + 5) * TILE];
   cs.cx += (target[0] - cs.cx) * Math.min(1, dt * 3.5);
   cs.cy += (target[1] - cs.cy) * Math.min(1, dt * 3.5);
-  if (cs.phase === "pan" && now - cs.t0 > 1100 && !cs.talked) {
-    cs.talked = true; grunt(); jamielHop = now;
-    say(["wait... is that jamiel?", "jamiel: hmph. i'm hungry too.", "jamiel: i'm going in first."], () => { cs.phase = "walk"; cs.last = performance.now(); });
-  }
-  if (cs.phase === "walk") {
-    cs.segT += dt * 4.5;
-    while (cs.segT >= 1 && cs.seg < cs.path.length - 1) { cs.segT -= 1; cs.seg++; }
-    if (cs.seg >= cs.path.length - 1) { cs.phase = "in"; cs.t0 = now; blip(523, 0.1); setTimeout(() => blip(392, 0.12), 120); }
-    else {
-      const [ax, ay] = cs.path[cs.seg], [bx, by] = cs.path[cs.seg + 1];
-      cs.jx = ax + (bx - ax) * cs.segT; cs.jy = ay + (by - ay) * cs.segT;
+
+  if (cs.kind === "jamiel") {
+    const j = FRIEND.jamiel;
+    if (cs.phase === "pan" && now - cs.t0 > 1100) {
+      cs.phase = "talk"; grunt(); j.hop = now;
+      say(["wait... is that jamiel?", "jamiel: hmph. i'm hungry too.", "dan: i'll wait out here. i'm on a diet.", "jamiel: i'm going in first."], () => {
+        const w = STORES[7];
+        cs.phase = "walk"; cs.last = performance.now();
+        scriptPath(j, w.x + 3, w.y + 5, [[w.x + 2, w.y + 5], [w.x + 2, w.y + 4]], 4.5, {
+          fade: true, done: () => { blip(523, 0.1); setTimeout(() => blip(392, 0.12), 120); j.hidden = true; cs.phase = "back"; cs.t0 = performance.now(); },
+        });
+      });
     }
-  }
-  if (cs.phase === "in") {
-    cs.alpha = Math.max(0, 1 - (now - cs.t0) / 500);
-    if (now - cs.t0 > 700) {
-      cs.phase = "back"; cs.t0 = now; jamielGone = true; grid[21][26] = ".";
-      THINGS.forEach(t => { if (t.id === "jamiel") t.picked = true; });
+    if (cs.phase === "back" && now - cs.t0 > 1000) {
+      cutscene = null; jamielAte = true;
+      melody([523, 659, 784]);
+      enterStore(7);
     }
+    return;
   }
-  if (cs.phase === "back" && now - cs.t0 > 1000) {
-    cutscene = null;
-    melody([523, 659, 784]);
-    enterStore(7);
+  // the photo booth: everyone gathers by the door, says hi, then squeezes in one by one
+  if (cs.phase === "gather" && (FRIENDS.every(f => !f.script) || now - cs.t0 > 5000)) {
+    FRIENDS.forEach(f => { if (f.script) { [f.fx, f.fy] = f.script.tiles[f.script.tiles.length - 1]; f.script = null; f.dir = "up"; } });
+    cs.phase = "talk";
+    VOICES.squeak(); setTimeout(() => VOICES.goofy(), 350);
+    const lines = boothVisits++ ? ["the whole gang squeezes in again ♡", "sky: HOY CLIZZZ!!"] : BOOTH_LINES;
+    say(lines, () => { cs.phase = "enter"; cs.t0 = performance.now(); });
+  }
+  if (cs.phase === "enter") {
+    const door = BOOTH.x + 2;
+    FRIENDS.forEach((f, i) => {
+      if (f.hidden || f.script || now - cs.t0 < i * 160) return;
+      script(f, [[door, f.fy], [door, BOOTH.y + 5], [door, BOOTH.y + 4]], 6, { fade: true, done: g => { g.hidden = true; blip(700 + i * 40, 0.05); } });
+    });
+    if (FRIENDS.every(f => f.hidden) && !cs.inAt) cs.inAt = now;
+    if (cs.inAt && now - cs.inAt > 400) {
+      cutscene = null;
+      melody([784, 988]);
+      enterBooth();
+    }
   }
 }
+resetFriends();
 function burst(kind, px, py, n) {
   for (let i = 0; i < n; i++) particles.push({
     kind, x: px + (Math.random() - 0.5) * 12, y: py, vx: (Math.random() - 0.5) * 30,
@@ -2074,7 +2399,9 @@ function nearby() {
   if (hero.y === JEEP_SPOT.y + 2 && hero.x >= JEEP_SPOT.x && hero.x <= JEEP_SPOT.x + 3) return { kind: "jeep" };
   const [dx, dy] = DIRS[hero.dir], fx = hero.x + dx, fy = hero.y + dy;
   const thing = THINGS.find(t => !t.picked && t.tiles.some(([x, y]) => x === fx && y === fy));
-  return thing ? { kind: "thing", thing } : null;
+  if (thing) return { kind: "thing", thing };
+  const friend = friendNear();
+  return friend ? { kind: "friend", friend } : null;
 }
 const nextStop = () => SCENES.findIndex((_, i) => !done.has(i));
 
@@ -2084,12 +2411,14 @@ function interact() {
   if (!n || arrival || cutscene) return;
   const hx = (hero.x + 0.5) * TILE, hy = hero.y * TILE;
   if (n.kind === "store") {
-    if (n.i === 7 && !jamielGone) { startJamielCutscene(); return; }
+    if (n.i === 7 && !jamielAte && !FRIEND.jamiel.hidden) { startJamielCutscene(); return; }
     melody([523, 659, 784]);
     enterStore(n.i);
   } else if (n.kind === "booth") {
     melody([784, 988]);
-    enterBooth();
+    startBoothCutscene();
+  } else if (n.kind === "friend") {
+    talkTo(n.friend);
   } else if (n.kind === "jeep") {
     if (done.size === SCENES.length) {
       jeepSound(); melody([523, 659, 784, 1046]);
@@ -2110,12 +2439,7 @@ function interact() {
       say(["you sat on the bench together.", "it's quiet. just the two of you ♡"]);
     } else if (t.id === "sign") {
       blip(660, 0.05);
-      say(["WELCOME TO OUR TOWN", "population: 2 cats (and jamiel)"]);
-    } else if (t.id === "jamiel") {
-      grunt(); jamielHop = performance.now();
-      const lines = [["jamiel: hmph."], ["jamiel: ...what."], ["jamiel: go away, i'm busy.", "(he is not busy)"], ["jamiel: ...", "jamiel: fine. have fun you two ♡"]];
-      t.talks = (t.talks || 0) + 1;
-      say(lines[Math.min(t.talks, lines.length) - 1]);
+      say(["WELCOME TO OUR TOWN", "population: 11 cats. sky counts as 3."]);
     } else if (t.id === "pond") {
       const [fx, fy] = t.tiles[Math.floor(t.tiles.length / 2)];
       fish = { x: (fx + 0.5) * TILE, y: (fy + 0.5) * TILE, t0: performance.now() };
@@ -2139,6 +2463,7 @@ function renderHud() {
   else if (n && n.kind === "store") html = `<b>${esc(STORES[n.i].name)}</b>${done.has(n.i) ? " ♡" : ""} · <kbd>E</kbd> go inside`;
   else if (n && n.kind === "booth") html = `<b>the photo booth</b> · <kbd>E</kbd> go inside`;
   else if (n && n.kind === "jeep") html = `<b>the jeep</b> · <kbd>E</kbd> ${done.size === SCENES.length ? "ride home ♡" : "look"}`;
+  else if (n && n.kind === "friend") html = `<b>${esc(n.friend.name)}</b> · <kbd>E</kbd> talk`;
   else if (n && n.kind === "thing") html = `<b>${esc(n.thing.name)}</b> · <kbd>E</kbd> ${n.thing.verb}`;
   else html = done.size === SCENES.length ? "everything visited ♡ walk back to the jeep" : "arrow keys / WASD to walk · follow the pink arrow ♡";
   if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; el.hidden = !html; }
@@ -2152,6 +2477,40 @@ function sizeCanvas() {
 }
 window.addEventListener("resize", () => { if (!$("#map").hidden) sizeCanvas(); });
 
+function drawFlipped(c, img, x, y, flip, w, h = w) {
+  c.save();
+  if (flip) { c.translate(x + w, y); c.scale(-1, 1); c.drawImage(img, 0, 0, w, h); }
+  else c.drawImage(img, x, y, w, h);
+  c.restore();
+}
+// how a friend looks right now: which frame, mirrored or not, and how high they're hopping
+function friendPose(f, now) {
+  if (f.mode === "dance" && !f.moving) {      // brylle: side to side, bouncing on the beat
+    const beat = Math.floor(now / 260);
+    return { img: catSprites[f.id].side[1 + beat % 2], flip: beat % 4 < 2, dy: beat % 2 ? -2 : 0 };
+  }
+  const hop = f.hop && now - f.hop < 300 ? -3 : 0;
+  if (f.id === "sky" && !f.moving) {          // sky can't stand still: he bounces on the spot
+    return { img: catSprites.sky.down[1 + Math.floor(now / 90) % 2], flip: false, dy: hop || (Math.floor(now / 90) % 2 ? -1 : 0) };
+  }
+  if (!f.moving && now - (f.stillSince || 0) > 2500) return { img: catSprites[f.id].sit[0], flip: false, dy: 2 + hop };
+  const view = f.dir === "left" || f.dir === "right" ? "side" : f.dir;
+  return { img: catSprites[f.id][view][f.moving ? 1 + f.frame : 0], flip: f.dir === "left", dy: hop };
+}
+// speech bubbles are html on top of the canvas (canvas text gets blurry when the pixels are scaled up)
+function drawBubbles(c, now, sx, sy) {
+  const k = c.canvas.clientWidth / c.canvas.width;
+  FRIENDS.forEach(f => {
+    if (f.bubble && (f.hidden || now > f.bubble.until || dialog || cutscene)) f.bubble = null;
+    if (!f.bubbleEl) { f.bubbleEl = document.createElement("span"); f.bubbleEl.className = "bubble"; $("#map").appendChild(f.bubbleEl); }
+    const el = f.bubbleEl;
+    el.hidden = !f.bubble;
+    if (!f.bubble) return;
+    if (el.textContent !== f.bubble.text) el.textContent = f.bubble.text;
+    el.style.left = Math.round(sx(Math.round(f.fx * TILE) + 8) * k) + "px";
+    el.style.top = Math.round((sy(Math.round(f.fy * TILE)) - 2) * k) + "px";
+  });
+}
 function drawFrame(now) {
   const cv = $("#mapCanvas"), c = cv.getContext("2d"), VW = cv.width, VH = cv.height;
   c.imageSmoothingEnabled = false;
@@ -2189,14 +2548,6 @@ function drawFrame(now) {
     c.fillStyle = "#ee8fa8"; c.fillRect(X + 4, Y + 2 - b, 8, 6); c.fillRect(X + 6, Y + 0 - b, 4, 10);
     c.fillStyle = "#f6d26b"; c.fillRect(X + 7, Y + 4 - b, 2, 2);
   });
-  // jamiel, sitting grumpily
-  const jh = now - jamielHop < 300 ? -3 : 0;
-  if (cutscene && cutscene.phase !== "pan") {
-    const bob = Math.floor(now / 120) % 2 ? -1 : 0;
-    c.globalAlpha = cutscene.alpha;
-    c.drawImage(jamielImg, sx(cutscene.jx * TILE - 1), sy(cutscene.jy * TILE - 2 + bob), 18, 19);
-    c.globalAlpha = 1;
-  } else if (!jamielGone) c.drawImage(jamielImg, sx(26 * TILE - 1), sy(21 * TILE - 2 + jh), 18, 19);
   // a jumping fish
   if (fish) {
     const p = (now - fish.t0) / 700;
@@ -2232,8 +2583,14 @@ function drawFrame(now) {
     melody([523, 659, 784, 1046]);
     say(["we're here! ♡", "first stop: the squishy store, right over there →"]);
   }
-  // cats, back to front (hidden until they hop out of the jeep)
-  if (!arrival) [[buddy, "rhey"], [hero, "cliz"]].sort((a, b) => a[0].fy - b[0].fy).forEach(([ch, who]) => {
+  // cats, back to front: the friends, plus cliz and rhey (hidden until they hop out of the jeep)
+  const actors = FRIENDS.filter(f => !f.hidden).map(f => ({ fy: f.fy, draw() {
+    const { img, flip, dy } = friendPose(f, now);
+    c.globalAlpha = f.alpha ?? 1;
+    drawFlipped(c, img, sx(Math.round(f.fx * TILE) + 1), sy(Math.round(f.fy * TILE) + 1 + dy), flip, 14);
+    c.globalAlpha = 1;
+  } }));
+  if (!arrival) [[buddy, "rhey"], [hero, "cliz"]].forEach(([ch, who]) => actors.push({ fy: ch.fy, draw() {
     const dir = ch.dir === "left" || ch.dir === "right" ? "side" : ch.dir;
     const img = ch.sitting ? catSprites[who].sit[0] : catSprites[who][dir][ch.moving ? 1 + ch.frame : 0];
     // round the world position first so the cat and camera move in lockstep (no 1px twitch)
@@ -2241,24 +2598,26 @@ function drawFrame(now) {
     const hpx = Math.round(hero.fx * TILE), hpy = Math.round(hero.fy * TILE);
     const wx = ch === hero ? hpx : hpx + Math.round((ch.fx - hero.fx) * TILE);
     const wy = ch === hero ? hpy : hpy + Math.round((ch.fy - hero.fy) * TILE);
-    const px = sx(wx + 1), py = sy(wy + 1 + (ch.sitting ? 2 : 0));
-    c.save();
-    if (ch.dir === "left") { c.translate(px + 14, py); c.scale(-1, 1); c.drawImage(img, 0, 0); }
-    else c.drawImage(img, px, py);
-    c.restore();
-  });
+    drawFlipped(c, img, sx(wx + 1), sy(wy + 1 + (ch.sitting ? 2 : 0)), ch.dir === "left", 14);
+  } }));
+  actors.sort((a, b) => a.fy - b.fy).forEach(a => a.draw());
   // particles: hearts, sparkles, water drops
   particles = particles.filter(p => {
     const age = (now - p.t) / 1000; if (age > 1.1) return false;
-    const X = sx(p.x + p.vx * age), Y = sy(p.y + p.vy * age + (p.kind === "drop" ? 140 * age * age : 0));
+    const X = sx(p.x + p.vx * age), Y = sy(p.y + p.vy * age + (p.kind === "drop" ? 140 * age * age : p.kind === "drool" ? 50 * age * age : 0));
     c.globalAlpha = Math.max(0, 1 - age);
     if (p.kind === "heart") c.drawImage(heartImg, X, Y, 7, 7);
     else if (p.kind === "spark") { c.fillStyle = age * 10 % 2 < 1 ? "#fffaf2" : "#f6d26b"; c.fillRect(X, Y, 2, 2); }
     else if (p.kind === "smoke") { c.fillStyle = "#d9d4cf"; c.fillRect(X, Y, 4 + age * 6, 4 + age * 6); }
+    else if (p.kind === "note") { c.fillStyle = "#a985cc"; c.fillRect(X, Y + 3, 3, 2); c.fillRect(X + 2, Y, 1, 4); c.fillRect(X + 3, Y, 2, 1); }
+    else if (p.kind === "dust") { c.fillStyle = "#e3d3b5"; c.fillRect(X, Y, 2, 2); }
+    else if (p.kind === "drool") { c.fillStyle = "#7cc0e8"; c.fillRect(X, Y, 1, 2); }
     else { c.fillStyle = "#b9dcef"; c.fillRect(X, Y, 2, 2); }
     c.globalAlpha = 1;
     return true;
   });
+  // what the friends are muttering
+  drawBubbles(c, now, sx, sy);
   // "E" bubble when something can be opened
   if (!arrival && !cutscene && nearby() && !dialog) {
     const bx = sx(Math.round(hero.fx * TILE) + 3), by = sy(Math.round(hero.fy * TILE) - 12);
@@ -2270,6 +2629,7 @@ function drawFrame(now) {
 
 function tick(now) {
   moveCats(now);
+  updateFriends(now);
   updateCutscene(now);
   drawFrame(now);
   renderHud();
@@ -2703,6 +3063,9 @@ ROOMS.booth = (c, now) => {
   base(120, "#ee8fa8");
   checker(123, "#fde6ec", "#f9d3dd");
 };
+// where each friend stands inside the booth room (x, feet y)
+const BOOTH_GANG = [["jamiel", 40, 150], ["dan", 70, 150], ["grace", 106, 138], ["chris", 134, 138], ["sky", 162, 138],
+  ["achilles", 190, 138], ["brylle", 218, 138], ["leo", 244, 150], ["erin", 272, 150]];
 const boothCats = { x: 160, y: 162, dir: "up", frame: 0, walkT: 0, moving: false, trail: [], props: 0, bx: 140, by: 162, bdir: "up", bframe: 0, bmoving: false };
 let boothLast = 0;
 function enterBooth() {
@@ -2715,7 +3078,7 @@ function enterBooth() {
   Object.assign(boothCats, { x: 160, y: 162, dir: "up", moving: false, trail: [], bx: 140, by: 162, bdir: "up", bmoving: false });
   boothLast = 0; clearHeld();
   show("interior");
-  say(["say cheese! ♡", "walk around, try on some props, then step into the booth (press E there)."]);
+  say(["say cheese! ♡", "the whole gang is here too ♡", "walk around, try on some props, then step into the booth (press E there)."]);
 }
 // what cliz is standing next to inside the booth room
 function boothNear() {
@@ -2802,8 +3165,20 @@ function drawBoothCats(c, now) {
     }
     if (prop === "bow") { c.fillStyle = "#ee8fa8"; c.fillRect(X, Y - S, 3 * S, 3 * S); c.fillRect(X + 4 * S, Y - S, 3 * S, 3 * S); c.fillStyle = "#d9738f"; c.fillRect(X + 3 * S, Y, S, S); }
   };
-  [["rhey", b.bx, b.by, b.bdir, b.bmoving, b.bframe, props[1]], ["cliz", b.x, b.y, b.dir, b.moving, b.frame, props[0]]]
-    .sort((p, q) => p[2] - q[2]).forEach(a => draw(...a));
+  // the whole gang squeezed in with you (buddies stand together)
+  const gang = BOOTH_GANG.map(([id, x, y]) => ({ y, draw() {
+    const pose = friendPose({ id, mode: FRIEND[id].mode, dir: "down", moving: false, stillSince: now }, now);
+    const bounce = id === "grace" && Math.floor(now / 380) % 2 ? -S : 0;
+    const X = Math.round(x - W / 2), Y = Math.round(y - W + pose.dy * S + bounce);
+    drawFlipped(c, pose.img, X, Y, pose.flip, W);
+    if (id === "achilles") {
+      const t = (now % 1300) / 1300;
+      c.globalAlpha = 1 - t; c.fillStyle = "#7cc0e8"; c.fillRect(X + 8 * S, Y + 10 * S + Math.round(t * 14), S, 2 * S); c.globalAlpha = 1;
+    }
+  } }));
+  const cats = [["rhey", b.bx, b.by, b.bdir, b.bmoving, b.bframe, props[1]], ["cliz", b.x, b.y, b.dir, b.moving, b.frame, props[0]]]
+    .map(a => ({ y: a[2], draw: () => draw(...a) }));
+  [...gang, ...cats].sort((p, q) => p.y - q.y).forEach(a => a.draw());
   if (boothNear() && !dialog && $("#boothBox").hidden) {
     const bx = Math.round(b.x - 5), by = Math.round(b.y - W - 16);
     c.fillStyle = "#5b4636"; c.fillRect(bx - 1, by - 1, 12, 11);
@@ -2859,6 +3234,7 @@ function exitTo(place) {
   stopRoom();
   if (dialog) { dialog.after = null; closeDialog(); }
   standAt(place.x + 2, place.y + 5);
+  friendsOutside(place);
   show("map");
 }
 $("#roomBack").onclick = () => exitTo(roomId === "booth" ? BOOTH : STORES[current]);
