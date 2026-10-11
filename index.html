@@ -274,6 +274,8 @@
   .arcade-act .skip-msg { color: #f6b8c8; }
   /* the photos box after an activity */
   .photo-box { position: fixed; inset: 0; z-index: 9; background: rgba(43, 34, 36, .55); overflow-y: auto; padding: 30px 16px 60px; }
+  .booth-box { background: rgba(43, 34, 36, .18); padding-top: 50px; }
+  .booth-box .booth { max-width: 520px; margin: 40px auto; }
   .photo-card { max-width: 720px; margin: 40px auto; animation: drop .5s ease-out both; }
   @media (max-width: 700px) {
     .room-stage { gap: 1vw; height: 70vh; }
@@ -513,6 +515,7 @@
     <button class="back pxbtn stage-back" id="roomBack">← outside</button>
     <p class="hud-pill hud-kicker room-title" id="roomTitle"></p>
     <div class="room-stage" id="roomStage"></div>
+    <div class="photo-box booth-box" id="boothBox" hidden></div>
     <div class="photo-box" id="photoBox" hidden>
       <div class="px card scene photo-card" data-ears>
         <p class="kicker" id="photoKicker"></p>
@@ -1765,6 +1768,7 @@ const townCanvas = document.createElement("canvas");
 townCanvas.width = MAP_W * TILE; townCanvas.height = MAP_H * TILE;
 function drawTown() {
   const c = townCanvas.getContext("2d");
+  c.imageSmoothingEnabled = false;
   for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
     const X = x * TILE, Y = y * TILE, t = grid[y][x];
     c.fillStyle = (x + y) % 2 ? "#c3e3ae" : "#b9dca2"; c.fillRect(X, Y, TILE, TILE);
@@ -1928,7 +1932,7 @@ function interact() {
     enterStore(n.i);
   } else if (n.kind === "booth") {
     melody([784, 988]);
-    show("boothPage");
+    enterBooth();
   } else if (n.kind === "jeep") {
     if (done.size === SCENES.length) {
       jeepSound(); melody([523, 659, 784, 1046]);
@@ -2490,17 +2494,62 @@ const ACTIVITIES = [
 ];
 
 /* ---------- entering and leaving ---------- */
+let roomId = 0;
+
+// the photo booth: a pink room with the camera strip on top
+ROOMS.booth = (c, now) => {
+  const { R, ball, frame, base, checker } = roomKit(c);
+  R(0, 0, 320, 120, "#fde4ea");
+  for (let y = 6; y < 120; y += 14) for (let x = (y / 14 % 2) * 7 + 3; x < 320; x += 14) R(x, y, 2, 2, "#f6c6d3");
+  // string lights
+  for (let x = 2, k = 0; x < 320; x += 10, k++) {
+    R(x, 6 + Math.round(Math.sin(x / 26) * 3), 6, 1, "#5b4636");
+    R(x + 2, 8 + Math.round(Math.sin(x / 26) * 3), 3, 3, Math.floor(now / 380 + k) % 3 ? ["#f6d26b", "#ee8fa8", "#fffaf2"][k % 3] : "#e8c9a8");
+  }
+  // photo strips pinned on the wall
+  for (const [x, y, r] of [[118, 26, 0], [140, 30, 1], [162, 25, 0], [184, 29, 1]]) {
+    frame(x, y, 14, 40, "#fffaf2");
+    for (let i = 0; i < 4; i++) R(x + 2, y + 2 + i * 9, 10, 7, ["#c7a2e6", "#f6b8c8", "#a9c4d6", "#f6d26b"][(i + r) % 4]);
+    R(x + 6, y - 3, 3, 3, "#e05a5a");
+  }
+  // the booth machine with its curtain
+  frame(14, 24, 70, 96, "#ee8fa8");
+  R(18, 28, 62, 10, "#5b4636"); for (let i = 0; i < 6; i++) R(22 + i * 10, 31, 6, 4, ["#f6d26b", "#fffaf2"][i % 2]);
+  R(22, 42, 54, 78, "#d9738f"); for (let x = 25; x < 76; x += 6) R(x, 42, 2, 78, "#c25f7a");
+  R(86, 56, 12, 20, "#5b4636"); R(88, 58, 8, 6, "#a9c4d6"); R(88, 68, 8, 2, "#f6d26b");
+  // props table: heart glasses, a bow, a crown
+  frame(222, 92, 86, 6, "#9b7350"); R(228, 98, 4, 22, "#5b4636"); R(298, 98, 4, 22, "#5b4636");
+  ball(236, 86, 4, "#e05a5a", "#5b4636"); ball(247, 86, 4, "#e05a5a", "#5b4636"); R(240, 85, 3, 1, "#5b4636");
+  R(262, 82, 6, 8, "#ee8fa8"); R(274, 82, 6, 8, "#ee8fa8"); R(268, 84, 6, 4, "#d9738f");
+  R(286, 80, 16, 8, "#f6d26b"); for (const x of [286, 293, 300]) R(x, 76, 2, 4, "#f6d26b");
+  frame(230, 30, 70, 46, "#fffaf2"); ball(265, 53, 12, "#f6b8c8", "#ee8fa8"); R(259, 49, 3, 3, "#5b4636"); R(268, 49, 3, 3, "#5b4636");
+  base(120, "#ee8fa8");
+  checker(123, "#fde6ec", "#f9d3dd");
+};
+function enterBooth() {
+  roomId = "booth";
+  $("#roomTitle").textContent = "the photo booth";
+  $("#roomStage").innerHTML = "";
+  $("#photoBox").hidden = true;
+  $("#boothBox").appendChild($("#booth"));
+  $("#boothBox").hidden = false;
+  $("#boothBox").scrollTop = 0;
+  show("interior");
+  say(["say cheese! ♡", "4 pictures, one strip. turn on the camera to start."]);
+}
+
 function drawRoom(now) {
   const cv = $("#roomCanvas"), c = cv.getContext("2d");
   c.imageSmoothingEnabled = false;
-  ROOMS[current](c, now);
+  ROOMS[roomId](c, now);
 }
 function roomTick(now) { drawRoom(now); roomLoop = requestAnimationFrame(roomTick); }
 function startRoom() { cancelAnimationFrame(roomLoop); roomLoop = requestAnimationFrame(roomTick); }
 function stopRoom() { cancelAnimationFrame(roomLoop); roomLoop = null; }
 
 function enterStore(i) {
-  current = i;
+  current = i; roomId = i;
+  $("#boothBox").hidden = true;
   const s = SCENES[i];
   $("#roomTitle").textContent = STORES[i].name;
   $("#roomStage").innerHTML = "";
@@ -2536,7 +2585,7 @@ function exitTo(place) {
   standAt(place.x + 2, place.y + 5);
   show("map");
 }
-$("#roomBack").onclick = () => exitTo(STORES[current]);
+$("#roomBack").onclick = () => exitTo(roomId === "booth" ? BOOTH : STORES[current]);
 $("#photoOut").onclick = () => exitTo(STORES[current]);
 
 /* ======================= setup ======================= */
