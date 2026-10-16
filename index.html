@@ -1579,15 +1579,15 @@ async function chaosPhoto() {
     x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.scale(flip ? -1 : 1, 1);
     x.drawImage(img, -w / 2, -h / 2, w, h); x.restore();
   };
-  // back row, standing: evenly spaced but a bit uneven, erin looking off to the side
+  // back row, standing: evenly spaced but a bit uneven
   cat("jamiel", "down", 80, 275, 8, 0);
   cat("dan", "down", 240, 265, 8, -0.06);
   cat("leo", "down", 400, 280, 8, 0.08);
-  cat("erin", "side", 560, 270, 8, 0, true);
+  cat("erin", "down", 560, 270, 8, -0.04);
   cat("grace", "down", 720, 260, 8, 0.1);
   // front row, sitting: brylle leaning in, cliz and rhey close together in the middle
   cat("brylle", "sit", 67, 455, 8, 0.12);
-  cat("sky", "side", 200, 450, 8, -0.05);
+  cat("sky", "sit", 200, 450, 8, -0.05);
   cat("cliz", "sit", 335, 445, 9, -0.06);
   cat("rhey", "sit", 465, 445, 9, 0.06);
   cat("chris", "sit", 600, 455, 8, -0.08);
