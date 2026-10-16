@@ -460,11 +460,9 @@
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
-    position: absolute; bottom: 0; width: auto; height: auto; max-width: 40%; max-height: 88%;
+    position: absolute; bottom: 0; width: auto; height: auto;
     object-fit: contain; pointer-events: none; animation: none;
   }
-  .frame .friend.left { left: 0; }
-  .frame .friend.right { right: 0; }
   .strip-foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 2px; font: 10px "Press Start 2P", monospace; }
   .strip-foot span { text-align: center; line-height: 1.6; padding-bottom: 4px; }
   .strip-foot svg { display: block; }
@@ -1696,20 +1694,32 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 const BOOTH_FRIENDS = {
   left: [1, 2, 3, 4].map(n => `photos/friends/cutouts/${n}.png`),       // jamiel & dan, then dan & leo in panel 4
   right: [1, 2, 3, 4].map(n => `photos/friends/cutouts/r${n}.png`),     // erin & leo, then rje in panel 4
+  center: [1, 2, 3].map(n => `photos/friends/cutouts/c${n}.png`),       // rhey, a little left of the middle (cliz stands beside him)
+};
+// where each group stands in a panel: x = left edge (left), right edge (right) or middle (center); w / h = biggest size
+const FRIEND_SPOT = {
+  left: { x: 0, w: 0.31, h: 0.86 },
+  right: { x: 1, w: 0.31, h: 0.86 },
+  center: { x: 0.42, w: 0.3, h: 0.72 },
+};
+const spotStyle = side => {
+  const s = FRIEND_SPOT[side], size = `max-width: ${s.w * 100}%; max-height: ${s.h * 100}%;`;
+  return side === "left" ? `left: 0; ${size}` : side === "right" ? `right: 0; ${size}` : `left: ${s.x * 100}%; transform: translateX(-50%); ${size}`;
 };
 const friendImgs = {};
 Object.values(BOOTH_FRIENDS).flat().forEach(src => { const im = new Image(); im.src = src; friendImgs[src] = im; });
 const friendsAt = i => Object.entries(BOOTH_FRIENDS).filter(([, list]) => list[i]).map(([side, list]) => ({ side, src: list[i] }));
 
-// same box as the .friend css: bottom corner, up to 40% wide and 88% tall (the middle stays free)
+// bakes the same spots as the live preview into a snap
 function drawFriends(c, i) {
   const x = c.getContext("2d");
   friendsAt(i).forEach(({ side, src }) => {
-    const im = friendImgs[src];
+    const im = friendImgs[src], s = FRIEND_SPOT[side];
     if (!im.complete || !im.naturalWidth) return;
-    const r = Math.min(c.width * 0.4 / im.naturalWidth, c.height * 0.88 / im.naturalHeight);
+    const r = Math.min(c.width * s.w / im.naturalWidth, c.height * s.h / im.naturalHeight);
     const w = im.naturalWidth * r, h = im.naturalHeight * r;
-    x.drawImage(im, side === "left" ? 0 : c.width - w, c.height - h, w, h);
+    const left = side === "left" ? 0 : side === "right" ? c.width - w : c.width * s.x - w / 2;
+    x.drawImage(im, left, c.height - h, w, h);
   });
   return c;
 }
@@ -1720,8 +1730,8 @@ function renderStrip() {
     if (shots[i]) return `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`;
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
-        ${next ? `<video muted playsinline autoplay></video>` : i + 1}
-        ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend ${f.side}" src="${f.src}" alt="">`).join("") : ""}
+        ${camStream ? `<video muted playsinline autoplay></video>` : i + 1}
+        ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side)}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
