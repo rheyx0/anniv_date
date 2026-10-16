@@ -455,10 +455,7 @@
   .booth-mode { display: contents; }
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; white-space: nowrap; margin: 0; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
-  .frame .friend {
-    position: absolute; bottom: 0; width: auto; height: auto;
-    object-fit: contain; pointer-events: none; animation: none;
-  }
+  .frame .friend { position: absolute; pointer-events: none; animation: none; }
   .strip-foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 2px; font: 10px "Press Start 2P", monospace; }
   .strip-foot span { text-align: center; line-height: 1.6; padding-bottom: 4px; }
   .strip-foot svg { display: block; }
@@ -1692,12 +1689,30 @@ const FRIEND_SPOT = {
   right: { x: 1, w: 0.27, h: 0.72 },
   center: { x: 0.39, w: 0.2, h: 0.56 },
 };
-// a panel without rhey in the middle (panel 4) lets the two groups stand bigger
-const FRIEND_SPOT_WIDE = { w: 0.4, h: 0.86 };
-const spotFor = (side, i) => side !== "center" && !BOOTH_FRIENDS.center[i] ? { ...FRIEND_SPOT[side], ...FRIEND_SPOT_WIDE } : FRIEND_SPOT[side];
-const spotStyle = (side, i) => {
-  const s = spotFor(side, i), size = `max-width: ${s.w * 100}%; max-height: ${s.h * 100}%;`;
-  return side === "left" ? `left: 0; ${size}` : side === "right" ? `right: 0; ${size}` : `left: ${s.x * 100}%; transform: translateX(-50%); ${size}`;
+// a panel without rhey in the middle (panel 4): the two groups stand big and may run a little off the panel's
+// outer edge (cut = most of the cutout allowed off-panel: dan's bag on the left, almost nothing of rje on the right);
+// their inner edge stops at "inner" so cliz keeps the middle
+const FRIEND_SPOT_WIDE = { h: 0.84, inner: 0.45, cut: { left: 0.14, right: 0.06 } };
+// where a cutout goes in panel i, as fractions of the panel (left, top, width, height)
+function friendBox(side, i, im) {
+  if (!im.complete || !im.naturalWidth) return null;
+  const aspect = im.naturalWidth / im.naturalHeight * 0.75;   // width/height in panel fractions (panels are 4:3)
+  if (side !== "center" && !BOOTH_FRIENDS.center[i]) {
+    const s = FRIEND_SPOT_WIDE;
+    const maxW = s.inner / (1 - s.cut[side]);
+    let hh = s.h, w = hh * aspect;
+    if (w > maxW) { w = maxW; hh = w / aspect; }
+    const l = side === "left" ? Math.min(0, s.inner - w) : Math.max(1 - w, 1 - s.inner);
+    return { l, t: 1 - hh, w, h: hh };
+  }
+  const s = FRIEND_SPOT[side];
+  const hh = Math.min(s.h, s.w / aspect), w = hh * aspect;
+  const l = side === "left" ? 0 : side === "right" ? 1 - w : s.x - w / 2;
+  return { l, t: 1 - hh, w, h: hh };
+}
+const spotStyle = (side, i, im) => {
+  const b = friendBox(side, i, im);
+  return b ? `left: ${b.l * 100}%; top: ${b.t * 100}%; width: ${b.w * 100}%; height: ${b.h * 100}%;` : "display: none;";
 };
 const friendImgs = {};
 Object.values(BOOTH_FRIENDS).flat().forEach(src => { const im = new Image(); im.src = src; friendImgs[src] = im; });
@@ -1707,12 +1722,8 @@ const friendsAt = i => Object.entries(BOOTH_FRIENDS).filter(([, list]) => list[i
 function drawFriends(c, i) {
   const x = c.getContext("2d");
   friendsAt(i).forEach(({ side, src }) => {
-    const im = friendImgs[src], s = spotFor(side, i);
-    if (!im.complete || !im.naturalWidth) return;
-    const r = Math.min(c.width * s.w / im.naturalWidth, c.height * s.h / im.naturalHeight);
-    const w = im.naturalWidth * r, h = im.naturalHeight * r;
-    const left = side === "left" ? 0 : side === "right" ? c.width - w : c.width * s.x - w / 2;
-    x.drawImage(im, left, c.height - h, w, h);
+    const im = friendImgs[src], b = friendBox(side, i, im);
+    if (b) x.drawImage(im, b.l * c.width, b.t * c.height, b.w * c.width, b.h * c.height);
   });
   return c;
 }
@@ -1724,7 +1735,7 @@ function renderStrip() {
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
         ${camStream ? `<canvas class="live" data-i="${i}" width="320" height="240"></canvas>` : i + 1}
-        ${boothMode === "friends" && !camStream ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side, i)}" src="${f.src}" alt="">`).join("") : ""}
+        ${boothMode === "friends" && !camStream ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side, i, friendImgs[f.src])}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
