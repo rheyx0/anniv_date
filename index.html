@@ -1696,7 +1696,18 @@ const FRIEND_SPOT = {
 // their inner edge stops at "inner" so cliz keeps the middle
 const FRIEND_SPOT_WIDE = { h: 0.84, inner: 0.45, cut: { left: 0.14, right: 0.06 } };
 // where a cutout goes in panel i, as fractions of the panel (left, top, width, height)
+// per-photo size nudges (1 = as placed): jamiel & dan bigger, rhey 2 and rje smaller
+const FRIEND_SCALE = { "1.png": 1.3, "2.png": 1.3, "3.png": 1.3, "c2.png": 0.8, "r4.png": 0.8 };
 function friendBox(side, i, im) {
+  const b = friendBoxBase(side, i, im);
+  const k = b && FRIEND_SCALE[im.src.split("/").pop()];
+  if (!k) return b;
+  // grow / shrink around the group's anchor: its outer edge (left / right) or its middle (center), feet on the floor
+  const w = b.w * k, hh = b.h * k;
+  const l = side === "left" ? b.l : side === "right" ? b.l + b.w - w : b.l + (b.w - w) / 2;
+  return { l, t: 1 - hh, w, h: hh };
+}
+function friendBoxBase(side, i, im) {
   if (!im.complete || !im.naturalWidth) return null;
   const aspect = im.naturalWidth / im.naturalHeight * 0.75;   // width/height in panel fractions (panels are 4:3)
   if (side !== "center" && !BOOTH_FRIENDS.center[i]) {
