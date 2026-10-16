@@ -442,8 +442,8 @@
     background: repeating-conic-gradient(var(--pink-l) 0 25%, #fff 0 50%) 0 0 / 16px 16px;
     box-shadow: 0 0 0 3px var(--ink); font: 16px "Press Start 2P", monospace; color: var(--pink-d);
   }
-  .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .frame video { transform: scaleX(-1); background: #3b2f2a; }
+  .frame img, .frame .live { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame .live { background: #3b2f2a; }
   .frame img { animation: develop .8s ease-out; }
   .frame.next { box-shadow: 0 0 0 3px var(--pink-d); animation: blink 1s steps(2) infinite; }
   .frame .countdown {
@@ -451,12 +451,14 @@
     font: 44px "Press Start 2P", monospace; color: var(--card); text-shadow: 4px 4px 0 var(--ink);
   }
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
-  .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
+  .booth.bw .frame .live, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
   .booth-mode {
-    display: flex; gap: 10px; justify-content: center; width: max-content; margin: 16px auto 0; padding: 10px 12px;
-    position: sticky; bottom: 14px; z-index: 3; background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
+    display: flex; gap: 10px; justify-content: center; padding: 10px 12px; width: max-content;
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 20;
+    background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
   }
-  .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
+  .booth-box .booth { margin-bottom: 100px; }
+  .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; white-space: nowrap; margin: 0; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
     position: absolute; bottom: 0; width: auto; height: auto;
@@ -1723,12 +1725,12 @@ function renderStrip() {
     if (shots[i]) return `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`;
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
-        ${camStream ? `<video muted playsinline autoplay></video>` : i + 1}
+        ${camStream ? `<canvas class="live" width="320" height="240"></canvas>` : i + 1}
         ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side)}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
-  $("#stripFrames").querySelectorAll("video").forEach(v => { v.srcObject = camStream; v.play().catch(() => {}); });
+  if (camStream) startLive();
   $("#snapBtn").hidden = full || !camStream;
   $("#modeBackBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
@@ -1744,11 +1746,33 @@ function camMessage(text) {
   $("#camMsg").hidden = !text;
 }
 
+// the camera plays in one hidden video; each empty box gets a small mirrored copy, ~30 times a second.
+// (four full-size video players at once was what made the booth lag)
+const camVideo = document.createElement("video");
+camVideo.muted = true; camVideo.playsInline = true; camVideo.setAttribute("playsinline", "");
+let liveLoop = 0, liveLast = 0;
+function startLive() {
+  if (camVideo.srcObject !== camStream) { camVideo.srcObject = camStream; camVideo.play().catch(() => {}); }
+  if (!liveLoop) liveLoop = requestAnimationFrame(drawLive);
+}
+function drawLive(now) {
+  liveLoop = 0;
+  if (!camStream) return;
+  liveLoop = requestAnimationFrame(drawLive);
+  if (now - liveLast < 33 || camVideo.readyState < 2) return;
+  liveLast = now;
+  const vw = camVideo.videoWidth, vh = camVideo.videoHeight, r = Math.max(320 / vw, 240 / vh), dw = vw * r, dh = vh * r;
+  document.querySelectorAll("#stripFrames .live").forEach(cv => {
+    const x = cv.getContext("2d");
+    x.setTransform(-1, 0, 0, 1, 320, 0);   // mirror, like a selfie camera
+    x.drawImage(camVideo, (320 - dw) / 2, (240 - dh) / 2, dw, dh);
+  });
+}
 async function startCamera() {
   camMessage("");
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
+      video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 720 } }, audio: false,
     });
   } catch (e) {
     camStream = null;
@@ -1760,6 +1784,7 @@ async function startCamera() {
 function stopCamera() {
   if (camStream) camStream.getTracks().forEach(t => t.stop());
   camStream = null;
+  camVideo.srcObject = null;
 }
 
 // crop any picture to a 4:3 frame (mirrored for the selfie camera, like a real booth)
@@ -1793,7 +1818,7 @@ async function snap() {
   const frame = $("#stripFrames .frame.next"), cd = frame.querySelector(".countdown");
   for (const n of [3, 2, 1]) { cd.textContent = n; blip(660, 0.08); await wait(750); }
   cd.textContent = "";
-  const v = frame.querySelector("video");
+  const v = camVideo;
   const flash = document.createElement("div"); flash.className = "cam-flash";
   frame.appendChild(flash);
   blip(1400, 0.05);
@@ -3460,6 +3485,7 @@ function enterBooth() {
   $("#roomStage").innerHTML = "";
   $("#photoBox").hidden = true;
   $("#boothBox").appendChild($("#booth"));
+  $("#boothBox").appendChild($("#boothMode"));
   $("#boothBox").hidden = true;
   Object.assign(boothCats, { x: 160, y: 162, dir: "up", moving: false, trail: [], bx: 140, by: 162, bdir: "up", bmoving: false });
   boothLast = 0; clearHeld();
