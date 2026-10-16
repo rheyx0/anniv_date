@@ -127,34 +127,23 @@
     position: fixed; inset: 0; z-index: 5; overflow: hidden;
     background: linear-gradient(#dff0f7 0 62%, #8f8a86 62% 100%);
   }
-  .jeep-stage::before {   /* little pixel clouds */
-    content: ""; position: absolute; left: 12%; top: 12%; width: 72px; height: 18px; background: #fff;
-    box-shadow: 12px -12px 0 #fff, 34px -12px 0 #fff, 46vw 30px 0 #fff, calc(46vw + 18px) 18px 0 #fff, calc(46vw + 34px) 30px 0 #fff,
-      70vw -6px 0 #fff, calc(70vw + 20px) -18px 0 #fff;
-  }
-  .jeep-stage::after {
-    content: ""; position: absolute; left: 0; right: -68px; bottom: 15vh; height: 8px; will-change: transform;
-    background: repeating-linear-gradient(90deg, #f6d26b 0 34px, transparent 34px 68px);
-  }
-  .jeep-stage.moving::after { animation: dash .3s linear infinite; }
+  /* sky, clouds, city, trees, road and smoke are one small pixel canvas, scaled up */
+  .jeep-scenery { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
   .stage-back { position: fixed; top: 14px; left: 14px; z-index: 8; background: var(--card) !important; color: var(--ink) !important; padding: 8px 12px !important; }
   .jeep {
     position: absolute; left: 50%; bottom: 18vh; width: min(560px, 86vw); padding: 0; border: 0; background: none;
     transform: translateX(-160vw); will-change: transform; backface-visibility: hidden;
   }
   .jeep > img, .rider img { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
-  .jeep.arrive { animation: rollin 2.2s cubic-bezier(.2, .7, .3, 1) forwards; }
   .jeep.idle { transform: translateX(-50%); }
   .jeep.idle > img { animation: hop .6s steps(2) infinite; }
   .jeep.rev { transform: translateX(-50%); animation: rev .1s steps(2) infinite; }
-  .jeep.go { animation: drive 1.9s cubic-bezier(.55, 0, .9, .45) forwards; }
   .jeep-sign {
     position: absolute; left: 4.8%; width: 71%; top: 10.7%; height: 14.3%;
     display: flex; align-items: center; justify-content: center; pointer-events: none;
     font: clamp(8px, 2.6vw, 15px) "Press Start 2P", monospace; color: #fffaf2; letter-spacing: .04em; white-space: nowrap;
   }
   .rider { position: absolute; bottom: 53.6%; width: 9.7%; pointer-events: none; }
-  .puff { position: absolute; width: 14px; height: 14px; background: #d9d4cf; z-index: 2; animation: puff .9s ease-out forwards; pointer-events: none; }
   .jeep-bubble {
     position: absolute; left: 50%; bottom: calc(18vh + min(560px, 86vw) * 0.45 + 22px); z-index: 3;
     transform: translateX(-50%); padding: 12px 18px; background: var(--card); white-space: nowrap;
@@ -166,11 +155,7 @@
     content: ""; position: absolute; left: calc(50% - 8px); bottom: -16px; width: 16px; height: 12px;
     background: var(--card); box-shadow: 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink);
   }
-  @keyframes rollin { from { transform: translateX(-160vw); } to { transform: translateX(-50%); } }
-  @keyframes drive { from { transform: translateX(-50%); } to { transform: translateX(120vw); } }
-  @keyframes dash { to { transform: translateX(-68px); } }
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
-  @keyframes puff { to { transform: translate(-50px, -34px) scale(2.4); opacity: 0; } }
   @keyframes bubble { 50% { transform: translate(-50%, -6px); } }
   .hero.poof { animation: poof .45s ease-in forwards; }
   @keyframes poof { to { transform: scale(.6) translateY(30px); opacity: 0; } }
@@ -423,8 +408,7 @@
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
   .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
   .booth-mode { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
-  .booth-mode .pxbtn { font-size: 15px; padding: 8px 14px; opacity: .55; }
-  .booth-mode .pxbtn.on { opacity: 1; }
+  .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
     position: absolute; bottom: 0; width: auto; height: auto; max-width: 46%; max-height: 90%;
@@ -497,6 +481,7 @@
 
   <section id="jeepScreen" class="screen" hidden>
     <div class="jeep-stage" id="road">
+      <canvas class="jeep-scenery" id="roadCanvas"></canvas>
       <button class="back pxbtn stage-back" id="jeepBack">← back</button>
       <div class="jeep-bubble" id="jeepBubble" hidden>tap the jeep ♡</div>
       <button class="jeep" id="jeep" aria-label="ride the jeep from mintal to roxas">
@@ -572,7 +557,7 @@
         <div class="strip-foot" id="stripFoot"></div>
       </div>
       <div class="booth-mode" id="boothMode">
-        <button class="pxbtn on" data-mode="solo">solo</button>
+        <button class="pxbtn" data-mode="solo">solo</button>
         <button class="pxbtn" data-mode="friends">with friends</button>
       </div>
       <p class="cam-msg" id="camMsg" hidden></p>
@@ -1393,7 +1378,7 @@ $("#toBooth").onclick = () => {
   show("recapPage");
   if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
 };
-$("#boothBack").onclick = () => { stopCamera(); renderStrip(); $("#boothBox").hidden = true; };
+$("#boothBack").onclick = () => { stopCamera(); choosing = false; renderStrip(); $("#boothBox").hidden = true; };
 $("#toRecap").onclick = () => exitTo(BOOTH);
 $("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
@@ -1408,7 +1393,7 @@ $("#restart").onclick = () => {
 // the live camera plays inside every empty box; each snap freezes the next box
 const SHOTS = 4;
 const BOOTH_CAPTION = ["CLIZ & RHEY", "3 YEARS"];
-let camStream = null, shots = [], snapping = false, boothBW = false, boothMode = "solo";
+let camStream = null, shots = [], snapping = false, boothBW = false, boothMode = "solo", choosing = false;
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // "with friends": one cutout per photo, per side of the frame (index = photo number)
@@ -1445,14 +1430,14 @@ function renderStrip() {
       </div>`;
   }).join("");
   $("#stripFrames").querySelectorAll("video").forEach(v => { v.srcObject = camStream; v.play().catch(() => {}); });
-  $("#camBtn").hidden = !!camStream || full;
+  $("#camBtn").hidden = !!camStream || full || choosing;
   $("#snapBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
   $("#uploadLabel").hidden = full || !!camStream;
-  $("#boothMode").hidden = !!camStream || shots.length > 0;
-  $("#boothMode").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.mode === boothMode));
+  $("#boothMode").hidden = !choosing;
   $("#boothHint").textContent = full ? "cute!! download your strip ♡"
+    : choosing ? "who's in the picture?"
     : camStream ? `smile! photo ${shots.length + 1} of ${SHOTS}` : "4 pictures, one strip. smile!";
 }
 function camMessage(text) {
@@ -1461,7 +1446,7 @@ function camMessage(text) {
 }
 
 async function startCamera() {
-  camMessage("");
+  choosing = false; camMessage("");
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
@@ -1583,16 +1568,18 @@ async function downloadStrip() {
 }
 function resetBooth() {
   stopCamera(); camMessage("");
-  shots = []; renderStrip();
+  shots = []; choosing = false; renderStrip();
 }
 
 $("#boothMode").onclick = e => {
   const b = e.target.closest("button[data-mode]");
-  if (b) { boothMode = b.dataset.mode; renderStrip(); }
+  if (b) { boothMode = b.dataset.mode; startCamera(); }
 };
-$("#camBtn").onclick = startCamera;
+// turning on the camera first asks: solo or with friends?
+const chooseMode = () => { stopCamera(); choosing = true; camMessage(""); renderStrip(); };
+$("#camBtn").onclick = chooseMode;
 $("#snapBtn").onclick = snap;
-$("#retakeBtn").onclick = () => { shots = []; renderStrip(); startCamera(); };
+$("#retakeBtn").onclick = () => { shots = []; chooseMode(); };
 $("#downloadBtn").onclick = downloadStrip;
 $("#uploadInput").onchange = e => { uploadPhotos(e.target.files); e.target.value = ""; };
 $("#bwBtn").onclick = () => {
@@ -3325,30 +3312,144 @@ function jeepSound() {
   o.connect(f).connect(g).connect(ctx.destination);
   o.start(t + 0.45); o.stop(t + 2.6);
 }
-function puff() {
-  const j = $("#jeep").getBoundingClientRect(), r = $("#road").getBoundingClientRect();
-  const p = document.createElement("span"); p.className = "puff";
-  p.style.left = (j.left - r.left + j.width * 0.01) + "px";
-  p.style.top = (j.top - r.top + j.height * 0.68) + "px";
-  $("#road").appendChild(p); setTimeout(() => p.remove(), 950);
+// the road scene: one small canvas, scaled up crisp. layers scroll at different speeds
+// (far city slow, trees faster, road fastest) and are pre-drawn once as repeating tiles
+const road = { cv: $("#roadCanvas"), S: 4, w: 0, h: 0, tiles: null, travel: 0, puffs: [], loop: 0, last: 0, lastPuff: 0,
+  phase: "idle", t0: 0, jx: 0, jw: 0, jh: 0 };
+function seeded(n) { return () => (n = (n * 16807) % 2147483647) / 2147483647; }
+function fillBlob(x, cx, cy, r, col) {   // a chunky pixel circle
+  x.fillStyle = col;
+  for (let dy = -r; dy <= r; dy++) { const w = Math.round(Math.sqrt(r * r - dy * dy)); x.fillRect(cx - w, cy + dy, w * 2, 1); }
 }
+function cityTile(H) {
+  const W = 420, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"), rnd = seeded(7);
+  const COLS = ["#c9b8d9", "#b8cfe0", "#e8c9b0", "#e3b3bd", "#a9c4b5", "#d7c7a8"];
+  let bx = 0;
+  while (bx < W - 10) {
+    let bw = 18 + Math.floor(rnd() * 22); if (W - bx - bw < 18) bw = W - bx;
+    const bh = Math.min(H - 6, 26 + Math.floor(rnd() * 46)), top = H - bh;
+    x.fillStyle = "#5b4636"; x.fillRect(bx, top, bw, bh);
+    x.fillStyle = COLS[Math.floor(rnd() * COLS.length)]; x.fillRect(bx + 1, top + 1, bw - 2, bh - 1);
+    x.fillStyle = "rgba(91,70,54,.18)"; x.fillRect(bx + 1, top + 1, bw - 2, 2);    // roof edge
+    for (let wy = top + 6; wy < H - 8; wy += 7) for (let wx = bx + 4; wx < bx + bw - 5; wx += 6) {
+      x.fillStyle = rnd() < 0.3 ? "#fff3c4" : "#8fb3c9"; x.fillRect(wx, wy, 3, 4);
+    }
+    if (rnd() < 0.4) { x.fillStyle = "#5b4636"; x.fillRect(bx + Math.floor(bw / 2), top - 5, 1, 5); }   // antenna
+    bx += bw + (rnd() < 0.5 ? 2 : 0);
+  }
+  return c;
+}
+function treeTile(H) {
+  const W = 150, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  [[18, 13], [58, 10], [104, 15], [136, 9]].forEach(([tx, r]) => {
+    const trunkH = 7 + Math.round(r / 2), cy = H - trunkH - r + 2;
+    x.fillStyle = "#5b4636"; x.fillRect(tx - 2, H - trunkH - 1, 4, trunkH + 1);
+    x.fillStyle = "#7a5a40"; x.fillRect(tx - 1, H - trunkH, 2, trunkH);
+    fillBlob(x, tx, cy, r + 1, "#2f5a33");
+    fillBlob(x, tx, cy, r, "#4f7d4a");
+    fillBlob(x, tx - Math.round(r / 3), cy - Math.round(r / 3), Math.round(r / 2), "#6fa35f");
+  });
+  x.fillStyle = "#5b4636"; x.fillRect(80, H - 30, 2, 30); x.fillRect(80, H - 30, 7, 2);   // lamp post
+  x.fillStyle = "#f6d26b"; x.fillRect(85, H - 28, 3, 2);
+  return c;
+}
+function sizeRoad() {
+  const S = road.S = Math.max(2, Math.round(Math.min(innerHeight / 210, innerWidth / 150)));
+  road.w = road.cv.width = Math.ceil(innerWidth / S);
+  road.h = road.cv.height = Math.ceil(innerHeight / S);
+  const horizon = Math.round(road.h * 0.62);
+  road.tiles = { horizon, city: cityTile(horizon - 12), trees: treeTile(Math.min(horizon, 60)) };
+  const jeep = $("#jeep"); road.jw = jeep.offsetWidth; road.jh = jeep.offsetHeight;
+}
+function tileRow(x, img, off, y) {
+  const w = img.width;
+  for (let sx = -Math.round(((off % w) + w) % w); sx < road.w; sx += w) x.drawImage(img, sx, y);
+}
+function drawRoad(now) {
+  const x = road.cv.getContext("2d"), { w, h, S, tiles } = road, hz = tiles.horizon;
+  x.fillStyle = "#dff0f7"; x.fillRect(0, 0, w, hz);
+  // clouds drift on their own and barely move with the jeep
+  x.fillStyle = "#fff";
+  [[0.1, 0.12, 18], [0.5, 0.2, 14], [0.78, 0.08, 20]].forEach(([fx, fy, cw], i) => {
+    const span = w + 40, cx = ((fx * w - road.travel * 0.05 - now / 1000 * (i + 2)) % span + span) % span - 30;
+    const cy = Math.round(fy * h);
+    x.fillRect(Math.round(cx), cy, cw, 4); x.fillRect(Math.round(cx) + 3, cy - 3, cw - 8, 3);
+  });
+  tileRow(x, tiles.city, road.travel * 0.25, hz - tiles.city.height);
+  tileRow(x, tiles.trees, road.travel * 0.6, hz - tiles.trees.height);
+  // sidewalk, road and the yellow dashes
+  x.fillStyle = "#cfc6bd"; x.fillRect(0, hz, w, 5);
+  x.fillStyle = "#a59d95"; x.fillRect(0, hz + 5, w, 1);
+  x.fillStyle = "#8f8a86"; x.fillRect(0, hz + 6, w, h - hz - 6);
+  const dashY = h - Math.round(h * 0.15) - 2, dw = Math.max(4, Math.round(34 / S)), gap = dw * 2;
+  x.fillStyle = "#f6d26b";
+  for (let dx = -Math.round(road.travel % gap); dx < w; dx += gap) x.fillRect(dx, dashY, dw, Math.max(1, Math.round(8 / S)));
+  // exhaust puffs
+  road.puffs = road.puffs.filter(p => now - p.t < 900);
+  x.fillStyle = "#d9d4cf";
+  road.puffs.forEach(p => {
+    const k = (now - p.t) / 900, e = 1 - (1 - k) * (1 - k), sz = Math.round((14 / S) * (1 + 1.4 * e));
+    x.globalAlpha = 1 - k;
+    x.fillRect(Math.round(p.x - (50 / S) * e - sz / 2), Math.round(p.y - (34 / S) * e - sz / 2), sz, sz);
+  });
+  x.globalAlpha = 1;
+}
+const easeOut = k => 1 - Math.pow(1 - k, 3), easeIn = k => k * k * k;
+function roadTick(now) {
+  if ($("#jeepScreen").hidden) { road.loop = 0; return; }
+  const dt = Math.min(0.05, (now - (road.last || now)) / 1000); road.last = now;
+  const jeep = $("#jeep"), mid = -road.jw / 2, V = 260;   // V: top scenery speed, canvas px per second
+  let speed = 0;
+  if (road.phase === "arrive") {
+    const k = Math.min(1, (now - road.t0) / 2200);
+    road.jx = -1.6 * innerWidth + (mid + 1.6 * innerWidth) * easeOut(k);
+    speed = V * Math.pow(1 - k, 2);
+    jeep.style.transform = `translate3d(${Math.round(road.jx)}px,0,0)`;
+    if (k >= 1) arrived();
+  } else if (road.phase === "go") {
+    const k = Math.min(1, (now - road.t0) / 1900);
+    road.jx = mid + (1.2 * innerWidth - mid) * easeIn(k);
+    speed = V * 1.4 * k * k;
+    jeep.style.transform = `translate3d(${Math.round(road.jx)}px,0,0)`;
+  }
+  road.travel += speed * dt;
+  if ((road.phase === "rev" || road.phase === "go") && now - road.lastPuff > 110) {
+    road.lastPuff = now;
+    // tailpipe: just behind the jeep's back bumper (the jeep sits 18vh above the bottom)
+    road.puffs.push({ t: now, x: (innerWidth / 2 + road.jx + road.jw * 0.01) / road.S, y: (innerHeight * 0.82 - road.jh * 0.32) / road.S });
+  }
+  drawRoad(now);
+  road.loop = requestAnimationFrame(roadTick);
+}
+function startRoad() {
+  sizeRoad();
+  road.last = 0;
+  if (!road.loop) road.loop = requestAnimationFrame(roadTick);
+}
+addEventListener("resize", () => { if (!$("#jeepScreen").hidden) sizeRoad(); });
+
 const later = (fn, ms) => jeepTimers.push(setTimeout(fn, ms));
+function arrived() {
+  road.phase = "idle"; road.jx = -road.jw / 2;
+  const jeep = $("#jeep");
+  jeep.style.transform = "";
+  jeep.className = "jeep idle";
+  $("#jeepBubble").hidden = false;
+  jeepReady = true;
+  blip(988, 0.06);
+}
 function rollIn() {
   jeepTimers.forEach(clearTimeout); jeepTimers = [];
   jeepReady = false;
   const jeep = $("#jeep");
   jeep.className = "jeep";
+  jeep.style.transform = "translate3d(-160vw,0,0)";
   $("#jeepBubble").hidden = true;
-  void jeep.offsetWidth;
-  jeep.classList.add("arrive");
-  $("#road").classList.add("moving");
-  later(() => {
-    $("#road").classList.remove("moving");
-    jeep.className = "jeep idle";
-    $("#jeepBubble").hidden = false;
-    jeepReady = true;
-    blip(988, 0.06);
-  }, 2250);
+  road.puffs = [];
+  startRoad();
+  road.phase = "arrive"; road.t0 = performance.now();
 }
 $("#jeep").onclick = () => {
   if (!jeepReady) return;
@@ -3356,12 +3457,13 @@ $("#jeep").onclick = () => {
   const jeep = $("#jeep");
   $("#jeepBubble").hidden = true;
   jeepSound();
-  jeep.className = "jeep rev";
-  const smoke = setInterval(puff, 110);
-  later(() => { jeep.className = "jeep go"; $("#road").classList.add("moving"); }, 700);
+  jeep.className = "jeep rev"; road.phase = "rev";
   later(() => {
-    clearInterval(smoke);
-    $("#road").classList.remove("moving");
+    jeep.className = "jeep"; jeep.style.transform = `translate3d(${Math.round(-road.jw / 2)}px,0,0)`;
+    road.phase = "go"; road.t0 = performance.now();
+  }, 700);
+  later(() => {
+    road.phase = "idle";
     arriveByJeep = true;
     show("map");
   }, 2700);
