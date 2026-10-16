@@ -1579,24 +1579,19 @@ async function chaosPhoto() {
     x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.scale(flip ? -1 : 1, 1);
     x.drawImage(img, -w / 2, -h / 2, w, h); x.restore();
   };
-  // a few hearts floating up top
-  [[110, 110, 4, -0.2], [230, 80, 3, 0.15], [390, 95, 5, 0], [540, 70, 3, -0.1], [680, 105, 4, 0.2]].forEach(([hx, hy, s, r]) => {
-    x.save(); x.translate(hx, hy); x.rotate(r);
-    x.drawImage(heartImg, -heartImg.width * s / 2, -heartImg.height * s / 2, heartImg.width * s, heartImg.height * s); x.restore();
-  });
-  // back row, standing: a bit uneven, erin looking off to the side
-  cat("jamiel", "down", 125, 335, 8, 0);
-  cat("dan", "down", 255, 325, 8, -0.06);
-  cat("leo", "down", 395, 340, 8, 0.08);
-  cat("erin", "side", 530, 330, 8, 0, true);
-  cat("grace", "down", 670, 320, 8, 0.1);
+  // back row, standing: evenly spaced but a bit uneven, erin looking off to the side
+  cat("jamiel", "down", 80, 275, 8, 0);
+  cat("dan", "down", 240, 265, 8, -0.06);
+  cat("leo", "down", 400, 280, 8, 0.08);
+  cat("erin", "side", 560, 270, 8, 0, true);
+  cat("grace", "down", 720, 260, 8, 0.1);
   // front row, sitting: brylle leaning in, cliz and rhey close together in the middle
-  cat("brylle", "sit", 80, 505, 8, 0.12);
-  cat("sky", "side", 205, 500, 8, -0.05);
-  cat("cliz", "sit", 338, 495, 9, -0.06);
-  cat("rhey", "sit", 462, 495, 9, 0.06);
-  cat("chris", "sit", 598, 505, 8, -0.08);
-  cat("achilles", "sit", 722, 510, 8, 0.15);
+  cat("brylle", "sit", 67, 455, 8, 0.12);
+  cat("sky", "side", 200, 450, 8, -0.05);
+  cat("cliz", "sit", 335, 445, 9, -0.06);
+  cat("rhey", "sit", 465, 445, 9, 0.06);
+  cat("chris", "sit", 600, 455, 8, -0.08);
+  cat("achilles", "sit", 733, 460, 8, 0.15);
   return c;
 }
 let chaosCanvas = null;
