@@ -288,7 +288,7 @@
   /* the photos box after an activity */
   .photo-box { position: fixed; inset: 0; z-index: 9; background: rgba(43, 34, 36, .55); overflow-y: auto; padding: 30px 16px 60px; }
   .booth-box { background: rgba(43, 34, 36, .18); padding-top: 50px; }
-  .booth-box .booth { max-width: 640px; margin: 24px auto; }
+  .booth-box .booth { max-width: 520px; margin: 40px auto; }
   .photo-card { max-width: 720px; margin: 40px auto; animation: drop .5s ease-out both; }
   @media (max-width: 700px) {
     .room-stage { gap: 1vw; height: 70vh; }
@@ -419,33 +419,20 @@
   /* photo booth: the live camera plays inside every empty box of the strip */
   .booth { animation: drop .6s ease-out both; }
   .cam-msg { color: var(--pink-d); font-size: 15px; margin: 14px 0 0; }
-  /* strip and buttons side by side, the strip shrinks so all 4 boxes fit on screen */
-  .booth-body { display: flex; gap: 26px; align-items: flex-start; justify-content: center; margin-top: 18px; }
-  .booth-side { flex: 0 1 230px; position: sticky; top: 12px; }
-  .booth-side .story { margin-top: 0; }
   .booth-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .booth-controls .pxbtn { font-size: 16px; padding: 9px 16px; margin: 0; }
-  .booth-controls .snap { font-size: 20px; padding: 12px 26px; }
-  @media (max-width: 640px) {
-    .booth-body { flex-direction: column; align-items: center; gap: 0; }
-    .booth-side { display: contents; }
-    .booth-side .story { order: -1; margin-bottom: 14px; }
-    .booth-body .strip { order: 0; }
-    .booth-mode, .cam-msg { order: 1; }
-    .upload { order: 3; }
-    /* on phones the buttons ride along the bottom of the screen */
-    .booth-controls {
-      order: 2; position: sticky; bottom: 10px; z-index: 3; width: 100%; padding: 10px 8px; gap: 8px;
-      background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
-    }
-    .booth-controls .pxbtn { font-size: 14px; padding: 8px 10px; }
-    .booth-controls .snap { font-size: 18px; padding: 10px 20px; }
+  /* snap! floats outside the booth card: to the right of it on wide screens, along the bottom on phones */
+  .snap-float {
+    position: fixed; z-index: 20; left: calc(50% + 280px); top: 50%; transform: translateY(-50%);
+    font-size: 22px !important; padding: 16px 26px !important; box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .25);
   }
-  .upload { display: inline-block; font-size: 14px; color: var(--muted); text-decoration: underline dotted; margin-top: 6px; }
-  .upload input { display: none; }
+  @media (max-width: 860px) {
+    .snap-float { left: 50%; top: auto; bottom: 18px; transform: translateX(-50%); }
+    .booth-box .booth { margin-bottom: 90px; }
+  }
   .strip {
-    position: relative; flex: none; margin: 0; background: var(--card); padding: 14px 14px 10px;
-    width: min(300px, 100%, max(190px, calc((100dvh - 210px) / 3.4)));
+    position: relative; margin: 26px auto 0; background: var(--card); padding: 14px 14px 10px;
+    width: min(300px, 100%, max(220px, calc((100dvh - 210px) / 3.4)));
     box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15);
   }
   .strip::before {
@@ -625,31 +612,26 @@
       <button class="back" id="boothBack">← back</button>
       <p class="kicker">say cheese</p>
       <h2>photo booth ♡</h2>
-      <div class="booth-body">
-        <div class="strip" id="strip">
-          <div id="stripFrames"></div>
-          <div class="strip-foot" id="stripFoot"></div>
-        </div>
-        <div class="booth-side">
-          <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
-          <div class="booth-mode" id="boothMode">
-            <button class="pxbtn" data-mode="solo">solo</button>
-            <button class="pxbtn" data-mode="friends">with friends</button>
-          </div>
-          <p class="cam-msg" id="camMsg" hidden></p>
-          <div class="booth-controls">
-            <button class="pxbtn" id="camBtn">turn on camera</button>
-            <button class="pxbtn snap" id="snapBtn" hidden>snap!</button>
-            <button class="pxbtn" id="modeBackBtn" hidden>← solo / with friends</button>
-            <button class="pxbtn" id="bwBtn">b&amp;w</button>
-            <button class="pxbtn" id="retakeBtn" hidden>retake</button>
-            <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
-          </div>
-          <label class="upload" id="uploadLabel">no camera? upload photos instead
-            <input type="file" id="uploadInput" accept="image/*" multiple>
-          </label>
-        </div>
+      <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
+      <div class="strip" id="strip">
+        <div id="stripFrames"></div>
+        <div class="strip-foot" id="stripFoot"></div>
       </div>
+      <div class="booth-mode" id="boothMode">
+        <button class="pxbtn" data-mode="solo">solo</button>
+        <button class="pxbtn" data-mode="friends">with friends</button>
+      </div>
+      <p class="cam-msg" id="camMsg" hidden></p>
+      <div class="booth-controls">
+        <button class="pxbtn" id="camBtn">turn on camera</button>
+        <button class="pxbtn" id="modeBackBtn" hidden>← solo / with friends</button>
+        <button class="pxbtn" id="bwBtn">b&amp;w</button>
+        <button class="pxbtn" id="retakeBtn" hidden>retake</button>
+        <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
+      </div>
+      <label class="upload" id="uploadLabel">no camera? upload photos instead
+        <input type="file" id="uploadInput" accept="image/*" multiple>
+      </label>
       <div class="nav"><button class="pxbtn" id="toRecap">back outside →</button></div>
     </div>
   </section>
@@ -674,6 +656,7 @@
   </section>
 </main>
 
+<button class="pxbtn snap-float" id="snapBtn" hidden>snap! 📸</button>
 <div class="talk-scene" id="talkScene" hidden>
   <canvas id="talkCanvas" aria-label="rhey, talking"></canvas>
   <div class="talk-bubble" id="talkBubble" hidden><p id="talkText"></p><span class="dialog-more">▼</span></div>
