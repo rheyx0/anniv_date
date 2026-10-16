@@ -288,7 +288,7 @@
   /* the photos box after an activity */
   .photo-box { position: fixed; inset: 0; z-index: 9; background: rgba(43, 34, 36, .55); overflow-y: auto; padding: 30px 16px 60px; }
   .booth-box { background: rgba(43, 34, 36, .18); padding-top: 50px; }
-  .booth-box .booth { max-width: 520px; margin: 40px auto; }
+  .booth-box .booth { max-width: 640px; margin: 24px auto; }
   .photo-card { max-width: 720px; margin: 40px auto; animation: drop .5s ease-out both; }
   @media (max-width: 700px) {
     .room-stage { gap: 1vw; height: 70vh; }
@@ -419,12 +419,33 @@
   /* photo booth: the live camera plays inside every empty box of the strip */
   .booth { animation: drop .6s ease-out both; }
   .cam-msg { color: var(--pink-d); font-size: 15px; margin: 14px 0 0; }
-  .booth-controls { margin-top: 14px; }
-  .booth-controls .pxbtn { font-size: 16px; padding: 9px 16px; }
+  /* strip and buttons side by side, the strip shrinks so all 4 boxes fit on screen */
+  .booth-body { display: flex; gap: 26px; align-items: flex-start; justify-content: center; margin-top: 18px; }
+  .booth-side { flex: 0 1 230px; position: sticky; top: 12px; }
+  .booth-side .story { margin-top: 0; }
+  .booth-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .booth-controls .pxbtn { font-size: 16px; padding: 9px 16px; margin: 0; }
+  .booth-controls .snap { font-size: 20px; padding: 12px 26px; }
+  @media (max-width: 640px) {
+    .booth-body { flex-direction: column; align-items: center; gap: 0; }
+    .booth-side { display: contents; }
+    .booth-side .story { order: -1; margin-bottom: 14px; }
+    .booth-body .strip { order: 0; }
+    .booth-mode, .cam-msg { order: 1; }
+    .upload { order: 3; }
+    /* on phones the buttons ride along the bottom of the screen */
+    .booth-controls {
+      order: 2; position: sticky; bottom: 10px; z-index: 3; width: 100%; padding: 10px 8px; gap: 8px;
+      background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
+    }
+    .booth-controls .pxbtn { font-size: 14px; padding: 8px 10px; }
+    .booth-controls .snap { font-size: 18px; padding: 10px 20px; }
+  }
   .upload { display: inline-block; font-size: 14px; color: var(--muted); text-decoration: underline dotted; margin-top: 6px; }
   .upload input { display: none; }
   .strip {
-    position: relative; width: min(300px, 100%); margin: 26px auto 0; background: var(--card); padding: 14px 14px 10px;
+    position: relative; flex: none; margin: 0; background: var(--card); padding: 14px 14px 10px;
+    width: min(300px, 100%, max(190px, calc((100dvh - 210px) / 3.4)));
     box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15);
   }
   .strip::before {
@@ -604,26 +625,31 @@
       <button class="back" id="boothBack">← back</button>
       <p class="kicker">say cheese</p>
       <h2>photo booth ♡</h2>
-      <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
-      <div class="strip" id="strip">
-        <div id="stripFrames"></div>
-        <div class="strip-foot" id="stripFoot"></div>
+      <div class="booth-body">
+        <div class="strip" id="strip">
+          <div id="stripFrames"></div>
+          <div class="strip-foot" id="stripFoot"></div>
+        </div>
+        <div class="booth-side">
+          <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
+          <div class="booth-mode" id="boothMode">
+            <button class="pxbtn" data-mode="solo">solo</button>
+            <button class="pxbtn" data-mode="friends">with friends</button>
+          </div>
+          <p class="cam-msg" id="camMsg" hidden></p>
+          <div class="booth-controls">
+            <button class="pxbtn" id="camBtn">turn on camera</button>
+            <button class="pxbtn snap" id="snapBtn" hidden>snap!</button>
+            <button class="pxbtn" id="modeBackBtn" hidden>← solo / with friends</button>
+            <button class="pxbtn" id="bwBtn">b&amp;w</button>
+            <button class="pxbtn" id="retakeBtn" hidden>retake</button>
+            <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
+          </div>
+          <label class="upload" id="uploadLabel">no camera? upload photos instead
+            <input type="file" id="uploadInput" accept="image/*" multiple>
+          </label>
+        </div>
       </div>
-      <div class="booth-mode" id="boothMode">
-        <button class="pxbtn" data-mode="solo">solo</button>
-        <button class="pxbtn" data-mode="friends">with friends</button>
-      </div>
-      <p class="cam-msg" id="camMsg" hidden></p>
-      <div class="booth-controls">
-        <button class="pxbtn" id="camBtn">turn on camera</button>
-        <button class="pxbtn" id="snapBtn" hidden>snap!</button>
-        <button class="pxbtn" id="bwBtn">b&amp;w</button>
-        <button class="pxbtn" id="retakeBtn" hidden>retake</button>
-        <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
-      </div>
-      <label class="upload" id="uploadLabel">no camera? upload photos instead
-        <input type="file" id="uploadInput" accept="image/*" multiple>
-      </label>
       <div class="nav"><button class="pxbtn" id="toRecap">back outside →</button></div>
     </div>
   </section>
@@ -1721,6 +1747,7 @@ function renderStrip() {
   $("#stripFrames").querySelectorAll("video").forEach(v => { v.srcObject = camStream; v.play().catch(() => {}); });
   $("#camBtn").hidden = !!camStream || full || choosing;
   $("#snapBtn").hidden = full || !camStream;
+  $("#modeBackBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
   $("#uploadLabel").hidden = full || !!camStream;
@@ -1745,6 +1772,7 @@ async function startCamera() {
     camMessage("the camera didn't turn on :( you can upload photos instead");
   }
   renderStrip();
+  if (camStream) showNextFrame();
 }
 function stopCamera() {
   if (camStream) camStream.getTracks().forEach(t => t.stop());
@@ -1760,6 +1788,11 @@ function grab(src, w, h, mirror) {
   x.drawImage(src, (800 - dw) / 2, (600 - dh) / 2, dw, dh);
   return c;
 }
+// keep the box that is about to be snapped in view, so nobody has to scroll
+function showNextFrame() {
+  const f = $("#stripFrames .frame.next");
+  if (f) f.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 function addShot(canvas) {
   if (boothMode === "friends") drawFriends(canvas, shots.length);
   shots.push({ canvas, url: canvas.toDataURL("image/jpeg", 0.9) });
@@ -1768,6 +1801,7 @@ function addShot(canvas) {
     heartBurst(); melody([659, 784, 988, 1318]);
   }
   renderStrip();
+  if (camStream) showNextFrame();
 }
 
 async function snap() {
@@ -1869,6 +1903,7 @@ const chooseMode = () => { stopCamera(); choosing = true; camMessage(""); render
 $("#camBtn").onclick = chooseMode;
 $("#snapBtn").onclick = snap;
 $("#retakeBtn").onclick = () => { shots = []; chooseMode(); };
+$("#modeBackBtn").onclick = () => { shots = []; chooseMode(); };
 $("#downloadBtn").onclick = downloadStrip;
 $("#uploadInput").onchange = e => { uploadPhotos(e.target.files); e.target.value = ""; };
 $("#bwBtn").onclick = () => {
