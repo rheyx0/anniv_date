@@ -1451,11 +1451,12 @@ const talk = { on: false, lines: [], i: 0, chars: 0, timer: 0, loop: 0, last: 0,
   x: 0, tx: 0, dir: "right", walkT: 0, frame: 0, phase: "enter", hop: 0, S: 8 };
 // the song while rhey talks: plays music/talk-song.mp3 if it's there,
 // otherwise an original cozy chiptune made right here
-const TALK_SONG = "music/talk-song.mp3";
+const TALK_SONG = null;   // set to "music/talk-song.mp3" if a song file is ever added; until then the chiptune plays
 const talkSong = { audio: null, timer: 0 };
 function startTalkSong() {
   stopTalkSong();
   if (!musicOn) return;
+  if (!TALK_SONG) { startMusicBox(); return; }
   const a = new Audio(TALK_SONG);
   a.loop = true; a.volume = 0;
   a.play().then(() => {
@@ -3810,6 +3811,7 @@ function showRoomPhotos(i) {
 }
 function exitTo(place) {
   stopRoom();
+  $("#roomStage").innerHTML = "";   // ends the store's activity (the arcade hoop kept animating in the background)
   if (dialog) { dialog.after = null; closeDialog(); }
   standAt(place.x + 2, place.y + 5);
   friendsOutside(place);
