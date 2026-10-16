@@ -422,6 +422,16 @@
   }
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
   .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
+  .booth-mode { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+  .booth-mode .pxbtn { font-size: 15px; padding: 8px 14px; opacity: .55; }
+  .booth-mode .pxbtn.on { opacity: 1; }
+  /* friend cutouts stand in the live frame; they get baked into each snap */
+  .frame .friend {
+    position: absolute; bottom: 0; width: auto; height: auto; max-width: 46%; max-height: 90%;
+    object-fit: contain; pointer-events: none; animation: none;
+  }
+  .frame .friend.left { left: 0; }
+  .frame .friend.right { right: 0; }
   .strip-foot { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 2px; font: 10px "Press Start 2P", monospace; }
   .strip-foot span { text-align: center; line-height: 1.6; padding-bottom: 4px; }
   .strip-foot svg { display: block; }
@@ -560,6 +570,10 @@
       <div class="strip" id="strip">
         <div id="stripFrames"></div>
         <div class="strip-foot" id="stripFoot"></div>
+      </div>
+      <div class="booth-mode" id="boothMode">
+        <button class="pxbtn on" data-mode="solo">solo</button>
+        <button class="pxbtn" data-mode="friends">with friends</button>
       </div>
       <p class="cam-msg" id="camMsg" hidden></p>
       <div class="booth-controls">
@@ -1394,8 +1408,30 @@ $("#restart").onclick = () => {
 // the live camera plays inside every empty box; each snap freezes the next box
 const SHOTS = 4;
 const BOOTH_CAPTION = ["CLIZ & RHEY", "3 YEARS"];
-let camStream = null, shots = [], snapping = false, boothBW = false;
+let camStream = null, shots = [], snapping = false, boothBW = false, boothMode = "solo";
 const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// "with friends": one cutout per photo, per side of the frame (index = photo number)
+const BOOTH_FRIENDS = {
+  left: [1, 2, 3, 4].map(n => `photos/friends/cutouts/${n}.png`),
+  right: [],
+};
+const friendImgs = {};
+Object.values(BOOTH_FRIENDS).flat().forEach(src => { const im = new Image(); im.src = src; friendImgs[src] = im; });
+const friendsAt = i => Object.entries(BOOTH_FRIENDS).filter(([, list]) => list[i]).map(([side, list]) => ({ side, src: list[i] }));
+
+// same box as the .friend css: bottom corner, up to 46% wide and 90% tall
+function drawFriends(c, i) {
+  const x = c.getContext("2d");
+  friendsAt(i).forEach(({ side, src }) => {
+    const im = friendImgs[src];
+    if (!im.complete || !im.naturalWidth) return;
+    const r = Math.min(c.width * 0.46 / im.naturalWidth, c.height * 0.9 / im.naturalHeight);
+    const w = im.naturalWidth * r, h = im.naturalHeight * r;
+    x.drawImage(im, side === "left" ? 0 : c.width - w, c.height - h, w, h);
+  });
+  return c;
+}
 
 function renderStrip() {
   const full = shots.length >= SHOTS;
@@ -1404,6 +1440,7 @@ function renderStrip() {
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
         ${camStream ? `<video muted playsinline autoplay></video>` : i + 1}
+        ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend ${f.side}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
@@ -1413,6 +1450,8 @@ function renderStrip() {
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
   $("#uploadLabel").hidden = full || !!camStream;
+  $("#boothMode").hidden = !!camStream || shots.length > 0;
+  $("#boothMode").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.mode === boothMode));
   $("#boothHint").textContent = full ? "cute!! download your strip ♡"
     : camStream ? `smile! photo ${shots.length + 1} of ${SHOTS}` : "4 pictures, one strip. smile!";
 }
@@ -1448,6 +1487,7 @@ function grab(src, w, h, mirror) {
   return c;
 }
 function addShot(canvas) {
+  if (boothMode === "friends") drawFriends(canvas, shots.length);
   shots.push({ canvas, url: canvas.toDataURL("image/jpeg", 0.9) });
   if (shots.length >= SHOTS) {
     stopCamera();
@@ -1546,6 +1586,10 @@ function resetBooth() {
   shots = []; renderStrip();
 }
 
+$("#boothMode").onclick = e => {
+  const b = e.target.closest("button[data-mode]");
+  if (b) { boothMode = b.dataset.mode; renderStrip(); }
+};
 $("#camBtn").onclick = startCamera;
 $("#snapBtn").onclick = snap;
 $("#retakeBtn").onclick = () => { shots = []; renderStrip(); startCamera(); };
