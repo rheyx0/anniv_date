@@ -1395,7 +1395,7 @@ $("#recapStrip").innerHTML = SCENES.flatMap(s => s.photos.map(p => ({ p, stop: s
 wireLightbox($("#recapStrip"));
 
 // tapping the envelope: the music stops, rhey walks on screen and says the letter out loud,
-// wandering around while he talks. then the real letter, then a group photo of every cat.
+// standing in the middle while he talks. then the real letter, then a group photo of every cat.
 $("#envelope").onclick = () => {
   $("#envelope").hidden = true; $("#envHint").hidden = true;
   musicHold = true; stopMusic();
@@ -1427,7 +1427,7 @@ function talkLines() {
 }
 
 const talk = { on: false, lines: [], i: 0, chars: 0, timer: 0, loop: 0, last: 0, done: null,
-  x: 0, tx: 0, dir: "right", walkT: 0, frame: 0, phase: "enter", nextMove: 0, hop: 0, S: 8 };
+  x: 0, tx: 0, dir: "right", walkT: 0, frame: 0, phase: "enter", hop: 0, S: 8 };
 // the song while rhey talks: plays music/talk-song.mp3 if it's there,
 // otherwise an original cozy chiptune made right here
 const TALK_SONG = "music/talk-song.mp3";
@@ -1521,18 +1521,13 @@ function talkTick(now) {
   const dt = Math.min(0.05, (now - (talk.last || now)) / 1000); talk.last = now;
   const { S } = talk, cv = $("#talkCanvas"), x = cv.getContext("2d"), W = cv.width, H = cv.height;
   const floorY = Math.round(H * 0.72), speed = S * 26;
-  // while he talks he wanders around a bit
-  if (talk.phase === "talk" && now > talk.nextMove && Math.abs(talk.tx - talk.x) < 2) {
-    talk.tx = W * (0.25 + Math.random() * 0.5);
-    talk.nextMove = now + 1800 + Math.random() * 2200;
-  }
   const dx = talk.tx - talk.x, moving = Math.abs(dx) > 2;
   if (moving) {
     talk.x += Math.sign(dx) * Math.min(Math.abs(dx), speed * dt);
     talk.dir = dx > 0 ? "right" : "left";
     talk.walkT += dt; talk.frame = Math.floor(talk.walkT / 0.13) % 2;
   } else if (talk.phase === "enter") {
-    talk.phase = "talk"; talk.i = 0; talk.nextMove = now + 1500; talkSay();
+    talk.phase = "talk"; talk.i = 0; talkSay();
   } else if (talk.phase === "leave") {
     talk.on = false; $("#talkScene").hidden = true; document.body.classList.remove("fullscreen");
     stopTalkSong();
