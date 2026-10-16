@@ -360,6 +360,27 @@
   .letter .sign { text-align: right; margin-bottom: 0; }
   .sign-luffy { display: flex; justify-content: flex-end; margin-top: 4px; }
   .sign-luffy svg { display: block; animation: hop 1s steps(2) infinite; }
+  /* rhey says the letter out loud first */
+  .talk-scene { position: fixed; inset: 0; z-index: 40; cursor: var(--paw), pointer; background: #fde6ec; }
+  .talk-scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .talk-bubble {
+    position: fixed; left: 0; top: 0; width: min(440px, calc(100vw - 24px)); padding: 16px 20px 22px; background: var(--card);
+    box-shadow: 0 0 0 4px var(--ink), inset 0 0 0 4px var(--pink-l), 4px 8px 0 4px rgba(91, 70, 54, .2); will-change: transform;
+  }
+  .talk-bubble::after {
+    content: ""; position: absolute; left: var(--tail, 50%); bottom: -16px; width: 16px; height: 12px;
+    background: var(--card); box-shadow: 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink);
+  }
+  .talk-bubble p { margin: 0; font: 600 19px/1.5 "Pixelify Sans", monospace; color: var(--ink); min-height: 1.5em; }
+  .talk-bubble .dialog-more { right: 12px; bottom: 4px; }
+  .talk-hint { position: absolute; left: 0; right: 0; bottom: 18px; margin: 0; text-align: center; font: 12px "Press Start 2P", monospace; color: var(--pink-d); }
+  /* the chaotic group photo */
+  .chaos { margin-top: 26px; }
+  .chaos-photo { margin: 18px auto 0; max-width: 520px; padding: 12px 12px 6px; background: #fff; box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15); transform: rotate(-1.5deg); }
+  .chaos-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; background: #fff; image-rendering: pixelated; }
+  .chaos-photo figcaption { font-family: "Gaegu", cursive; font-size: 22px; padding: 8px 0 4px; }
+  .chaos-photo.snap img { animation: develop 1.2s ease-out; }
+  .chaos-actions { margin-top: 16px; }
 
   /* the whole date, in one swipeable strip */
   .recap { margin-top: 0; }
@@ -542,6 +563,14 @@
       <div class="stage" id="endStage"></div>
       <p class="hint" id="envHint">tap to open</p>
       <article class="px letter" id="letter" hidden></article>
+      <div class="chaos" id="chaos" hidden>
+        <button class="pxbtn" id="chaosBtn">everyone wants a picture! 📸</button>
+        <figure class="chaos-photo" id="chaosPhoto" hidden><img id="chaosImg" alt="every cat in town in one very chaotic photo"><figcaption>everyone ♡</figcaption></figure>
+        <div class="chaos-actions" id="chaosActions" hidden>
+          <button class="pxbtn" id="chaosAgain">again!</button>
+          <button class="pxbtn" id="chaosSave">download ♡</button>
+        </div>
+      </div>
       <div class="nav" id="letterNav" hidden><button class="pxbtn" id="toBooth">one more thing →</button></div>
     </div>
   </section>
@@ -595,6 +624,11 @@
   </section>
 </main>
 
+<div class="talk-scene" id="talkScene" hidden>
+  <canvas id="talkCanvas" aria-label="rhey, talking"></canvas>
+  <div class="talk-bubble" id="talkBubble" hidden><p id="talkText"></p><span class="dialog-more">▼</span></div>
+  <p class="talk-hint">tap to continue</p>
+</div>
 <div class="dialog" id="dialog" hidden><p id="dialogText"></p><span class="dialog-more">▼</span></div>
 <div class="lightbox" id="lightbox" hidden><figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure></div>
 
@@ -1086,8 +1120,9 @@ function scheduleMusic() {
     musicNext += EIGHTH; musicStep++;
   }
 }
+let musicHold = false;   // the ending pauses the music until the group photo
 function startMusic() {
-  if (!musicOn || musicTimer) return;
+  if (!musicOn || musicTimer || musicHold) return;
   const ctx = audio(); if (!ctx) return;
   musicNext = ctx.currentTime + 0.1;
   musicTimer = setInterval(scheduleMusic, 60);
@@ -1359,16 +1394,214 @@ $("#recapStrip").innerHTML = SCENES.flatMap(s => s.photos.map(p => ({ p, stop: s
   .map(({ p, stop }, i) => polaroid(p, i, `<span class="stop-tag">${esc(stop)}</span>`)).join("");
 wireLightbox($("#recapStrip"));
 
+// tapping the envelope: the music stops, rhey walks on screen and says the letter out loud,
+// wandering around while he talks. then the real letter, then a very chaotic group photo.
 $("#envelope").onclick = () => {
   $("#envelope").hidden = true; $("#envHint").hidden = true;
+  musicHold = true; stopMusic();
+  rheyTalks(talkLines(), showLetter);
+};
+function showLetter() {
   $("#letter").innerHTML = CONFIG.letter.map(p => `<p>${esc(p)}</p>`).join("")
     + `<p class="sign">${CONFIG.signature.map(esc).join("<br>")}</p>`
     + `<div class="sign-luffy">${sprite("luffy", 48)}</div>`;
   $("#letter").hidden = false;
   hopPets($("#endStage"));
   melody([784, 659, 784, 1046]);
-  setTimeout(() => { $("#letterNav").hidden = false; }, 900);
-};
+  setTimeout(() => { $("#letter").scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
+  setTimeout(() => { $("#chaos").hidden = false; }, 900);
+}
+
+// the letter, cut into speech-bubble sized bits
+function talkLines() {
+  const bits = [`psst... ${CONFIG.herName}!`, "come here, i have something to tell you ♡"];
+  CONFIG.letter.forEach(p => p.split(/(?<=[.!?])\s+/).forEach(s => {
+    let line = "";
+    s.split(" ").forEach(w => {
+      if (line && (line + " " + w).length > 110) { bits.push(line); line = w; } else line = line ? line + " " + w : w;
+    });
+    if (line) bits.push(line);
+  }));
+  bits.push("okay that's it. go read it properly now ♡");
+  return bits;
+}
+
+const talk = { on: false, lines: [], i: 0, chars: 0, timer: 0, loop: 0, last: 0, done: null,
+  x: 0, tx: 0, dir: "right", walkT: 0, frame: 0, phase: "enter", nextMove: 0, hop: 0, S: 8 };
+function rheyTalks(lines, done) {
+  Object.assign(talk, { on: true, lines, i: -1, chars: 0, done, phase: "enter", dir: "right", walkT: 0, last: 0 });
+  const cv = $("#talkCanvas");
+  cv.width = innerWidth; cv.height = innerHeight;
+  talk.S = Math.max(5, Math.round(Math.min(innerWidth, innerHeight) / 60));
+  talk.x = -talk.S * 14; talk.tx = innerWidth / 2;
+  $("#talkBubble").hidden = true;
+  $("#talkScene").hidden = false;
+  document.body.classList.add("fullscreen");
+  blip(523, 0.06);
+  cancelAnimationFrame(talk.loop); talk.loop = requestAnimationFrame(talkTick);
+}
+function talkSay() {
+  clearInterval(talk.timer);
+  const line = talk.lines[talk.i];
+  talk.chars = 0; $("#talkText").textContent = "";
+  $("#talkBubble").hidden = false;
+  talk.timer = setInterval(() => {
+    talk.chars++;
+    $("#talkText").textContent = line.slice(0, talk.chars);
+    if (talk.chars % 2 && line[talk.chars - 1] !== " ") blip(420 + Math.random() * 160, 0.035);   // rhey's little voice
+    if (talk.chars >= line.length) clearInterval(talk.timer);
+  }, 32);
+}
+function talkNext() {
+  if (!talk.on || talk.phase === "enter") return;
+  const line = talk.lines[talk.i];
+  if (talk.chars < line.length) { talk.chars = line.length; clearInterval(talk.timer); $("#talkText").textContent = line; return; }
+  talk.i++;
+  if (talk.i < talk.lines.length) { talkSay(); return; }
+  // all said: he waves and walks off, then the letter
+  clearInterval(talk.timer);
+  $("#talkBubble").hidden = true;
+  talk.phase = "leave"; talk.tx = innerWidth + talk.S * 20;
+}
+function talkTick(now) {
+  if (!talk.on) return;
+  const dt = Math.min(0.05, (now - (talk.last || now)) / 1000); talk.last = now;
+  const { S } = talk, cv = $("#talkCanvas"), x = cv.getContext("2d"), W = cv.width, H = cv.height;
+  const floorY = Math.round(H * 0.72), speed = S * 26;
+  // while he talks he wanders around a bit
+  if (talk.phase === "talk" && now > talk.nextMove && Math.abs(talk.tx - talk.x) < 2) {
+    talk.tx = W * (0.25 + Math.random() * 0.5);
+    talk.nextMove = now + 1800 + Math.random() * 2200;
+  }
+  const dx = talk.tx - talk.x, moving = Math.abs(dx) > 2;
+  if (moving) {
+    talk.x += Math.sign(dx) * Math.min(Math.abs(dx), speed * dt);
+    talk.dir = dx > 0 ? "right" : "left";
+    talk.walkT += dt; talk.frame = Math.floor(talk.walkT / 0.13) % 2;
+  } else if (talk.phase === "enter") {
+    talk.phase = "talk"; talk.i = 0; talk.nextMove = now + 1500; talkSay();
+  } else if (talk.phase === "leave") {
+    talk.on = false; $("#talkScene").hidden = true; document.body.classList.remove("fullscreen");
+    if (talk.done) talk.done();
+    return;
+  }
+  // the room: wall, a stripe of wallpaper hearts, wooden floor
+  x.imageSmoothingEnabled = false;
+  x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, floorY);
+  for (let hx = (S * 6) % (S * 24); hx < W; hx += S * 24) for (let hy = S * 6; hy < floorY - S * 10; hy += S * 20)
+    x.drawImage(heartImg, hx + ((hy / (S * 20)) % 2) * S * 12, hy, heartImg.width * S * 0.5, heartImg.height * S * 0.5);
+  x.fillStyle = "#e8c9b0"; x.fillRect(0, floorY, W, H - floorY);
+  x.fillStyle = "#d7b393"; for (let fy = floorY + S * 4; fy < H; fy += S * 6) x.fillRect(0, fy, W, Math.max(1, S / 3));
+  x.fillStyle = "#5b4636"; x.fillRect(0, floorY - S / 2, W, S / 2);
+  // rhey: walks side-on, faces you and bobs while talking
+  const typing = talk.phase === "talk" && talk.chars < (talk.lines[talk.i] || "").length;
+  const view = moving ? "side" : "down";
+  const img = catSprites.rhey[view][moving ? 1 + talk.frame : 0];
+  const bob = typing && !moving ? (Math.floor(now / 140) % 2) * S : 0;
+  const cw = img.width * S, ch = img.height * S, left = Math.round(talk.x - cw / 2), top = floorY - ch + S - bob;
+  x.fillStyle = "rgba(91,70,54,.18)"; x.fillRect(left + S * 2, floorY, cw - S * 4, S);   // shadow
+  x.save();
+  if (moving && talk.dir === "left") { x.translate(left + cw, top); x.scale(-1, 1); x.drawImage(img, 0, 0, cw, ch); }
+  else x.drawImage(img, left, top, cw, ch);
+  x.restore();
+  // the speech bubble rides above his head, the tail points at him
+  const b = $("#talkBubble");
+  if (!b.hidden) {
+    const bw = b.offsetWidth, bl = Math.max(12, Math.min(W - bw - 12, talk.x - bw / 2));
+    b.style.transform = `translate3d(${Math.round(bl)}px, ${Math.round(top - S * 3)}px, 0) translateY(-100%)`;
+    b.style.setProperty("--tail", Math.round(Math.max(16, Math.min(bw - 32, talk.x - bl - 8))) + "px");
+  }
+  talk.loop = requestAnimationFrame(talkTick);
+}
+$("#talkScene").onclick = talkNext;
+document.addEventListener("keydown", e => {
+  if (!talk.on || e.repeat) return;
+  if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); talkNext(); }
+});
+
+// ---------- the chaotic group photo: every cat in town, nobody posing properly ----------
+async function chaosPhoto() {
+  try { await document.fonts.load('20px "Press Start 2P"'); } catch (e) {}
+  const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
+  const R = (a, b) => a + Math.random() * (b - a);
+  // room + bunting
+  x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#f6b8c8"; for (let i = 0; i < 40; i++) x.fillRect(R(0, W), R(60, 430), 6, 6);
+  x.fillStyle = "#e8c9b0"; x.fillRect(0, 440, W, 160);
+  x.fillStyle = "#5b4636"; x.fillRect(0, 436, W, 4);
+  const FLAG = ["#ee8fa8", "#f6d26b", "#8fb3c9", "#a9c4b5"];
+  for (let i = 0; i < 14; i++) {
+    x.fillStyle = FLAG[i % 4]; x.beginPath();
+    x.moveTo(i * 60, 18 + (i % 2) * 6); x.lineTo(i * 60 + 56, 18 + ((i + 1) % 2) * 6); x.lineTo(i * 60 + 28, 64); x.fill();
+  }
+  x.fillStyle = "#5b4636"; x.font = '26px "Press Start 2P", monospace'; x.textAlign = "center";
+  x.fillText("HAPPY 3 YEARS", W / 2 + R(-20, 20), 110);
+  const cat = (id, view, frame, cx, cy, s, rot = 0, flip = false, alpha = 1) => {
+    const img = catSprites[id] && catSprites[id][view][frame]; if (!img) return;
+    x.save(); x.globalAlpha = alpha; x.translate(cx, cy); x.rotate(rot); x.scale(flip ? -s : s, s);
+    x.drawImage(img, -img.width / 2, -img.height / 2); x.restore();
+  };
+  const say = (t, cx, cy, size = 12, rot = 0, col = "#5b4636") => {
+    x.save(); x.translate(cx, cy); x.rotate(rot); x.font = `${size}px "Press Start 2P", monospace`;
+    x.fillStyle = col; x.textAlign = "center"; x.fillText(t, 0, 0); x.restore();
+  };
+  // back row: jamiel refuses to have fun, dan is explaining something
+  cat("jamiel", "down", 0, R(600, 650), 330, 8);
+  say("hmph.", 625, 255, 12, 0.05);
+  cat("dan", "side", 0, R(700, 730), 340, 8, R(-0.1, 0.1), true);
+  say("actually...", 730, 262, 10, -0.08);
+  // leo hangs upside down, erin hisses at him
+  cat("leo", "down", 0, R(170, 230), 150, 7, Math.PI + R(-0.2, 0.2));
+  cat("erin", "side", 1, R(90, 130), 330, 8, R(-0.2, 0.1));
+  say("HSSSS", 120, 250, 14, -0.2, "#c25a6e");
+  // sky runs straight through the shot
+  const sy = R(190, 240), sx = R(420, 520);
+  for (let k = 4; k >= 1; k--) cat("sky", "side", k % 2 + 1, sx - k * 34, sy, 7, -0.25, false, 0.12 * (5 - k));
+  cat("sky", "side", 1, sx, sy, 7, -0.25);
+  say("HOY CLIZZZ", sx + 40, sy - 60, 12, -0.2, "#c96f2a");
+  // brylle dances, chris trips, grace peeks in from the corner
+  cat("brylle", "side", 2, R(310, 350), 340, 8, R(0.3, 0.5));
+  say("♪", 300, 260, 22, 0, "#ee8fa8"); say("♪", 370, 245, 16, 0, "#ee8fa8");
+  cat("chris", "side", 1, R(690, 740), 170, 7, R(1, 1.6), true);
+  cat("grace", "sit", 0, 40, 560, 9, 0.5);
+  // the couple in the middle, hearts everywhere
+  cat("cliz", "down", 0, 380, 420, 10, -0.08);
+  cat("rhey", "down", 0, 500, 420, 10, 0.1);
+  x.drawImage(heartImg, 425, 300, heartImg.width * 5, heartImg.height * 5);
+  // achilles photobombs, way too close
+  cat("achilles", "down", 0, R(700, 760), R(560, 600), 22, R(-0.35, -0.15));
+  say("*drool*", 640, 470, 14, -0.15);
+  // confetti and stray hearts
+  const CONF = ["#ee8fa8", "#f6d26b", "#8fb3c9", "#a9c4b5", "#fffaf2", "#c9b8d9"];
+  for (let i = 0; i < 140; i++) {
+    x.save(); x.translate(R(0, W), R(0, H)); x.rotate(R(0, 3)); x.fillStyle = CONF[i % CONF.length];
+    x.fillRect(-4, -2, 8, 4); x.restore();
+  }
+  for (let i = 0; i < 10; i++) { const s = R(1.5, 3); x.drawImage(heartImg, R(0, W - 30), R(0, H - 30), heartImg.width * s, heartImg.height * s); }
+  return c;
+}
+let chaosCanvas = null;
+async function takeChaos() {
+  $("#chaosBtn").hidden = true;
+  const fig = $("#chaosPhoto");
+  fig.hidden = false; fig.classList.remove("snap"); void fig.offsetWidth; fig.classList.add("snap");
+  blip(1400, 0.05);
+  chaosCanvas = await chaosPhoto();
+  $("#chaosImg").src = chaosCanvas.toDataURL("image/png");
+  $("#chaosActions").hidden = false;
+  if (musicHold) { musicHold = false; startMusic(); }
+  heartBurst(); melody([523, 659, 784, 1046]);
+  setTimeout(() => { $("#letterNav").hidden = false; }, 700);
+}
+$("#chaosBtn").onclick = takeChaos;
+$("#chaosAgain").onclick = takeChaos;
+$("#chaosSave").onclick = () => chaosCanvas && chaosCanvas.toBlob(blob => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "everyone-chaos.png";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}, "image/png");
 document.querySelectorAll("[data-yes]").forEach(b => b.onclick = () => {
   heartBurst(); melody([523, 659, 784, 1046, 1318]);
   $("#again").hidden = true; $("#final").hidden = false;
@@ -1384,7 +1617,9 @@ $("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
   current = 0; done.clear(); resetTown();
   $("#envelope").hidden = false; $("#envHint").hidden = false;
-  ["#letter", "#letterNav", "#again", "#final"].forEach(id => $(id).hidden = true);
+  ["#letter", "#letterNav", "#again", "#final", "#chaos", "#chaosPhoto", "#chaosActions"].forEach(id => $(id).hidden = true);
+  $("#chaosBtn").hidden = false;
+  musicHold = false;
   resetBooth();
   show("start");
 };
