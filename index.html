@@ -374,7 +374,7 @@
   .talk-bubble p { margin: 0; font: 600 19px/1.5 "Pixelify Sans", monospace; color: var(--ink); min-height: 1.5em; }
   .talk-bubble .dialog-more { right: 12px; bottom: 4px; }
   .talk-hint { position: absolute; left: 0; right: 0; bottom: 18px; margin: 0; text-align: center; font: 12px "Press Start 2P", monospace; color: var(--pink-d); }
-  /* the chaotic group photo */
+  /* the group photo of every cat */
   .chaos { margin-top: 26px; }
   .chaos-photo { margin: 18px auto 0; max-width: 520px; padding: 12px 12px 6px; background: #fff; box-shadow: 0 0 0 4px var(--ink), 6px 8px 0 4px rgba(91, 70, 54, .15); transform: rotate(-1.5deg); }
   .chaos-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; background: #fff; image-rendering: pixelated; }
@@ -565,7 +565,7 @@
       <article class="px letter" id="letter" hidden></article>
       <div class="chaos" id="chaos" hidden>
         <button class="pxbtn" id="chaosBtn">everyone wants a picture! 📸</button>
-        <figure class="chaos-photo" id="chaosPhoto" hidden><img id="chaosImg" alt="every cat in town in one very chaotic photo"><figcaption>everyone ♡</figcaption></figure>
+        <figure class="chaos-photo" id="chaosPhoto" hidden><img id="chaosImg" alt="every cat in town in one group photo"><figcaption>everyone ♡</figcaption></figure>
         <div class="chaos-actions" id="chaosActions" hidden>
           <button class="pxbtn" id="chaosAgain">again!</button>
           <button class="pxbtn" id="chaosSave">download ♡</button>
@@ -1395,7 +1395,7 @@ $("#recapStrip").innerHTML = SCENES.flatMap(s => s.photos.map(p => ({ p, stop: s
 wireLightbox($("#recapStrip"));
 
 // tapping the envelope: the music stops, rhey walks on screen and says the letter out loud,
-// wandering around while he talks. then the real letter, then a very chaotic group photo.
+// wandering around while he talks. then the real letter, then a group photo of every cat.
 $("#envelope").onclick = () => {
   $("#envelope").hidden = true; $("#envHint").hidden = true;
   musicHold = true; stopMusic();
@@ -1519,66 +1519,33 @@ document.addEventListener("keydown", e => {
   if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); talkNext(); }
 });
 
-// ---------- the chaotic group photo: every cat in town, nobody posing properly ----------
+// ---------- the group photo: every cat in town, on a plain background ----------
 async function chaosPhoto() {
-  try { await document.fonts.load('20px "Press Start 2P"'); } catch (e) {}
   const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
   const R = (a, b) => a + Math.random() * (b - a);
-  // room + bunting
   x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
-  x.fillStyle = "#f6b8c8"; for (let i = 0; i < 40; i++) x.fillRect(R(0, W), R(60, 430), 6, 6);
-  x.fillStyle = "#e8c9b0"; x.fillRect(0, 440, W, 160);
-  x.fillStyle = "#5b4636"; x.fillRect(0, 436, W, 4);
-  const FLAG = ["#ee8fa8", "#f6d26b", "#8fb3c9", "#a9c4b5"];
-  for (let i = 0; i < 14; i++) {
-    x.fillStyle = FLAG[i % 4]; x.beginPath();
-    x.moveTo(i * 60, 18 + (i % 2) * 6); x.lineTo(i * 60 + 56, 18 + ((i + 1) % 2) * 6); x.lineTo(i * 60 + 28, 64); x.fill();
-  }
-  x.fillStyle = "#5b4636"; x.font = '26px "Press Start 2P", monospace'; x.textAlign = "center";
-  x.fillText("HAPPY 3 YEARS", W / 2 + R(-20, 20), 110);
-  const cat = (id, view, frame, cx, cy, s, rot = 0, flip = false, alpha = 1) => {
+  const cat = (id, view, frame, cx, cy, s, rot = 0, flip = false) => {
     const img = catSprites[id] && catSprites[id][view][frame]; if (!img) return;
-    x.save(); x.globalAlpha = alpha; x.translate(cx, cy); x.rotate(rot); x.scale(flip ? -s : s, s);
+    x.save(); x.translate(cx, cy); x.rotate(rot); x.scale(flip ? -s : s, s);
     x.drawImage(img, -img.width / 2, -img.height / 2); x.restore();
   };
-  const say = (t, cx, cy, size = 12, rot = 0, col = "#5b4636") => {
-    x.save(); x.translate(cx, cy); x.rotate(rot); x.font = `${size}px "Press Start 2P", monospace`;
-    x.fillStyle = col; x.textAlign = "center"; x.fillText(t, 0, 0); x.restore();
-  };
-  // back row: jamiel refuses to have fun, dan is explaining something
-  cat("jamiel", "down", 0, R(600, 650), 330, 8);
-  say("hmph.", 625, 255, 12, 0.05);
-  cat("dan", "side", 0, R(700, 730), 340, 8, R(-0.1, 0.1), true);
-  say("actually...", 730, 262, 10, -0.08);
-  // leo hangs upside down, erin hisses at him
-  cat("leo", "down", 0, R(170, 230), 150, 7, Math.PI + R(-0.2, 0.2));
-  cat("erin", "side", 1, R(90, 130), 330, 8, R(-0.2, 0.1));
-  say("HSSSS", 120, 250, 14, -0.2, "#c25a6e");
-  // sky runs straight through the shot
-  const sy = R(190, 240), sx = R(420, 520);
-  for (let k = 4; k >= 1; k--) cat("sky", "side", k % 2 + 1, sx - k * 34, sy, 7, -0.25, false, 0.12 * (5 - k));
-  cat("sky", "side", 1, sx, sy, 7, -0.25);
-  say("HOY CLIZZZ", sx + 40, sy - 60, 12, -0.2, "#c96f2a");
-  // brylle dances, chris trips, grace peeks in from the corner
-  cat("brylle", "side", 2, R(310, 350), 340, 8, R(0.3, 0.5));
-  say("♪", 300, 260, 22, 0, "#ee8fa8"); say("♪", 370, 245, 16, 0, "#ee8fa8");
-  cat("chris", "side", 1, R(690, 740), 170, 7, R(1, 1.6), true);
-  cat("grace", "sit", 0, 40, 560, 9, 0.5);
-  // the couple in the middle, hearts everywhere
-  cat("cliz", "down", 0, 380, 420, 10, -0.08);
-  cat("rhey", "down", 0, 500, 420, 10, 0.1);
-  x.drawImage(heartImg, 425, 300, heartImg.width * 5, heartImg.height * 5);
-  // achilles photobombs, way too close
-  cat("achilles", "down", 0, R(700, 760), R(560, 600), 22, R(-0.35, -0.15));
-  say("*drool*", 640, 470, 14, -0.15);
-  // confetti and stray hearts
-  const CONF = ["#ee8fa8", "#f6d26b", "#8fb3c9", "#a9c4b5", "#fffaf2", "#c9b8d9"];
-  for (let i = 0; i < 140; i++) {
-    x.save(); x.translate(R(0, W), R(0, H)); x.rotate(R(0, 3)); x.fillStyle = CONF[i % CONF.length];
-    x.fillRect(-4, -2, 8, 4); x.restore();
-  }
-  for (let i = 0; i < 10; i++) { const s = R(1.5, 3); x.drawImage(heartImg, R(0, W - 30), R(0, H - 30), heartImg.width * s, heartImg.height * s); }
+  const tilt = () => R(-0.08, 0.08);
+  // back row
+  cat("jamiel", "down", 0, 130, 250, 8, 0);
+  cat("dan", "down", 0, 245, 245, 8, tilt());
+  cat("leo", "down", 0, 360, 250, 8, tilt());
+  cat("erin", "side", 0, 470, 250, 8, tilt(), true);
+  cat("grace", "down", 0, 580, 245, 8, tilt());
+  cat("chris", "down", 0, 690, 250, 8, tilt());
+  // front row: a little silliness, nothing too wild
+  cat("brylle", "side", 1 + Math.floor(R(0, 2)), 120, 430, 9, R(0.1, 0.25));
+  cat("cliz", "down", 0, 320, 430, 10, -0.05);
+  cat("rhey", "down", 0, 470, 430, 10, 0.05);
+  x.drawImage(heartImg, 381, 335, heartImg.width * 4, heartImg.height * 4);
+  cat("sky", "side", 1, 610, R(370, 395), 9, -0.15);       // mid-jump, of course
+  cat("achilles", "down", 0, 715, 445, 10, R(-0.15, -0.05));
+  for (let i = 0; i < 4; i++) { const s = R(1.5, 2.5); x.drawImage(heartImg, R(20, W - 50), R(20, 120), heartImg.width * s, heartImg.height * s); }
   return c;
 }
 let chaosCanvas = null;
