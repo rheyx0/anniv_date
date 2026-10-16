@@ -451,7 +451,7 @@
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
-    position: absolute; bottom: 0; width: auto; height: auto; max-width: 46%; max-height: 90%;
+    position: absolute; bottom: 0; width: auto; height: auto; max-width: 40%; max-height: 88%;
     object-fit: contain; pointer-events: none; animation: none;
   }
   .frame .friend.left { left: 0; }
@@ -1687,20 +1687,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // "with friends": one cutout per photo, per side of the frame (index = photo number)
 const BOOTH_FRIENDS = {
-  left: [1, 2, 3, 4].map(n => `photos/friends/cutouts/${n}.png`),
-  right: [],
+  left: [1, 2, 3].map(n => `photos/friends/cutouts/${n}.png`),          // jamiel & dan (panel 4: two more people, coming)
+  right: [1, 2, 3, 4].map(n => `photos/friends/cutouts/r${n}.png`),     // erin & leo, then rje in panel 4
 };
 const friendImgs = {};
 Object.values(BOOTH_FRIENDS).flat().forEach(src => { const im = new Image(); im.src = src; friendImgs[src] = im; });
 const friendsAt = i => Object.entries(BOOTH_FRIENDS).filter(([, list]) => list[i]).map(([side, list]) => ({ side, src: list[i] }));
 
-// same box as the .friend css: bottom corner, up to 46% wide and 90% tall
+// same box as the .friend css: bottom corner, up to 40% wide and 88% tall (the middle stays free)
 function drawFriends(c, i) {
   const x = c.getContext("2d");
   friendsAt(i).forEach(({ side, src }) => {
     const im = friendImgs[src];
     if (!im.complete || !im.naturalWidth) return;
-    const r = Math.min(c.width * 0.46 / im.naturalWidth, c.height * 0.9 / im.naturalHeight);
+    const r = Math.min(c.width * 0.4 / im.naturalWidth, c.height * 0.88 / im.naturalHeight);
     const w = im.naturalWidth * r, h = im.naturalHeight * r;
     x.drawImage(im, side === "left" ? 0 : c.width - w, c.height - h, w, h);
   });
