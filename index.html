@@ -1721,6 +1721,7 @@ const friendsAt = i => Object.entries(BOOTH_FRIENDS).filter(([, list]) => list[i
 // bakes the same spots as the live preview into a snap
 function drawFriends(c, i) {
   const x = c.getContext("2d");
+  x.setTransform(1, 0, 0, 1, 0, 0);
   friendsAt(i).forEach(({ side, src }) => {
     const im = friendImgs[src], b = friendBox(side, i, im);
     if (b) x.drawImage(im, b.l * c.width, b.t * c.height, b.w * c.width, b.h * c.height);
@@ -1817,6 +1818,7 @@ function grab(src, w, h, mirror) {
   const r = Math.max(800 / w, 600 / h), dw = w * r, dh = h * r;
   if (mirror) { x.translate(800, 0); x.scale(-1, 1); }
   x.drawImage(src, (800 - dw) / 2, (600 - dh) / 2, dw, dh);
+  x.setTransform(1, 0, 0, 1, 0, 0);   // un-mirror again, so friends drawn on top stay on their own side
   return c;
 }
 // keep the box that is about to be snapped in view, so nobody has to scroll
