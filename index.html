@@ -1579,19 +1579,19 @@ async function chaosPhoto() {
     x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.scale(flip ? -1 : 1, 1);
     x.drawImage(img, -w / 2, -h / 2, w, h); x.restore();
   };
-  // back row, standing: evenly spaced but a bit uneven
-  cat("jamiel", "down", 80, 275, 8, 0);
-  cat("dan", "down", 240, 265, 8, -0.06);
-  cat("leo", "down", 400, 280, 8, 0.08);
-  cat("erin", "down", 560, 270, 8, -0.04);
-  cat("grace", "down", 720, 260, 8, 0.1);
-  // front row, sitting: brylle leaning in, cliz and rhey close together in the middle
-  cat("brylle", "sit", 67, 455, 8, 0.12);
-  cat("sky", "sit", 200, 450, 8, -0.05);
-  cat("cliz", "sit", 335, 445, 9, -0.06);
-  cat("rhey", "sit", 465, 445, 9, 0.06);
-  cat("chris", "sit", 600, 455, 8, -0.08);
-  cat("achilles", "sit", 733, 460, 8, 0.15);
+  // back row: evenly spaced but a bit uneven
+  cat("jamiel", "portrait", 80, 280, 6, 0);
+  cat("dan", "portrait", 240, 270, 6, -0.06);
+  cat("leo", "portrait", 400, 285, 6, 0.08);
+  cat("erin", "portrait", 560, 275, 6, -0.04);
+  cat("grace", "portrait", 720, 265, 6, 0.1);
+  // front row: brylle leaning in, cliz and rhey close together in the middle
+  cat("brylle", "portrait", 67, 470, 6, 0.12);
+  cat("sky", "portrait", 200, 465, 6, -0.05);
+  cat("cliz", "portrait", 332, 460, 7, -0.06);
+  cat("rhey", "portrait", 468, 460, 7, 0.06);
+  cat("chris", "portrait", 600, 470, 6, -0.08);
+  cat("achilles", "portrait", 733, 475, 6, 0.15);
   return c;
 }
 let chaosCanvas = null;
@@ -1986,6 +1986,55 @@ for (const [cat, look] of Object.entries(CAT_LOOKS)) {
   const frames = catFrames(look.face);
   catSprites[cat] = {};
   for (const [view, list] of Object.entries(frames)) catSprites[cat][view] = list.map(rows => paintCat(rows, look, view));
+  catSprites[cat].portrait = [paintPortrait(look)];
+}
+
+// the group photo pose: sitting up tall facing the camera, pointy ears, tail curled at the side.
+// same letters as the walking cats; rows 7-8 are the eyes and change per face.
+function paintPortrait(look) {
+  const eyes = {
+    happy:  ["..OFFEEOFFFFEEOFFO.", "..OFFEOOFFFFEOOFFO."],
+    derpy:  ["..OFFEEOFFFFOEEFFO.", "..OFFEOOFFFFOOEFFO."],
+    grumpy: ["..OFOOFFFFFFFFOOFO.", "..OFFOOOFFFFOOOFFO."],
+    chill:  ["..OFFFFFFFFFFFFFFO.", "..OFFOOOFFFFOOOFFO."],
+  }[look.face];
+  const rows = [
+    "...OO..........OO..", "...OFO........OFO..", "..OFPFO......OFPFO.", "..OFPPFOOOOOOFPPFO.",
+    "..OFFFFFFFFFFFFFFO.", "..OFFMFFFFFFFFMFFO.", "..OFFFFFFFFFFFFFFO.", ...eyes,
+    "..OFCOFBBPPBBFOCFO.", "..OFFFBBOBBOBBFFFO.", "...OFFBBBOOBBBFFO..", "....OOFBBBBBBFOO...",
+    "....OFFBBBBBBFFO...", "...OMFFBBBBBBFFFO..", "...OFMFFBBBBFFFFO..", "...OFFFOOBBOOFFFO..",
+    "OO.OFFFOFFFFOFFFO..", "OFOOFFFOFFFFOMFFO..", "OFFOFBBOFFFFOBBFO..", ".OOOOOOOOOOOOOOOO..",
+  ];
+  const cv = document.createElement("canvas"); cv.width = 19; cv.height = rows.length;
+  const x = cv.getContext("2d");
+  const col = { P: PALETTE.p, C: PALETTE.r, E: look.O, ...look };
+  const dot = (i, j, c) => { x.fillStyle = c; x.fillRect(i, j, 1, 1); };
+  // colour functions were drawn for the 14-wide walking cat, so squash the coordinates to match
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const c = typeof col[ch] === "function" ? col[ch](Math.floor(i * 14 / 19), Math.floor(j * 14 / 21)) : col[ch];
+    if (ch !== "." && c) dot(i, j, c);
+  }));
+  const extras = {
+    clip()    { dot(1, 0, PALETTE.y); dot(2, 0, PALETTE.y); dot(1, 1, PALETTE.y); dot(2, 1, PALETTE.Y); },
+    teeth()   { dot(9, 11, "#ffffff"); dot(10, 11, "#ffffff"); dot(9, 12, look.O); dot(10, 12, look.O); },
+    drool()   { dot(11, 11, "#7cc0e8"); dot(11, 12, "#7cc0e8"); },
+    glasses() {
+      const G = "#3a2e2a";
+      for (const x0 of [4, 11]) {
+        for (let i = x0; i < x0 + 5; i++) { dot(i, 6, G); dot(i, 9, G); }
+        dot(x0, 7, G); dot(x0, 8, G); dot(x0 + 4, 7, G); dot(x0 + 4, 8, G);
+      }
+      dot(9, 7, G); dot(10, 7, G);
+    },
+    headset() {
+      const H = "#7b6bd6", D = "#4b3fa0";
+      for (let i = 6; i <= 12; i++) dot(i, 3, D);
+      for (let j = 6; j <= 8; j++) { dot(1, j, H); dot(2, j, D); dot(17, j, D); dot(18, j, H); }
+    },
+    shoes()   { [5, 6, 13, 14].forEach(i => dot(i, 19, "#e03a3a")); dot(6, 19, "#f6d26b"); dot(14, 19, "#f6d26b"); },
+  };
+  (look.extras || []).forEach(name => extras[name] && extras[name]());
+  return cv;
 }
 const heartImg = pixelCanvas(SPRITES.heart);
 
