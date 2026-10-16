@@ -1578,12 +1578,12 @@ async function chaosPhoto() {
     x.drawImage(img, Math.round(cx - img.width * s / 2), bottom - img.height * s, img.width * s, img.height * s);
   };
   // a row of little hearts across the top
-  for (let i = 0; i < 7; i++) x.drawImage(heartImg, 100 + i * 100 - heartImg.width, 50, heartImg.width * 2, heartImg.height * 2);
+  for (let i = 0; i < 7; i++) x.drawImage(heartImg, 100 + i * 100 - heartImg.width * 2, 100, heartImg.width * 4, heartImg.height * 4);
   // back row, standing
-  ["jamiel", "dan", "leo", "erin", "grace"].forEach((id, i) => cat(id, "down", 130 + i * 135, 380, 8));
+  ["jamiel", "dan", "leo", "erin", "grace"].forEach((id, i) => cat(id, "down", 130 + i * 135, 340, 8));
   // front row, sitting, with cliz and rhey in the middle
-  [["brylle", 75, 9], ["sky", 195, 9], ["cliz", 335, 10], ["rhey", 465, 10], ["chris", 605, 9], ["achilles", 725, 9]]
-    .forEach(([id, cx, s]) => cat(id, "sit", cx, 540, s));
+  [["brylle", 76, 8], ["sky", 200, 8], ["cliz", 331, 9], ["rhey", 469, 9], ["chris", 600, 8], ["achilles", 724, 8]]
+    .forEach(([id, cx, s]) => cat(id, "sit", cx, 500, s));
   return c;
 }
 let chaosCanvas = null;
