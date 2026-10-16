@@ -452,12 +452,7 @@
   }
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
   .booth.bw .frame .live, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
-  .booth-mode {
-    display: flex; gap: 10px; justify-content: center; padding: 10px 12px; width: max-content;
-    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 20;
-    background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
-  }
-  .booth-box .booth { margin-bottom: 100px; }
+  .booth-mode { display: contents; }
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; white-space: nowrap; margin: 0; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
@@ -613,12 +608,12 @@
         <div id="stripFrames"></div>
         <div class="strip-foot" id="stripFoot"></div>
       </div>
-      <div class="booth-mode" id="boothMode">
-        <button class="pxbtn" data-mode="solo">solo</button>
-        <button class="pxbtn" data-mode="friends">with friends</button>
-      </div>
       <p class="cam-msg" id="camMsg" hidden></p>
       <div class="booth-controls">
+        <span class="booth-mode" id="boothMode">
+          <button class="pxbtn" data-mode="solo">solo</button>
+          <button class="pxbtn" data-mode="friends">with friends</button>
+        </span>
         <button class="pxbtn" id="modeBackBtn" hidden>← back</button>
         <button class="pxbtn" id="bwBtn">b&amp;w</button>
         <button class="pxbtn" id="retakeBtn" hidden>retake</button>
@@ -1728,8 +1723,8 @@ function renderStrip() {
     if (shots[i]) return `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`;
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
-        ${camStream ? `<canvas class="live" width="320" height="240"></canvas>` : i + 1}
-        ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side, i)}" src="${f.src}" alt="">`).join("") : ""}
+        ${camStream ? `<canvas class="live" data-i="${i}" width="320" height="240"></canvas>` : i + 1}
+        ${boothMode === "friends" && !camStream ? friendsAt(i).map(f => `<img class="friend" style="${spotStyle(f.side, i)}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
@@ -1749,7 +1744,7 @@ function camMessage(text) {
   $("#camMsg").hidden = !text;
 }
 
-// the camera plays in one hidden video; each empty box gets a small mirrored copy, ~30 times a second.
+// the camera plays in one hidden video; each empty box gets a small mirrored copy (friends drawn in), ~24 times a second.
 // (four full-size video players at once was what made the booth lag)
 const camVideo = document.createElement("video");
 camVideo.muted = true; camVideo.playsInline = true; camVideo.setAttribute("playsinline", "");
@@ -1758,17 +1753,31 @@ function startLive() {
   if (camVideo.srcObject !== camStream) { camVideo.srcObject = camStream; camVideo.play().catch(() => {}); }
   if (!liveLoop) liveLoop = requestAnimationFrame(drawLive);
 }
+// each panel's friends, pre-drawn once at the live picture's size
+let liveOverlays = null;
+function overlaysReady() {
+  if (liveOverlays) return liveOverlays;
+  if (!Object.values(friendImgs).every(im => im.complete && im.naturalWidth)) return null;
+  liveOverlays = Array.from({ length: SHOTS }, (_, i) => {
+    const c = document.createElement("canvas"); c.width = 320; c.height = 240;
+    return drawFriends(c, i);
+  });
+  return liveOverlays;
+}
 function drawLive(now) {
   liveLoop = 0;
   if (!camStream) return;
   liveLoop = requestAnimationFrame(drawLive);
-  if (now - liveLast < 33 || camVideo.readyState < 2) return;
+  if (now - liveLast < 40 || camVideo.readyState < 2) return;
   liveLast = now;
   const vw = camVideo.videoWidth, vh = camVideo.videoHeight, r = Math.max(320 / vw, 240 / vh), dw = vw * r, dh = vh * r;
+  const over = boothMode === "friends" ? overlaysReady() : null;
   document.querySelectorAll("#stripFrames .live").forEach(cv => {
     const x = cv.getContext("2d");
     x.setTransform(-1, 0, 0, 1, 320, 0);   // mirror, like a selfie camera
     x.drawImage(camVideo, (320 - dw) / 2, (240 - dh) / 2, dw, dh);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    if (over) x.drawImage(over[+cv.dataset.i], 0, 0);
   });
 }
 async function startCamera() {
@@ -3488,7 +3497,6 @@ function enterBooth() {
   $("#roomStage").innerHTML = "";
   $("#photoBox").hidden = true;
   $("#boothBox").appendChild($("#booth"));
-  $("#boothBox").appendChild($("#boothMode"));
   $("#boothBox").hidden = true;
   Object.assign(boothCats, { x: 160, y: 162, dir: "up", moving: false, trail: [], bx: 140, by: 162, bdir: "up", bmoving: false });
   boothLast = 0; clearHeld();
