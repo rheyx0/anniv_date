@@ -1567,31 +1567,56 @@ document.addEventListener("keydown", e => {
   if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); talkNext(); }
 });
 
-// ---------- the group photo: every cat in town, neatly lined up on a plain background ----------
+// ---------- the group photo: every cat in town doing their own thing, on a plain background ----------
+// little props, drawn in the cat's own pixel grid so they tilt along with it
+const PROPS = {
+  book:  { rows: ["OOOOOOOO", "ObbbbbbO", "ObyyyybO", "ObbbbbbO", "OwwwwwwO", "OOOOOOOO"], col: { O: "#2b2e3d", b: "#5f86c9", y: "#f6d26b", w: "#fffaf2" } },
+  pad:   { rows: [".OOOOOOO.", "OGGGGGGGO", "OGyGGGrGO", "OGGOOOGGO", "OOO...OOO"], col: { O: "#2b2e3d", G: "#7b7f96", y: "#f6d26b", r: "#e05a5a" } },
+  vein:  { rows: [".R.R.", "RR.RR", ".....", "RR.RR", ".R.R."], col: { R: "#e05a5a" } },
+  note:  { rows: ["..OO", "..O.", "..O.", "OOO.", "OO.."], col: { O: "#5b4636" } },
+  bolt:  { rows: ["..YY", ".YY.", "YYYY", ".YY.", "YY..", "Y..."], col: { Y: "#f6d26b" } },
+  puddle:{ rows: ["..BBBBB..", ".BBBBBBB.", "..BBBBB.."], col: { B: "#9fd3f0" } },
+  mouth: { rows: ["OOOO", "OPPO", "OOOO"], col: { O: "#3b2418", P: "#ee8fa8" } },
+  whoosh:{ rows: ["L..L..L", ".......", ".L..L..", ".......", "L..L..L"], col: { L: "#c9a9b4" } },
+};
 async function chaosPhoto() {
   const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
+  try { await document.fonts.load('10px "Press Start 2P"'); } catch (e) {}
   x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
-  // two loose rows: everyone's in it, but nobody quite stands still for the camera
-  const cat = (id, view, cx, bottom, s, rot = 0, flip = false) => {
-    const img = catSprites[id] && catSprites[id][view][0]; if (!img) return;
-    const w = img.width * s, h = img.height * s;
-    x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.scale(flip ? -1 : 1, 1);
-    x.drawImage(img, -w / 2, -h / 2, w, h); x.restore();
+  // a cat at (cx, bottom), plus props at (px, py) in its own pixels. returns the top of its head.
+  const cat = (id, cx, bottom, s, rot = 0, props = []) => {
+    const img = catSprites[id].portrait[0], w = img.width * s, h = img.height * s;
+    x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.translate(-w / 2, -h / 2);
+    x.drawImage(img, 0, 0, w, h);
+    props.forEach(([name, px, py]) => PROPS[name].rows.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (PROPS[name].col[ch]) { x.fillStyle = PROPS[name].col[ch]; x.fillRect((px + i) * s, (py + j) * s, s, s); }
+    })));
+    x.restore();
+    return bottom - h;
   };
-  // back row: evenly spaced but a bit uneven
-  cat("jamiel", "portrait", 80, 280, 6, 0);
-  cat("dan", "portrait", 240, 270, 6, -0.06);
-  cat("leo", "portrait", 400, 285, 6, 0.08);
-  cat("erin", "portrait", 560, 275, 6, -0.04);
-  cat("grace", "portrait", 720, 265, 6, 0.1);
-  // front row: brylle leaning in, cliz and rhey close together in the middle
-  cat("brylle", "portrait", 67, 470, 6, 0.12);
-  cat("sky", "portrait", 200, 465, 6, -0.05);
-  cat("cliz", "portrait", 332, 460, 7, -0.06);
-  cat("rhey", "portrait", 468, 460, 7, 0.06);
-  cat("chris", "portrait", 600, 470, 6, -0.08);
-  cat("achilles", "portrait", 733, 475, 6, 0.15);
+  // a speech bubble whose tail points down at (cx, y)
+  const say = (text, cx, y) => {
+    x.font = '10px "Press Start 2P"';
+    const w = Math.ceil(x.measureText(text).width) + 16, h = 24, l = Math.round(cx - w / 2), t = y - h - 8;
+    x.fillStyle = "#5b4636"; x.fillRect(l - 3, t - 3, w + 6, h + 6); x.fillRect(cx - 6, t + h, 12, 6); x.fillRect(cx - 3, t + h + 6, 6, 5);
+    x.fillStyle = "#fffaf2"; x.fillRect(l, t, w, h); x.fillRect(cx - 3, t + h, 6, 5);
+    x.fillStyle = "#5b4636"; x.textBaseline = "middle"; x.fillText(text, l + 8, t + h / 2 + 1);
+  };
+  // back row
+  say("hmph.", 80, cat("jamiel", 80, 300, 6, 0, [["vein", 15, 0]]));
+  say("actually,", 240, cat("dan", 240, 295, 6, -0.04, [["book", 5, 13]]));
+  say("gg", 400, cat("leo", 400, 305, 6, 0.06, [["pad", 5, 14]]));
+  say("HSSSS", 560, cat("erin", 560, 300, 6, -0.12));
+  say("AAAAAA!", 720, cat("grace", 720, 290, 6, 0.1, [["mouth", 8, 10]]));
+  // front row
+  cat("brylle", 85, 525, 6, 0.22, [["note", -3, 4], ["note", 18, -3]]);       // dancing, of course
+  cat("sky", 200, 470, 6, -0.12, [["whoosh", 6, 23]]);                         // mid-jump, of course
+  cat("cliz", 335, 525, 7, -0.1);
+  cat("rhey", 465, 525, 7, 0.1);
+  x.drawImage(heartImg, 400 - heartImg.width * 3, 330, heartImg.width * 6, heartImg.height * 6);
+  say("ka-chow.", 600, cat("chris", 600, 530, 6, -0.06, [["bolt", 17, 14]]));
+  say("huh?", 735, cat("achilles", 735, 530, 6, 0.15, [["puddle", 6, 20]]));
   return c;
 }
 let chaosCanvas = null;
