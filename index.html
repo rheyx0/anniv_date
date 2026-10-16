@@ -131,16 +131,12 @@
   @keyframes float { 50% { transform: translateY(-6px); } }
   .title-box {
     position: absolute; left: 50%; bottom: max(5vh, 40px); transform: translateX(-50%);
-    width: min(560px, calc(100% - 40px)); margin: 0; padding: 22px 20px 14px; text-align: left;
+    width: min(560px, calc(100% - 40px)); margin: 0; padding: 0; text-align: center;
   }
-  .title-speaker { position: absolute; top: -12px; left: 18px; font-size: 11px; padding: 5px 8px 4px; }
-  .title-box h2 { font: 400 clamp(14px, 3.6vw, 18px) "Press Start 2P", monospace; margin: 4px 0 8px; color: var(--pink-d); }
-  .title-box p { font-family: "Gaegu", cursive; font-size: clamp(19px, 4.6vw, 22px); line-height: 1.3; margin: 0 0 6px; }
-  .title-box .pxbtn { display: block; margin: 12px auto 6px; animation: nudge 1.2s steps(2) infinite; }
+  .title-box .pxbtn { display: block; margin: 0 auto; animation: nudge 1.2s steps(2) infinite; }
   @keyframes nudge { 50% { transform: translateY(-3px); } }
-  .title-foot { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; font-size: 12px; color: var(--muted); pointer-events: none; }
   .title-stage.poof .title-box, .title-stage.poof .title-logo { animation: poof .45s ease-in forwards; }
-  @media (max-height: 640px) { .title-logo { top: 58px; } .title-kicker { margin-bottom: 8px; } .title-name { font-size: clamp(22px, 6vw, 40px); } .title-box { bottom: 24px; padding-top: 18px; } }
+  @media (max-height: 640px) { .title-logo { top: 58px; } .title-kicker { margin-bottom: 8px; } .title-name { font-size: clamp(22px, 6vw, 40px); } .title-box { bottom: 24px; } }
 
   /* the jeepney ride: a full-screen road, mintal to roxas */
   .jeep-stage {
@@ -456,7 +452,10 @@
   }
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
   .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
-  .booth-mode { display: flex; gap: 10px; justify-content: center; margin: 4px 0 6px; }
+  .booth-mode {
+    display: flex; gap: 10px; justify-content: center; width: max-content; margin: 16px auto 0; padding: 10px 12px;
+    position: sticky; bottom: 14px; z-index: 3; background: var(--card); box-shadow: 0 0 0 3px var(--ink), 3px 5px 0 3px rgba(91, 70, 54, .18);
+  }
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
@@ -522,13 +521,9 @@
         <p class="title-kicker" id="dateLabel"></p>
         <h1 class="title-name">our little<br>date</h1>
       </div>
-      <div class="px title-box">
-        <span class="tag title-speaker">rhey</span>
-        <h2 id="greeting"></h2>
-        <p id="intro"></p>
+      <div class="title-box">
         <button class="pxbtn big" id="startBtn">▶ start our date</button>
       </div>
-      <p class="title-foot">ฅ^•ﻌ•^ฅ &nbsp;♡ cliz &amp; rhey ♡&nbsp; ฅ^•ﻌ•^ฅ</p>
     </div>
   </section>
 
@@ -612,13 +607,13 @@
       <p class="kicker">say cheese</p>
       <h2>photo booth ♡</h2>
       <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
-      <div class="booth-mode" id="boothMode">
-        <button class="pxbtn" data-mode="solo">solo</button>
-        <button class="pxbtn" data-mode="friends">with friends</button>
-      </div>
       <div class="strip" id="strip">
         <div id="stripFrames"></div>
         <div class="strip-foot" id="stripFoot"></div>
+      </div>
+      <div class="booth-mode" id="boothMode">
+        <button class="pxbtn" data-mode="solo">solo</button>
+        <button class="pxbtn" data-mode="friends">with friends</button>
       </div>
       <p class="cam-msg" id="camMsg" hidden></p>
       <div class="booth-controls">
@@ -668,9 +663,7 @@
 const CONFIG = {
   herName: "cliz",
   yourName: "rhey",
-  greeting: "HI CLIZ!",
   dateLabel: "our anniversary date ♡",
-  intro: "i know we're miles apart, so today i took you along with me. tap through and come on our little date.",
   letter: [
     "hi cliz,",
     "happy anniversary. 3 FREAKING YEARS and wala ko napulan hahhaha UNTA IKAW PUD. bisan wala ka karon ma feel gihapon nako imong presence every kay I carry a piece of you everyday with me and that is enough for me right now until magkita ta usab.",
@@ -1698,9 +1691,9 @@ const BOOTH_FRIENDS = {
 };
 // where each group stands in a panel: x = left edge (left), right edge (right) or middle (center); w / h = biggest size
 const FRIEND_SPOT = {
-  left: { x: 0, w: 0.31, h: 0.86 },
-  right: { x: 1, w: 0.31, h: 0.86 },
-  center: { x: 0.42, w: 0.3, h: 0.72 },
+  left: { x: 0, w: 0.27, h: 0.72 },
+  right: { x: 1, w: 0.27, h: 0.72 },
+  center: { x: 0.39, w: 0.2, h: 0.56 },
 };
 const spotStyle = side => {
   const s = FRIEND_SPOT[side], size = `max-width: ${s.w * 100}%; max-height: ${s.h * 100}%;`;
@@ -3642,9 +3635,7 @@ $("#photoOut").onclick = () => exitTo(STORES[current]);
 /* ======================= setup ======================= */
 document.querySelectorAll(".her").forEach(el => el.textContent = CONFIG.herName);
 document.querySelectorAll("[data-ears]").forEach(c => c.insertAdjacentHTML("afterbegin", EARS));
-$("#greeting").textContent = CONFIG.greeting;
 $("#dateLabel").textContent = CONFIG.dateLabel;
-$("#intro").textContent = CONFIG.intro;
 $("#startBtn").onclick = () => {
   started = true;
   startMusic();
@@ -3666,7 +3657,7 @@ function sizeTitle() {
   const S = title.S = Math.max(2, Math.round(Math.min(innerHeight / 200, innerWidth / 140)));
   title.w = title.cv.width = Math.ceil(innerWidth / S);
   title.h = title.cv.height = Math.ceil(innerHeight / S);
-  // cliz and rhey sit just above rhey's dialog box, the gang right behind them, and the grass starts behind the gang
+  // cliz and rhey sit just above the start button, the gang right behind them, and the grass starts behind the gang
   const boxTop = $(".title-box").getBoundingClientRect().top / S;
   title.cy = Math.min(Math.round(title.h * 0.75), Math.floor(boxTop) - 2);
   title.hz = title.cy - 24;
