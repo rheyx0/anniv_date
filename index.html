@@ -115,12 +115,32 @@
   .tag.her { background: var(--pink-l); }
 
   /* start screen */
-  .cats { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 18px; }
-  .cats .float-heart { align-self: center; animation: hop 1.6s steps(2) infinite; }
-  .cats .pet svg { animation: hop 2.4s steps(2) infinite; }
-  .cats .pet + .float-heart + .pet svg { animation-delay: -1.2s; }
-  .hero p:not(.kicker) { font-family: "Gaegu", cursive; font-size: 22px; max-width: 30ch; margin: 10px auto 18px; }
-  .kaomoji { color: var(--pink-d); font-size: 18px; margin-top: 10px; }
+  /* a game title screen: pixel sky, town and every cat on the grass, title on top, rhey's dialog box below */
+  .title-stage { position: fixed; inset: 0; z-index: 5; overflow: hidden; background: #fde6ec; text-align: center; }
+  .title-logo { position: absolute; left: 0; right: 0; top: max(7vh, 52px); padding: 0 16px; pointer-events: none; }
+  .title-kicker {
+    display: inline-block; margin: 0 0 14px; padding: 6px 12px 5px; background: var(--card);
+    font: 10px "Press Start 2P", monospace; color: var(--pink-d); box-shadow: 0 0 0 3px var(--ink); letter-spacing: .06em;
+  }
+  .title-name {
+    margin: 0; font: 400 clamp(28px, 8.5vw, 64px)/1.25 "Press Start 2P", monospace; color: var(--card);
+    text-shadow: 4px 0 var(--ink), -4px 0 var(--ink), 0 4px var(--ink), 0 -4px var(--ink),
+      4px 4px var(--ink), -4px 4px var(--ink), 4px -4px var(--ink), -4px -4px var(--ink), 0 10px var(--pink-d), 4px 10px var(--pink-d), -4px 10px var(--pink-d);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-6px); } }
+  .title-box {
+    position: absolute; left: 50%; bottom: max(5vh, 40px); transform: translateX(-50%);
+    width: min(560px, calc(100% - 40px)); margin: 0; padding: 22px 20px 14px; text-align: left;
+  }
+  .title-speaker { position: absolute; top: -12px; left: 18px; font-size: 11px; padding: 5px 8px 4px; }
+  .title-box h2 { font: 400 clamp(14px, 3.6vw, 18px) "Press Start 2P", monospace; margin: 4px 0 8px; color: var(--pink-d); }
+  .title-box p { font-family: "Gaegu", cursive; font-size: clamp(19px, 4.6vw, 22px); line-height: 1.3; margin: 0 0 6px; }
+  .title-box .pxbtn { display: block; margin: 12px auto 6px; animation: nudge 1.2s steps(2) infinite; }
+  @keyframes nudge { 50% { transform: translateY(-3px); } }
+  .title-foot { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; font-size: 12px; color: var(--muted); pointer-events: none; }
+  .title-stage.poof .title-box, .title-stage.poof .title-logo { animation: poof .45s ease-in forwards; }
+  @media (max-height: 640px) { .title-logo { top: 58px; } .title-kicker { margin-bottom: 8px; } .title-name { font-size: clamp(22px, 6vw, 40px); } .title-box { bottom: 24px; padding-top: 18px; } }
 
   /* the jeepney ride: a full-screen road, mintal to roxas */
   .jeep-stage {
@@ -157,7 +177,6 @@
   }
   @keyframes rev { 50% { transform: translate(calc(-50% + 1px), -1px); } }
   @keyframes bubble { 50% { transform: translate(-50%, -6px); } }
-  .hero.poof { animation: poof .45s ease-in forwards; }
   @keyframes poof { to { transform: scale(.6) translateY(30px); opacity: 0; } }
 
   /* the full-screen town */
@@ -490,13 +509,19 @@
 
 <main>
   <section id="start" class="screen">
-    <div class="px card hero" data-ears>
-      <div class="cats" id="heroCats"></div>
-      <p class="kicker" id="dateLabel"></p>
-      <h1 id="greeting"></h1>
-      <p id="intro"></p>
-      <button class="pxbtn big" id="startBtn">start our date</button>
-      <div class="kaomoji">ฅ^•ﻌ•^ฅ</div>
+    <div class="title-stage">
+      <canvas class="jeep-scenery" id="titleCanvas"></canvas>
+      <div class="title-logo">
+        <p class="title-kicker" id="dateLabel"></p>
+        <h1 class="title-name">our little<br>date</h1>
+      </div>
+      <div class="px title-box">
+        <span class="tag title-speaker">rhey</span>
+        <h2 id="greeting"></h2>
+        <p id="intro"></p>
+        <button class="pxbtn big" id="startBtn">▶ start our date</button>
+      </div>
+      <p class="title-foot">ฅ^•ﻌ•^ฅ &nbsp;♡ cliz &amp; rhey ♡&nbsp; ฅ^•ﻌ•^ฅ</p>
     </div>
   </section>
 
@@ -1179,7 +1204,8 @@ function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.hidden = s.id !== id);
   if (typeof startTown === "function") { if (id === "map") startTown(); else stopTown(); }
   if (typeof startRoom === "function") { if (id === "interior") startRoom(); else stopRoom(); }
-  document.body.classList.toggle("fullscreen", ["map", "jeepScreen", "interior"].includes(id));
+  if (typeof startTitle === "function" && id === "start") startTitle();
+  document.body.classList.toggle("fullscreen", ["start", "map", "jeepScreen", "interior"].includes(id));
   if (id !== "journey") setRain(false);
   if (id !== "boothPage" && typeof camStream !== "undefined" && camStream) { stopCamera(); renderStrip(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3586,19 +3612,83 @@ document.querySelectorAll("[data-ears]").forEach(c => c.insertAdjacentHTML("afte
 $("#greeting").textContent = CONFIG.greeting;
 $("#dateLabel").textContent = CONFIG.dateLabel;
 $("#intro").textContent = CONFIG.intro;
-$("#heroCats").innerHTML = cliz(104) + `<span class="float-heart">${sprite("heart", 30)}</span>` + rhey(104);
 $("#startBtn").onclick = () => {
   started = true;
   startMusic();
   melody([523, 659, 784]);
-  // the start box poofs away, then the jeep rolls up
-  $(".hero").classList.add("poof");
+  // the title and dialog box poof away, then the jeep rolls up
+  $(".title-stage").classList.add("poof");
   setTimeout(() => {
-    $(".hero").classList.remove("poof");
+    $(".title-stage").classList.remove("poof");
     show("jeepScreen");
     rollIn();
   }, 450);
 };
+
+// the title screen: pink sky, the city and trees from the jeep ride, and every cat in town sitting on the grass.
+// one small canvas scaled up crisp, like the road
+const title = { cv: $("#titleCanvas"), S: 4, w: 0, h: 0, hz: 0, tiles: null, flowers: [], loop: 0 };
+const TITLE_GANG = ["jamiel", "dan", "leo", "erin", "grace", "brylle", "sky", "chris", "achilles"];
+function sizeTitle() {
+  const S = title.S = Math.max(2, Math.round(Math.min(innerHeight / 200, innerWidth / 140)));
+  title.w = title.cv.width = Math.ceil(innerWidth / S);
+  title.h = title.cv.height = Math.ceil(innerHeight / S);
+  // cliz and rhey sit just above rhey's dialog box, the gang right behind them, and the grass starts behind the gang
+  const boxTop = $(".title-box").getBoundingClientRect().top / S;
+  title.cy = Math.min(Math.round(title.h * 0.75), Math.floor(boxTop) - 2);
+  title.hz = title.cy - 24;
+  title.tiles = { city: cityTile(Math.max(30, Math.min(60, title.hz - 50))), trees: treeTile(44) };
+  const rnd = seeded(11);
+  title.flowers = Array.from({ length: Math.round(title.w / 9) }, () => ({
+    x: Math.floor(rnd() * title.w), y: title.hz + 4 + Math.floor(rnd() * (title.h - title.hz - 6)), c: rnd() < 0.5 ? "#f6b8c8" : "#f6d26b",
+  }));
+}
+function drawTitle(now) {
+  const x = title.cv.getContext("2d"), { w, h, hz, tiles } = title;
+  x.imageSmoothingEnabled = false;
+  // sky in soft bands, lighter at the top
+  [["#fde6ec", 0], ["#fbdbe3", 0.55], ["#f9cfda", 0.8]].forEach(([c, k]) => { x.fillStyle = c; x.fillRect(0, Math.round(hz * k), w, hz); });
+  x.fillStyle = "#fff";
+  [[0.08, 0.1, 18], [0.42, 0.2, 14], [0.7, 0.07, 20], [0.9, 0.26, 12]].forEach(([fx, fy, cw], i) => {
+    const span = w + 40, cx = Math.round(((fx * w + now / 1000 * (i + 1.5)) % span + span) % span - 30), cy = Math.round(fy * h);
+    x.fillRect(cx, cy, cw, 4); x.fillRect(cx + 3, cy - 3, cw - 8, 3);
+  });
+  [[tiles.city, 1.5], [tiles.trees, 3]].forEach(([img, v]) => {
+    const off = Math.round(now / 1000 * v) % img.width;
+    for (let sx = -off; sx < w; sx += img.width) x.drawImage(img, sx, hz - img.height);
+  });
+  // grass with stripes and little flowers
+  x.fillStyle = "#9cc98a"; x.fillRect(0, hz, w, h - hz);
+  x.fillStyle = "#8bbb79"; for (let y = hz + 3; y < h; y += 6) x.fillRect(0, y, w, 1);
+  x.fillStyle = "#6fa35f"; x.fillRect(0, hz, w, 1);
+  title.flowers.forEach(f => { x.fillStyle = f.c; x.fillRect(f.x, f.y, 2, 2); x.fillStyle = "#fffaf2"; x.fillRect(f.x, f.y, 1, 1); });
+  // the gang sits in a row behind, each one bobbing on their own beat (sky can't sit still)
+  const sp = Math.min(24, Math.floor((w - 16) / TITLE_GANG.length)), x0 = Math.round(w / 2 - sp * (TITLE_GANG.length - 1) / 2);
+  TITLE_GANG.forEach((id, i) => {
+    const img = catSprites[id].portrait[0];
+    const hop = id === "sky" ? (Math.floor(now / 160) % 2) * 3 : (Math.floor(now / 500 + i * 0.37) % 2);
+    x.drawImage(img, x0 + i * sp - Math.floor(img.width / 2), hz + 12 - img.height - hop);
+  });
+  // cliz and rhey up front, with a heart between them
+  const cy = title.cy, beat = Math.floor(now / 600) % 2;
+  [["cliz", -11, 0], ["rhey", 11, 1]].forEach(([id, dx, ph]) => {
+    const img = catSprites[id].portrait[0];
+    x.drawImage(img, Math.round(w / 2 + dx - img.width / 2), cy - img.height - (beat === ph ? 1 : 0));
+  });
+  x.drawImage(heartImg, Math.round(w / 2 - heartImg.width / 2), cy - 30 - beat);
+}
+function titleTick(now) {
+  if ($("#start").hidden) { title.loop = 0; return; }
+  drawTitle(now);
+  title.loop = requestAnimationFrame(titleTick);
+}
+function startTitle() {
+  sizeTitle();
+  if (!title.loop) title.loop = requestAnimationFrame(titleTick);
+}
+addEventListener("resize", () => { if (!$("#start").hidden) sizeTitle(); });
+document.body.classList.add("fullscreen");
+startTitle();
 
 // the jeepney: rolls up, waits for a tap, then honks and drives off into town
 // drawn once as small pixel images (a big svg of rects is slow to move every frame)
