@@ -1428,6 +1428,46 @@ function talkLines() {
 
 const talk = { on: false, lines: [], i: 0, chars: 0, timer: 0, loop: 0, last: 0, done: null,
   x: 0, tx: 0, dir: "right", walkT: 0, frame: 0, phase: "enter", nextMove: 0, hop: 0, S: 8 };
+// the song while rhey talks: plays music/talk-song.mp3 if it's there,
+// otherwise a soft little music-box tune made right here
+const TALK_SONG = "music/talk-song.mp3";
+const N = { C4: 262, E4: 330, F4: 349, G4: 392, A4: 440, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, C6: 1047 };
+const MUSIC_BOX = [   // [note, beats], slow and a bit wistful
+  ["E5", 1], ["G5", 1], ["C6", 2], ["G5", 1], ["E5", 1], ["D5", 2],
+  ["F5", 1], ["A5", 1], ["G5", 2], ["E5", 1], ["C5", 1], ["D5", 2],
+  ["E5", 1], ["G5", 1], ["A5", 2], ["G5", 1], ["F5", 1], ["E5", 2],
+  ["D5", 1], ["E5", 1], ["C5", 3], [null, 1],
+];
+const BOX_BASS = ["C4", "C4", "F4", "G4", "A4", "F4", "G4", "C4"];
+const talkSong = { audio: null, timer: 0, next: 0, step: 0, beat: 0.42 };
+function startTalkSong() {
+  stopTalkSong();
+  if (!musicOn) return;
+  const a = new Audio(TALK_SONG);
+  a.loop = true; a.volume = 0;
+  a.play().then(() => {
+    if (!talk.on) { a.pause(); return; }
+    talkSong.audio = a;
+    const fade = setInterval(() => { a.volume = Math.min(0.55, a.volume + 0.05); if (a.volume >= 0.55) clearInterval(fade); }, 80);
+  }).catch(startMusicBox);
+}
+function startMusicBox() {
+  const ctx = audio(); if (!ctx || !talk.on || talkSong.timer) return;
+  talkSong.next = ctx.currentTime + 0.1; talkSong.step = 0;
+  talkSong.timer = setInterval(() => {
+    while (talkSong.next < ctx.currentTime + 0.3) {
+      const [note, beats] = MUSIC_BOX[talkSong.step % MUSIC_BOX.length], len = beats * talkSong.beat;
+      if (note) tone(N[note], talkSong.next, len * 1.6, "triangle", 0.045);
+      if (talkSong.step % 3 === 0) tone(N[BOX_BASS[Math.floor(talkSong.step / 3) % BOX_BASS.length]] / 2, talkSong.next, talkSong.beat * 3, "sine", 0.04);
+      talkSong.next += len; talkSong.step++;
+    }
+  }, 80);
+}
+function stopTalkSong() {
+  clearInterval(talkSong.timer); talkSong.timer = 0;
+  const a = talkSong.audio; talkSong.audio = null;
+  if (a) { const fade = setInterval(() => { a.volume = Math.max(0, a.volume - 0.06); if (a.volume <= 0) { clearInterval(fade); a.pause(); } }, 60); }
+}
 function rheyTalks(lines, done) {
   Object.assign(talk, { on: true, lines, i: -1, chars: 0, done, phase: "enter", dir: "right", walkT: 0, last: 0 });
   const cv = $("#talkCanvas");
@@ -1438,6 +1478,7 @@ function rheyTalks(lines, done) {
   $("#talkScene").hidden = false;
   document.body.classList.add("fullscreen");
   blip(523, 0.06);
+  startTalkSong();
   cancelAnimationFrame(talk.loop); talk.loop = requestAnimationFrame(talkTick);
 }
 function talkSay() {
@@ -1482,6 +1523,7 @@ function talkTick(now) {
     talk.phase = "talk"; talk.i = 0; talk.nextMove = now + 1500; talkSay();
   } else if (talk.phase === "leave") {
     talk.on = false; $("#talkScene").hidden = true; document.body.classList.remove("fullscreen");
+    stopTalkSong();
     if (talk.done) talk.done();
     return;
   }
@@ -3674,7 +3716,8 @@ $("#jeepBack").onclick = () => { jeepTimers.forEach(clearTimeout); show("start")
 $("#musicBtn").onclick = () => {
   musicOn = !musicOn;
   $("#musicBtn").setAttribute("aria-pressed", musicOn);
-  if (musicOn) { started = true; startMusic(); } else stopMusic();
+  if (talk.on) { if (musicOn) startTalkSong(); else stopTalkSong(); }
+  else if (musicOn) { started = true; startMusic(); } else stopMusic();
 };
 $("#sfxBtn").onclick = () => {
   sfxOn = !sfxOn;
