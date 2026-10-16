@@ -567,7 +567,6 @@
         <button class="pxbtn" id="chaosBtn">everyone wants a picture! 📸</button>
         <figure class="chaos-photo" id="chaosPhoto" hidden><img id="chaosImg" alt="every cat in town in one group photo"><figcaption>everyone ♡</figcaption></figure>
         <div class="chaos-actions" id="chaosActions" hidden>
-          <button class="pxbtn" id="chaosAgain">again!</button>
           <button class="pxbtn" id="chaosSave">download ♡</button>
         </div>
       </div>
@@ -1568,33 +1567,23 @@ document.addEventListener("keydown", e => {
   if (["Enter", " ", "e", "E"].includes(e.key)) { e.preventDefault(); talkNext(); }
 });
 
-// ---------- the group photo: every cat in town, on a plain background ----------
+// ---------- the group photo: every cat in town, neatly lined up on a plain background ----------
 async function chaosPhoto() {
   const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
-  const R = (a, b) => a + Math.random() * (b - a);
   x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
-  const cat = (id, view, frame, cx, cy, s, rot = 0, flip = false) => {
-    const img = catSprites[id] && catSprites[id][view][frame]; if (!img) return;
-    x.save(); x.translate(cx, cy); x.rotate(rot); x.scale(flip ? -s : s, s);
-    x.drawImage(img, -img.width / 2, -img.height / 2); x.restore();
+  // every cat facing the camera, standing still, lined up on their marks
+  const cat = (id, view, cx, bottom, s) => {
+    const img = catSprites[id] && catSprites[id][view][0]; if (!img) return;
+    x.drawImage(img, Math.round(cx - img.width * s / 2), bottom - img.height * s, img.width * s, img.height * s);
   };
-  const tilt = () => R(-0.08, 0.08);
-  // back row
-  cat("jamiel", "down", 0, 130, 250, 8, 0);
-  cat("dan", "down", 0, 245, 245, 8, tilt());
-  cat("leo", "down", 0, 360, 250, 8, tilt());
-  cat("erin", "side", 0, 470, 250, 8, tilt(), true);
-  cat("grace", "down", 0, 580, 245, 8, tilt());
-  cat("chris", "down", 0, 690, 250, 8, tilt());
-  // front row: a little silliness, nothing too wild
-  cat("brylle", "side", 1 + Math.floor(R(0, 2)), 120, 430, 9, R(0.1, 0.25));
-  cat("cliz", "down", 0, 320, 430, 10, -0.05);
-  cat("rhey", "down", 0, 470, 430, 10, 0.05);
-  x.drawImage(heartImg, 381, 335, heartImg.width * 4, heartImg.height * 4);
-  cat("sky", "side", 1, 610, R(370, 395), 9, -0.15);       // mid-jump, of course
-  cat("achilles", "down", 0, 715, 445, 10, R(-0.15, -0.05));
-  for (let i = 0; i < 4; i++) { const s = R(1.5, 2.5); x.drawImage(heartImg, R(20, W - 50), R(20, 120), heartImg.width * s, heartImg.height * s); }
+  // a row of little hearts across the top
+  for (let i = 0; i < 7; i++) x.drawImage(heartImg, 100 + i * 100 - heartImg.width, 50, heartImg.width * 2, heartImg.height * 2);
+  // back row, standing
+  ["jamiel", "dan", "leo", "erin", "grace"].forEach((id, i) => cat(id, "down", 130 + i * 135, 380, 8));
+  // front row, sitting, with cliz and rhey in the middle
+  [["brylle", 75, 9], ["sky", 195, 9], ["cliz", 335, 10], ["rhey", 465, 10], ["chris", 605, 9], ["achilles", 725, 9]]
+    .forEach(([id, cx, s]) => cat(id, "sit", cx, 540, s));
   return c;
 }
 let chaosCanvas = null;
@@ -1611,10 +1600,9 @@ async function takeChaos() {
   setTimeout(() => { $("#letterNav").hidden = false; }, 700);
 }
 $("#chaosBtn").onclick = takeChaos;
-$("#chaosAgain").onclick = takeChaos;
 $("#chaosSave").onclick = () => chaosCanvas && chaosCanvas.toBlob(blob => {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = "everyone-chaos.png";
+  a.href = URL.createObjectURL(blob); a.download = "everyone.png";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }, "image/png");
