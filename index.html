@@ -179,6 +179,7 @@
   #map { position: fixed; inset: 0; z-index: 5; background: #4f7d4a; }
   #map canvas { position: absolute; inset: 0; width: 100vw; height: 100vh; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
   body.fullscreen { overflow: hidden; }
+  .home-bubble { background: var(--pink) !important; font-weight: 600; }
   .bubble {
     position: absolute; z-index: 6; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
     font-size: 15px; line-height: 1; padding: 4px 8px; background: var(--card); color: var(--ink); box-shadow: 0 0 0 3px var(--ink);
@@ -2326,6 +2327,7 @@ let tapped = null;       // a quick tap still counts as one step
 const clearHeld = () => { order.length = 0; tapped = null; };
 let townLoop = null, townDrawn = false, particles = [], fish = null, flowersPicked = 0;
 let arrival = null, arriveByJeep = false, cutscene = null;
+let homeIntroDone = false, homeTrail = null;   // the "all 8 stops done, back to the jeep" moment
 const jeepImg = pixelCanvas(SPRITES.jeep);
 
 function resetTown() {
@@ -2334,7 +2336,7 @@ function resetTown() {
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
   flowersPicked = 0; particles = []; clearHeld(); trail.length = 0;
-  cutscene = null; jamielAte = false; boothVisits = 0; talkingTo = null; resetFriends(); $("#skipBtn").hidden = true;
+  cutscene = null; jamielAte = false; boothVisits = 0; homeIntroDone = false; homeTrail = null; talkingTo = null; resetFriends(); $("#skipBtn").hidden = true;
   if (dialog) { dialog.after = null; closeDialog(); }
 }
 // put the cats just outside a door (used when leaving a store)
@@ -2691,6 +2693,25 @@ function talkTo(f) {
   say(typeof f.talk === "function" ? f.talk() : f.talk[(f.talks++) % f.talk.length]);
 }
 
+/* ---------- all 8 stops done: hearts, a look at the jeep, then a heart trail back to it ---------- */
+const HOME_TILE = () => [JEEP_SPOT.x + 1, JEEP_SPOT.y + 2];   // where cliz stands to ride home
+function startHomeCutscene() {
+  if (homeIntroDone || $("#map").hidden || cutscene || dialog) return;
+  homeIntroDone = true;
+  const now = performance.now();
+  heartBurst(); melody([523, 659, 784, 1046, 1318]);
+  cutscene = { kind: "home", phase: "pan", t0: now, last: now, cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE };
+  hero.dir = buddy.dir = "down";
+  clearHeld();
+}
+function homeHonk() { blip(466, 0.14); setTimeout(() => blip(587, 0.2), 220); }
+// tiles from cliz to the jeep, recomputed only when she steps onto a new tile
+function homeTrailTiles() {
+  const key = hero.x + "," + hero.y;
+  if (!homeTrail || homeTrail.key !== key) homeTrail = { key, tiles: pathTo(hero.x, hero.y, ...HOME_TILE()) || [] };
+  return homeTrail.tiles;
+}
+
 /* ---------- jamiel's cutscene: he heads into unli wings first ---------- */
 let jamielAte = false;
 function startJamielCutscene() {
@@ -2751,9 +2772,19 @@ function updateCutscene(now) {
   let target = [(hero.fx + 0.5) * TILE, (hero.fy + 0.5) * TILE];
   if (cs.kind === "jamiel" && cs.phase !== "back") target = [(FRIEND.jamiel.fx + 0.5) * TILE, (FRIEND.jamiel.fy + 0.5) * TILE];
   if (cs.kind === "booth") target = [(BOOTH.x + 2.5) * TILE, (BOOTH.y + 5) * TILE];
+  if (cs.kind === "home" && cs.phase !== "back") target = [(JEEP_SPOT.x + 2) * TILE, (JEEP_SPOT.y + 1) * TILE];
   cs.cx += (target[0] - cs.cx) * Math.min(1, dt * 3.5);
   cs.cy += (target[1] - cs.cy) * Math.min(1, dt * 3.5);
 
+  if (cs.kind === "home") {
+    if (cs.phase === "pan" && now - cs.t0 > 1400) {
+      cs.phase = "talk"; homeHonk();
+      say(["all 8 stops done! ♡", "that was the best date ever.", "the jeep's waiting to take us home ♡", "follow the hearts back to it!"],
+        () => { cs.phase = "back"; cs.t0 = performance.now(); });
+    }
+    if (cs.phase === "back" && now - cs.t0 > 900) cutscene = null;
+    return;
+  }
   if (cs.kind === "jamiel") {
     const j = FRIEND.jamiel;
     if (cs.phase === "pan" && now - cs.t0 > 1100) {
@@ -2923,7 +2954,7 @@ function renderHud() {
   else if (n && n.kind === "jeep") html = `<b>the jeep</b> · <kbd>E</kbd> ${done.size === SCENES.length ? "ride home ♡" : "look"}`;
   else if (n && n.kind === "friend") html = `<b>${esc(n.friend.name)}</b> · <kbd>E</kbd> talk`;
   else if (n && n.kind === "thing") html = `<b>${esc(n.thing.name)}</b> · <kbd>E</kbd> ${n.thing.verb}`;
-  else html = done.size === SCENES.length ? "everything visited ♡ walk back to the jeep" : "arrow keys / WASD to walk · follow the pink arrow ♡";
+  else html = done.size === SCENES.length ? "<b>all 8 stops done ♡</b> · follow the hearts back to the jeep" : "arrow keys / WASD to walk · follow the pink arrow ♡";
   if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; el.hidden = !html; }
   const k = `our town · ${done.size}/${SCENES.length} places`;
   if ($("#mapKicker").textContent !== k) $("#mapKicker").textContent = k;
@@ -2958,6 +2989,13 @@ function friendPose(f, now) {
 // speech bubbles are html on top of the canvas (canvas text gets blurry when the pixels are scaled up)
 function drawBubbles(c, now, sx, sy) {
   const k = c.canvas.clientWidth / c.canvas.width;
+  if (!drawBubbles.home) { const el = drawBubbles.home = document.createElement("span"); el.className = "bubble home-bubble"; el.textContent = "home ♡"; $("#map").appendChild(el); }
+  const hb = drawBubbles.home, showHome = done.size === SCENES.length && !arrival && !dialog;
+  hb.hidden = !showHome;
+  if (showHome) {
+    hb.style.left = Math.round(sx(JEEP_SPOT.x * TILE + 32) * k) + "px";
+    hb.style.top = Math.round((sy(JEEP_SPOT.y * TILE - 10) + (Math.floor(now / 400) % 2 ? 0 : -2)) * k) + "px";
+  }
   FRIENDS.forEach(f => {
     if (f.bubble && (f.hidden || now > f.bubble.until || dialog || cutscene)) f.bubble = null;
     if (!f.bubbleEl) { f.bubbleEl = document.createElement("span"); f.bubbleEl.className = "bubble"; $("#map").appendChild(f.bubbleEl); }
@@ -3015,6 +3053,17 @@ function drawFrame(now) {
       c.fillStyle = "#ef8e4f"; c.fillRect(X, Y, 8, 4); c.fillRect(X - 3, Y - 1, 3, 6);
       c.fillStyle = INK_C; c.fillRect(X + 6, Y + 1, 1, 1);
     }
+  }
+  // all done: a trail of little hearts from cliz to the jeep, a ripple running along it toward the jeep
+  if (done.size === SCENES.length && !arrival && (!cutscene || cutscene.kind === "home")) {
+    const tiles = homeTrailTiles(), step = Math.floor(now / 140);
+    for (let k = 2; k < tiles.length; k += 2) {
+      const [tx, ty] = tiles[k], lit = (step - k / 2) % 6 === 0;
+      const bob = Math.round(Math.sin(now / 220 + k * 0.6) * 1.5);
+      c.globalAlpha = lit ? 1 : 0.6;
+      c.drawImage(heartImg, sx(tx * TILE + 8 - heartImg.width / 2), sy(ty * TILE + 9 - heartImg.height) + bob);
+    }
+    c.globalAlpha = 1;
   }
   // bouncing arrow over the next place (or the jeep at the end)
   const nxt = nextStop();
@@ -3103,6 +3152,7 @@ function startTown() {
     arrival = { t0: performance.now() };
     jeepSound();
   }
+  if (done.size === SCENES.length && !homeIntroDone && !arrival) setTimeout(startHomeCutscene, 450);
   cancelAnimationFrame(townLoop);
   townLoop = requestAnimationFrame(tick);
 }
