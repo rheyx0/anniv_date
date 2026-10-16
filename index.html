@@ -1687,7 +1687,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // "with friends": one cutout per photo, per side of the frame (index = photo number)
 const BOOTH_FRIENDS = {
-  left: [1, 2, 3].map(n => `photos/friends/cutouts/${n}.png`),          // jamiel & dan (panel 4: two more people, coming)
+  left: [1, 2, 3, 4].map(n => `photos/friends/cutouts/${n}.png`),       // jamiel & dan, then dan & leo in panel 4
   right: [1, 2, 3, 4].map(n => `photos/friends/cutouts/r${n}.png`),     // erin & leo, then rje in panel 4
 };
 const friendImgs = {};
