@@ -422,6 +422,7 @@
   .booth-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .booth-controls .pxbtn { font-size: 16px; padding: 9px 16px; margin: 0; }
   /* snap! floats outside the booth card: to the right of it on wide screens, along the bottom on phones */
+  .skip-btn { position: fixed; z-index: 35; right: 16px; bottom: 16px; font-size: 15px !important; padding: 8px 14px !important; }
   .snap-float {
     position: fixed; z-index: 20; left: calc(50% + 280px); top: 50%; transform: translateY(-50%);
     font-size: 22px !important; padding: 16px 26px !important; box-shadow: 0 0 0 4px var(--ink), 4px 8px 0 4px rgba(91, 70, 54, .25);
@@ -455,7 +456,7 @@
   }
   .cam-flash { position: absolute; inset: 0; background: #fff; animation: flash .45s ease-out forwards; pointer-events: none; }
   .booth.bw .frame video, .booth.bw .frame img { filter: grayscale(1) contrast(1.1); }
-  .booth-mode { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+  .booth-mode { display: flex; gap: 10px; justify-content: center; margin: 4px 0 6px; }
   .booth-mode .pxbtn { font-size: 16px; padding: 9px 16px; }
   /* friend cutouts stand in the live frame; they get baked into each snap */
   .frame .friend {
@@ -613,25 +614,21 @@
       <p class="kicker">say cheese</p>
       <h2>photo booth ♡</h2>
       <p class="story" id="boothHint">4 pictures, one strip. smile!</p>
-      <div class="strip" id="strip">
-        <div id="stripFrames"></div>
-        <div class="strip-foot" id="stripFoot"></div>
-      </div>
       <div class="booth-mode" id="boothMode">
         <button class="pxbtn" data-mode="solo">solo</button>
         <button class="pxbtn" data-mode="friends">with friends</button>
       </div>
+      <div class="strip" id="strip">
+        <div id="stripFrames"></div>
+        <div class="strip-foot" id="stripFoot"></div>
+      </div>
       <p class="cam-msg" id="camMsg" hidden></p>
       <div class="booth-controls">
-        <button class="pxbtn" id="camBtn">turn on camera</button>
-        <button class="pxbtn" id="modeBackBtn" hidden>← solo / with friends</button>
+        <button class="pxbtn" id="modeBackBtn" hidden>← back</button>
         <button class="pxbtn" id="bwBtn">b&amp;w</button>
         <button class="pxbtn" id="retakeBtn" hidden>retake</button>
         <button class="pxbtn" id="downloadBtn" hidden>download ♡</button>
       </div>
-      <label class="upload" id="uploadLabel">no camera? upload photos instead
-        <input type="file" id="uploadInput" accept="image/*" multiple>
-      </label>
       <div class="nav"><button class="pxbtn" id="toRecap">back outside →</button></div>
     </div>
   </section>
@@ -657,6 +654,7 @@
 </main>
 
 <button class="pxbtn snap-float" id="snapBtn" hidden>snap! 📸</button>
+<button class="pxbtn skip-btn" id="skipBtn" hidden>skip ▸▸</button>
 <div class="talk-scene" id="talkScene" hidden>
   <canvas id="talkCanvas" aria-label="rhey, talking"></canvas>
   <div class="talk-bubble" id="talkBubble" hidden><p id="talkText"></p><span class="dialog-more">▼</span></div>
@@ -1674,7 +1672,7 @@ $("#toBooth").onclick = () => {
   show("recapPage");
   if ($("#final").hidden) setTimeout(() => { $("#again").hidden = false; }, 700);
 };
-$("#boothBack").onclick = () => { stopCamera(); choosing = false; renderStrip(); $("#boothBox").hidden = true; };
+$("#boothBack").onclick = () => { stopCamera(); renderStrip(); $("#boothBox").hidden = true; };
 $("#toRecap").onclick = () => exitTo(BOOTH);
 $("#recapBack").onclick = () => show("ending");
 $("#restart").onclick = () => {
@@ -1691,7 +1689,7 @@ $("#restart").onclick = () => {
 // the live camera plays inside every empty box; each snap freezes the next box
 const SHOTS = 4;
 const BOOTH_CAPTION = ["CLIZ & RHEY", "3 YEARS"];
-let camStream = null, shots = [], snapping = false, boothBW = false, boothMode = "solo", choosing = false;
+let camStream = null, shots = [], snapping = false, boothBW = false, boothMode = "solo";
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // "with friends": one cutout per photo, per side of the frame (index = photo number)
@@ -1722,18 +1720,17 @@ function renderStrip() {
     if (shots[i]) return `<div class="frame"><img src="${shots[i].url}" alt="photo ${i + 1}"></div>`;
     const next = i === shots.length && camStream;
     return `<div class="frame ${next ? "next" : ""}">
-        ${camStream ? `<video muted playsinline autoplay></video>` : i + 1}
+        ${next ? `<video muted playsinline autoplay></video>` : i + 1}
         ${boothMode === "friends" ? friendsAt(i).map(f => `<img class="friend ${f.side}" src="${f.src}" alt="">`).join("") : ""}
         ${next ? `<div class="countdown"></div>` : ""}
       </div>`;
   }).join("");
   $("#stripFrames").querySelectorAll("video").forEach(v => { v.srcObject = camStream; v.play().catch(() => {}); });
-  $("#camBtn").hidden = !!camStream || full || choosing;
   $("#snapBtn").hidden = full || !camStream;
   $("#modeBackBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
-  $("#uploadLabel").hidden = full || !!camStream;
+  const choosing = !camStream && !full && shots.length === 0;
   $("#boothMode").hidden = !choosing;
   $("#boothHint").textContent = full ? "cute!! download your strip ♡"
     : choosing ? "who's in the picture?"
@@ -1745,14 +1742,14 @@ function camMessage(text) {
 }
 
 async function startCamera() {
-  choosing = false; camMessage("");
+  camMessage("");
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
     });
   } catch (e) {
     camStream = null;
-    camMessage("the camera didn't turn on :( you can upload photos instead");
+    camMessage("the camera didn't turn on :( allow camera access and pick again");
   }
   renderStrip();
   if (camStream) showNextFrame();
@@ -1800,17 +1797,6 @@ async function snap() {
   await wait(120);
   addShot(grab(v, v.videoWidth, v.videoHeight, true));
   snapping = false;
-}
-
-function uploadPhotos(files) {
-  [...files].slice(0, SHOTS - shots.length).forEach(file => {
-    const img = new Image();
-    img.onload = () => {
-      if (shots.length < SHOTS) addShot(grab(img, img.naturalWidth, img.naturalHeight, false));
-      URL.revokeObjectURL(img.src);
-    };
-    img.src = URL.createObjectURL(file);
-  });
 }
 
 function toBW(src) {
@@ -1874,7 +1860,7 @@ async function downloadStrip() {
 }
 function resetBooth() {
   stopCamera(); camMessage("");
-  shots = []; choosing = false; renderStrip();
+  shots = []; renderStrip();
 }
 
 $("#boothMode").onclick = e => {
@@ -1882,13 +1868,12 @@ $("#boothMode").onclick = e => {
   if (b) { boothMode = b.dataset.mode; startCamera(); }
 };
 // turning on the camera first asks: solo or with friends?
-const chooseMode = () => { stopCamera(); choosing = true; camMessage(""); renderStrip(); };
-$("#camBtn").onclick = chooseMode;
+// back to "who's in the picture?" (solo / with friends)
+const chooseMode = () => { stopCamera(); camMessage(""); renderStrip(); };
 $("#snapBtn").onclick = snap;
 $("#retakeBtn").onclick = () => { shots = []; chooseMode(); };
 $("#modeBackBtn").onclick = () => { shots = []; chooseMode(); };
 $("#downloadBtn").onclick = downloadStrip;
-$("#uploadInput").onchange = e => { uploadPhotos(e.target.files); e.target.value = ""; };
 $("#bwBtn").onclick = () => {
   boothBW = !boothBW;
   $("#booth").classList.toggle("bw", boothBW);
@@ -2274,7 +2259,7 @@ function resetTown() {
   Object.assign(buddy, { x: SPAWN.x - 1, y: SPAWN.y, fx: SPAWN.x - 1, fy: SPAWN.y, dir: "right", moving: null });
   THINGS.forEach(t => { if (t.id === "flower" && t.picked) { t.picked = false; t.tiles.forEach(([x, y]) => grid[y][x] = "X"); } });
   flowersPicked = 0; particles = []; clearHeld(); trail.length = 0;
-  cutscene = null; jamielAte = false; boothVisits = 0; talkingTo = null; resetFriends();
+  cutscene = null; jamielAte = false; boothVisits = 0; talkingTo = null; resetFriends(); $("#skipBtn").hidden = true;
   if (dialog) { dialog.after = null; closeDialog(); }
 }
 // put the cats just outside a door (used when leaving a store)
@@ -2656,6 +2641,7 @@ function startBoothCutscene() {
     scriptPath(f, x, y, [], null, { done: g => { g.dir = "up"; } });
   });
   cutscene = { kind: "booth", phase: "gather", t0: now, last: now, cx: (hero.fx + 0.5) * TILE, cy: (hero.fy + 0.5) * TILE };
+  $("#skipBtn").hidden = boothVisits === 0;   // the first time it plays in full
   hero.dir = buddy.dir = "up";
   clearHeld();
 }
@@ -2728,12 +2714,25 @@ function updateCutscene(now) {
     });
     if (FRIENDS.every(f => f.hidden) && !cs.inAt) cs.inAt = now;
     if (cs.inAt && now - cs.inAt > 400) {
-      cutscene = null;
+      cutscene = null; $("#skipBtn").hidden = true;
       melody([784, 988]);
       enterBooth();
     }
   }
 }
+// skip: straight into the open booth (everyone already inside)
+function skipToBooth() {
+  if (!cutscene || cutscene.kind !== "booth") return;
+  if (cutscene.phase === "gather") boothVisits++;
+  cutscene = null; $("#skipBtn").hidden = true;
+  if (dialog) { dialog.after = null; closeDialog(); }
+  FRIENDS.forEach(f => { f.script = null; f.hidden = true; });
+  melody([784, 988]);
+  enterBooth();
+  if (dialog) { dialog.after = null; closeDialog(); }
+  $("#boothBox").hidden = false; $("#boothBox").scrollTop = 0;
+}
+$("#skipBtn").onclick = skipToBooth;
 resetFriends();
 function burst(kind, px, py, n) {
   for (let i = 0; i < n; i++) particles.push({
@@ -3577,7 +3576,13 @@ function drawRoom(now) {
   ROOMS[roomId](c, now);
   if (roomId === "booth") drawBoothCats(c, now);
 }
-function roomTick(now) { if (roomId === "booth") boothUpdate(now); drawRoom(now); roomLoop = requestAnimationFrame(roomTick); }
+let roomDrawn = 0;
+function roomTick(now) {
+  const covered = roomId === "booth" && !$("#boothBox").hidden;   // the booth card covers the room: redraw it only now and then
+  if (roomId === "booth") boothUpdate(now);
+  if (!covered || now - roomDrawn > 400) { drawRoom(now); roomDrawn = now; }
+  roomLoop = requestAnimationFrame(roomTick);
+}
 function startRoom() { cancelAnimationFrame(roomLoop); roomLoop = requestAnimationFrame(roomTick); }
 function stopRoom() { cancelAnimationFrame(roomLoop); roomLoop = null; }
 
