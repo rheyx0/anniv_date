@@ -1572,18 +1572,31 @@ async function chaosPhoto() {
   const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
   x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
-  // every cat facing the camera, standing still, lined up on their marks
-  const cat = (id, view, cx, bottom, s) => {
+  // two loose rows: everyone's in it, but nobody quite stands still for the camera
+  const cat = (id, view, cx, bottom, s, rot = 0, flip = false) => {
     const img = catSprites[id] && catSprites[id][view][0]; if (!img) return;
-    x.drawImage(img, Math.round(cx - img.width * s / 2), bottom - img.height * s, img.width * s, img.height * s);
+    const w = img.width * s, h = img.height * s;
+    x.save(); x.translate(cx, bottom - h / 2); x.rotate(rot); x.scale(flip ? -1 : 1, 1);
+    x.drawImage(img, -w / 2, -h / 2, w, h); x.restore();
   };
-  // a row of little hearts across the top
-  for (let i = 0; i < 7; i++) x.drawImage(heartImg, 100 + i * 100 - heartImg.width * 2, 100, heartImg.width * 4, heartImg.height * 4);
-  // back row, standing
-  ["jamiel", "dan", "leo", "erin", "grace"].forEach((id, i) => cat(id, "down", 130 + i * 135, 340, 8));
-  // front row, sitting, with cliz and rhey in the middle
-  [["brylle", 76, 8], ["sky", 200, 8], ["cliz", 331, 9], ["rhey", 469, 9], ["chris", 600, 8], ["achilles", 724, 8]]
-    .forEach(([id, cx, s]) => cat(id, "sit", cx, 500, s));
+  // a few hearts floating up top
+  [[110, 110, 4, -0.2], [230, 80, 3, 0.15], [390, 95, 5, 0], [540, 70, 3, -0.1], [680, 105, 4, 0.2]].forEach(([hx, hy, s, r]) => {
+    x.save(); x.translate(hx, hy); x.rotate(r);
+    x.drawImage(heartImg, -heartImg.width * s / 2, -heartImg.height * s / 2, heartImg.width * s, heartImg.height * s); x.restore();
+  });
+  // back row, standing: a bit uneven, erin looking off to the side
+  cat("jamiel", "down", 125, 335, 8, 0);
+  cat("dan", "down", 255, 325, 8, -0.06);
+  cat("leo", "down", 395, 340, 8, 0.08);
+  cat("erin", "side", 530, 330, 8, 0, true);
+  cat("grace", "down", 670, 320, 8, 0.1);
+  // front row, sitting: brylle leaning in, cliz and rhey close together in the middle
+  cat("brylle", "sit", 80, 505, 8, 0.12);
+  cat("sky", "side", 205, 500, 8, -0.05);
+  cat("cliz", "sit", 338, 495, 9, -0.06);
+  cat("rhey", "sit", 462, 495, 9, 0.06);
+  cat("chris", "sit", 598, 505, 8, -0.08);
+  cat("achilles", "sit", 722, 510, 8, 0.15);
   return c;
 }
 let chaosCanvas = null;
