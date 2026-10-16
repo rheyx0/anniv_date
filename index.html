@@ -613,6 +613,7 @@
         <span class="booth-mode" id="boothMode">
           <button class="pxbtn" data-mode="solo">solo</button>
           <button class="pxbtn" data-mode="friends">with friends</button>
+          <button class="pxbtn" data-mode="rhey">with rhey</button>
         </span>
         <button class="pxbtn" id="modeBackBtn" hidden>← back</button>
         <button class="pxbtn" id="bwBtn">b&amp;w</button>
@@ -1755,7 +1756,7 @@ function renderStrip() {
       </div>`;
   }).join("");
   if (camStream) startLive();
-  $("#snapBtn").hidden = full || !camStream;
+  $("#snapBtn").hidden = full || !camStream || (boothMode === "rhey" && rheyState.phase !== "frozen");
   $("#modeBackBtn").hidden = full || !camStream;
   $("#retakeBtn").hidden = shots.length === 0;
   $("#downloadBtn").hidden = !full;
@@ -1807,6 +1808,13 @@ function drawLive(now) {
   b.setTransform(-1, 0, 0, 1, LIVE_W, 0);
   b.drawImage(camVideo, (LIVE_W - dw) / 2, (LIVE_H - dh) / 2, dw, dh);
   b.setTransform(1, 0, 0, 1, 0, 0);
+  if (boothMode === "rhey") {
+    if (rheyState.phase === "playing" && rheyVid.currentTime >= RHEY_FREEZES[rheyState.next]) {
+      rheyVid.pause(); rheyVid.currentTime = RHEY_FREEZES[rheyState.next] + 0.04;   // land exactly on the pose
+      rheyState.phase = "frozen"; renderStrip();
+    }
+    if (rheyVid.readyState >= 2) b.drawImage(rheyLayer(LIVE_W, LIVE_H), 0, 0);
+  }
   // then small copies into each box, with that panel's friends on top
   const over = boothMode === "friends" ? overlaysReady() : null;
   document.querySelectorAll("#stripFrames .live").forEach(cv => {
@@ -1815,6 +1823,57 @@ function drawLive(now) {
     if (over) x.drawImage(over[+cv.dataset.i], 0, 0);
   });
 }
+// "with rhey": a video of rhey walking into the booth. it is a 640x960 mp4: his picture on top, a black/white mask of
+// where he is underneath (works on iphones, unlike transparent video). it freezes at each pose until she snaps.
+const RHEY_VIDEO = "photos/rhey-booth.mp4", RHEY_FREEZES = [11, 20, 30, 49];
+const rheyVid = document.createElement("video");
+rheyVid.muted = true; rheyVid.playsInline = true; rheyVid.preload = "auto";
+rheyVid.setAttribute("playsinline", ""); rheyVid.setAttribute("aria-hidden", "true");
+rheyVid.style.cssText = camVideo.style.cssText;
+document.body.appendChild(rheyVid);
+const rheyState = { phase: "idle", next: 0, run: 0 };   // idle · countdown · playing · frozen
+function loadRheyVideo() { if (!rheyVid.src) { rheyVid.src = RHEY_VIDEO; rheyVid.load(); } }
+// rhey cut out of the current video frame, at w x h (the mask becomes the alpha)
+const rheyCanvases = {};
+function rheyLayer(w, h) {
+  const key = w + "x" + h;
+  const c = rheyCanvases[key] || (rheyCanvases[key] = Object.assign(document.createElement("canvas"), { width: w, height: h }));
+  const x = c.getContext("2d", { willReadFrequently: true });
+  x.clearRect(0, 0, w, h);
+  x.drawImage(rheyVid, 0, 480, 640, 480, 0, 0, w, h);
+  const mask = x.getImageData(0, 0, w, h).data;
+  x.drawImage(rheyVid, 0, 0, 640, 480, 0, 0, w, h);
+  const img = x.getImageData(0, 0, w, h), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const a = mask[i];
+    if (a < 8) { d[i + 3] = 0; continue; }
+    const k = 255 / a;   // the colors were stored pre-multiplied by the mask
+    d[i] = Math.min(255, d[i] * k); d[i + 1] = Math.min(255, d[i + 1] * k); d[i + 2] = Math.min(255, d[i + 2] * k); d[i + 3] = a;
+  }
+  x.putImageData(img, 0, 0);
+  return c;
+}
+// after the camera turns on: 3-2-1, then rhey walks in
+async function startRheyRun() {
+  const run = ++rheyState.run;
+  rheyState.phase = "countdown"; rheyState.next = 0;
+  rheyVid.pause(); rheyVid.currentTime = 0;
+  renderStrip();
+  const cd = $("#stripFrames .frame.next .countdown");
+  for (const n of [3, 2, 1]) { if (run !== rheyState.run) return; if (cd) cd.textContent = n; blip(660, 0.08); await wait(750); }
+  if (run !== rheyState.run) return;
+  if (cd) cd.textContent = "";
+  rheyState.phase = "playing";
+  rheyVid.play().catch(() => {});
+}
+function rheyResume() {
+  rheyState.next++;
+  if (rheyState.next >= RHEY_FREEZES.length) { rheyState.phase = "idle"; rheyVid.pause(); return; }
+  rheyState.phase = "playing";
+  rheyVid.play().catch(() => {});
+  renderStrip();
+}
+function stopRhey() { rheyState.run++; rheyState.phase = "idle"; rheyVid.pause(); }
 async function startCamera() {
   camMessage("");
   try {
@@ -1829,6 +1888,7 @@ async function startCamera() {
   if (camStream) showNextFrame();
 }
 function stopCamera() {
+  stopRhey();
   if (camStream) camStream.getTracks().forEach(t => t.stop());
   camStream = null;
   camVideo.srcObject = null;
@@ -1851,6 +1911,7 @@ function showNextFrame() {
 }
 function addShot(canvas) {
   if (boothMode === "friends") drawFriends(canvas, shots.length);
+  if (boothMode === "rhey" && rheyVid.readyState >= 2) canvas.getContext("2d").drawImage(rheyLayer(800, 600), 0, 0);
   shots.push({ canvas, url: canvas.toDataURL("image/jpeg", 0.9) });
   if (shots.length >= SHOTS) {
     stopCamera();
@@ -1858,10 +1919,12 @@ function addShot(canvas) {
   }
   renderStrip();
   if (camStream) showNextFrame();
+  if (boothMode === "rhey" && camStream) rheyResume();
 }
 
 async function snap() {
   if (snapping || !camStream || shots.length >= SHOTS) return;
+  if (boothMode === "rhey" && rheyState.phase !== "frozen") return;
   snapping = true;
   const frame = $("#stripFrames .frame.next"), cd = frame.querySelector(".countdown");
   for (const n of [3, 2, 1]) { cd.textContent = n; blip(660, 0.08); await wait(750); }
@@ -1941,7 +2004,7 @@ function resetBooth() {
 
 $("#boothMode").onclick = e => {
   const b = e.target.closest("button[data-mode]");
-  if (b) { boothMode = b.dataset.mode; startCamera(); }
+  if (b) { boothMode = b.dataset.mode; startCamera().then(() => { if (boothMode === "rhey" && camStream) startRheyRun(); }); }
 };
 // turning on the camera first asks: solo or with friends?
 // back to "who's in the picture?" (solo / with friends)
@@ -3582,6 +3645,7 @@ function enterBooth() {
   $("#roomStage").innerHTML = "";
   $("#photoBox").hidden = true;
   $("#boothBox").appendChild($("#booth"));
+  loadRheyVideo();
   $("#boothBox").hidden = true;
   Object.assign(boothCats, { x: 160, y: 162, dir: "up", moving: false, trail: [], bx: 140, by: 162, bdir: "up", bmoving: false });
   boothLast = 0; clearHeld();
