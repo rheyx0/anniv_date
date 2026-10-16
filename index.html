@@ -1582,7 +1582,6 @@ const PROPS = {
 async function chaosPhoto() {
   const W = 800, H = 600, c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.imageSmoothingEnabled = false;
-  try { await document.fonts.load('10px "Press Start 2P"'); } catch (e) {}
   x.fillStyle = "#fde6ec"; x.fillRect(0, 0, W, H);
   // a cat at (cx, bottom), plus props at (px, py) in its own pixels. returns the top of its head.
   const cat = (id, cx, bottom, s, rot = 0, props = []) => {
@@ -1595,28 +1594,20 @@ async function chaosPhoto() {
     x.restore();
     return bottom - h;
   };
-  // a speech bubble whose tail points down at (cx, y)
-  const say = (text, cx, y) => {
-    x.font = '10px "Press Start 2P"';
-    const w = Math.ceil(x.measureText(text).width) + 16, h = 24, l = Math.round(cx - w / 2), t = y - h - 8;
-    x.fillStyle = "#5b4636"; x.fillRect(l - 3, t - 3, w + 6, h + 6); x.fillRect(cx - 6, t + h, 12, 6); x.fillRect(cx - 3, t + h + 6, 6, 5);
-    x.fillStyle = "#fffaf2"; x.fillRect(l, t, w, h); x.fillRect(cx - 3, t + h, 6, 5);
-    x.fillStyle = "#5b4636"; x.textBaseline = "middle"; x.fillText(text, l + 8, t + h / 2 + 1);
-  };
   // back row
-  say("hmph.", 80, cat("jamiel", 80, 300, 6, 0, [["vein", 15, 0]]));
-  say("actually,", 240, cat("dan", 240, 295, 6, -0.04, [["book", 5, 13]]));
-  say("gg", 400, cat("leo", 400, 305, 6, 0.06, [["pad", 5, 14]]));
-  say("HSSSS", 560, cat("erin", 560, 300, 6, -0.12));
-  say("AAAAAA!", 720, cat("grace", 720, 290, 6, 0.1, [["mouth", 8, 10]]));
+  cat("jamiel", 80, 270, 6, 0, [["vein", 15, 0]]);                             // grumpy
+  cat("dan", 240, 265, 6, -0.04, [["book", 5, 13]]);                           // studying
+  cat("leo", 400, 275, 6, 0.06, [["pad", 5, 14]]);                             // one more game
+  cat("erin", 560, 270, 6, -0.12);                                             // leaning away, hissing
+  cat("grace", 720, 260, 6, 0.1, [["mouth", 8, 10]]);                          // AAAAAA
   // front row
-  cat("brylle", 85, 525, 6, 0.22, [["note", -3, 4], ["note", 18, -3]]);       // dancing, of course
-  cat("sky", 200, 470, 6, -0.12, [["whoosh", 6, 23]]);                         // mid-jump, of course
-  cat("cliz", 335, 525, 7, -0.1);
-  cat("rhey", 465, 525, 7, 0.1);
-  x.drawImage(heartImg, 400 - heartImg.width * 3, 330, heartImg.width * 6, heartImg.height * 6);
-  say("ka-chow.", 600, cat("chris", 600, 530, 6, -0.06, [["bolt", 17, 14]]));
-  say("huh?", 735, cat("achilles", 735, 530, 6, 0.15, [["puddle", 6, 20]]));
+  cat("brylle", 85, 495, 6, 0.22, [["note", -3, 4], ["note", 18, -3]]);       // dancing, of course
+  cat("sky", 200, 440, 6, -0.12, [["whoosh", 6, 23]]);                         // mid-jump, of course
+  cat("cliz", 335, 495, 7, -0.1);
+  cat("rhey", 465, 495, 7, 0.1);
+  x.drawImage(heartImg, 400 - heartImg.width * 3, 300, heartImg.width * 6, heartImg.height * 6);
+  cat("chris", 600, 500, 6, -0.06, [["bolt", 17, 14]]);                        // ka-chow
+  cat("achilles", 735, 500, 6, 0.15, [["puddle", 6, 20]]);                     // drooling
   return c;
 }
 let chaosCanvas = null;
